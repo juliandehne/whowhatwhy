@@ -120,5 +120,5 @@ dmypy.json
 /users/migrations/0001_initial.py
 
 /.idea/*
-/.idea
+.idea/
 /media/profile_pics/*
