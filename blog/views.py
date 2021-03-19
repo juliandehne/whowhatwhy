@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
 from django.contrib.auth.models import User
 from django.views.generic import (
     ListView,
@@ -8,7 +9,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
-from .models import Post
+from .models import Post, Institution
 
 
 def home(request):
@@ -41,6 +42,10 @@ class PostDetailView(DetailView):
     model = Post
 
 
+class InstitutionView(DetailView):
+    model = Institution
+
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     fields = ['title', 'content']
@@ -48,6 +53,20 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
+
+
+class InstitutionCreateView(LoginRequiredMixin, CreateView):
+    model = Institution
+
+    fields = ['title', 'description', 'image']
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    # def post(self, request, *args, **kwargs):
+    #    messages.success(None, f'Your account has been updated!')
+    #    super.post(self, request, args, kwargs)
 
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
