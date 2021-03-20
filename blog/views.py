@@ -1,3 +1,4 @@
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
@@ -55,18 +56,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class InstitutionCreateView(LoginRequiredMixin, CreateView):
+class InstitutionCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Institution
-
     fields = ['title', 'description', 'image']
+
+    success_message = "Institution %(title)s was created successfully"
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
-
-    # def post(self, request, *args, **kwargs):
-    #    messages.success(None, f'Your account has been updated!')
-    #    super.post(self, request, args, kwargs)
 
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

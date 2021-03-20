@@ -33,6 +33,4 @@ class Institution(models.Model):
         return self.title
 
     def get_absolute_url(self):
-       return reverse('institution-detail', kwargs={'pk': self.pk})
-
-
+        return reverse('institution-detail', kwargs={'pk': self.pk})
