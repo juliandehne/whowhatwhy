@@ -1,4 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import UniqueConstraint
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
@@ -49,7 +50,7 @@ class InstitutionView(DetailView):
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ['title', 'content']
+    fields = ['title', 'content', 'institution']
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -58,7 +59,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 class InstitutionCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Institution
-    fields = ['title', 'description', 'image']
+    fields = ['title', 'description', 'image', 'country']
 
     success_message = "Institution %(title)s was created successfully"
 

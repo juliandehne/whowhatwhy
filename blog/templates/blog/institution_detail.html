@@ -1,4 +1,5 @@
 {% extends "blog/base.html" %}
+
 {% block content %}
   <article class="media content-section">
     <img class="rounded-circle article-img" src="{{ object.image.url }}">
@@ -15,7 +16,7 @@
           </div>
         {% endif %} -->
       </div>
-      <h2 class="article-title">{{ object.title }}</h2>
+      <h2 class="article-title">  <i class="{{ object.country.flag_css }}"></i> {{ object.title }}</h2>
       <p class="article-content">{{ object.description }}</p>
     </div>
   </article>

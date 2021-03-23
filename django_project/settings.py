@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'users.apps.UsersConfig',
     'background_task',
+    'django_countries',
     'crispy_forms',
     'reset_migrations',
     'django.contrib.admin',
