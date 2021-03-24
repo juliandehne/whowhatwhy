@@ -24,3 +24,4 @@ django-reset-migrations==0.4.0
 six==1.12.0
 django-utils-six==2.0
 django-countries==7.1
+searchtweets-v2==1.0.7
