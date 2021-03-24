@@ -37,10 +37,12 @@ ALLOWED_HOSTS = ['myawesomedjangoapp.herokuapp.com']
 
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
+    'twitter.apps.TwitterConfig',
     'users.apps.UsersConfig',
     'background_task',
     'django_countries',
     'crispy_forms',
+    'django_extensions',
     'reset_migrations',
     'django.contrib.admin',
     'django.contrib.auth',

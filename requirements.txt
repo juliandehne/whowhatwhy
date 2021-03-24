@@ -15,9 +15,7 @@ Pillow==8.1.0
 psycopg2==2.8.6
 python-dateutil==2.8.0
 pytz==2018.5
-requests==2.19.1
 s3transfer==0.2.0
-urllib3==1.23
 whitenoise==4.1.2
 django-background-tasks==1.1.13
 django-reset-migrations==0.4.0
@@ -25,3 +23,10 @@ six==1.12.0
 django-utils-six==2.0
 django-countries==7.1
 searchtweets-v2==1.0.7
+searchtweets==1.7.6
+django-extensions==3.1.1
+cx_freeze==6.5.3
+pytest==5.2.0
+pytest-cov==2.5.1
+pytest-dependency==0.5.1
+requests==2.24.0
