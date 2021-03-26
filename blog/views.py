@@ -16,7 +16,8 @@ from .models import Post, Institution
 
 def home(request):
     context = {
-        'posts': Post.objects.all()
+        'posts': Post.objects.all(),
+        'institutions': Institution.objects.all()
     }
     return render(request, 'blog/home.html', context)
 
@@ -27,6 +28,11 @@ class PostListView(ListView):
     context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super(PostListView, self).get_context_data(**kwargs)
+        context['institutions'] = Institution.objects.all()
+        return context
 
 
 class UserPostListView(ListView):
@@ -114,5 +120,6 @@ class InstitutionPostList(ListView):
         context = super(InstitutionPostList, self).get_context_data(**kwargs)
         institution = get_object_or_404(Institution, id=self.request.resolver_match.kwargs['pk'])
         context['institution_title'] = institution.title
+        context['institutions'] = Institution.objects.all()
         return context
 

@@ -23,6 +23,9 @@ class Institution(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
 
     class Meta:
+        verbose_name = "Institution"
+        verbose_name_plural = "Institutions"
+        ordering = ['title']
         constraints = [
             UniqueConstraint(fields=['title'], name="unique_institution_constraint"),
         ]
