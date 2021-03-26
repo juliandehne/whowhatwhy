@@ -14,6 +14,7 @@ def get_sentinel_user():
 
 
 class Institution(models.Model):
+    readonly_fields = ('id',)
     title = models.CharField(max_length=100)
     image = models.ImageField(default='default.jpg', upload_to='institution_pics')
     description = models.TextField()
@@ -38,6 +39,7 @@ class Institution(models.Model):
 
 
 class Post(models.Model):
+    readonly_fields = ('id',)
     title = models.CharField(max_length=100)
     content = models.TextField()
     date_posted = models.DateTimeField(default=timezone.now)

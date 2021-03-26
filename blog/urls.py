@@ -6,7 +6,9 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    InstitutionCreateView, InstitutionView
+    InstitutionCreateView,
+    InstitutionView,
+    InstitutionPostList
 )
 from . import views
 
@@ -15,6 +17,7 @@ urlpatterns = [
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('institution/<int:pk>/', InstitutionView.as_view(), name='institution-detail'),
+    path('institution/<int:pk>/posts', InstitutionPostList.as_view(), name='institution-posts'),
     path('post/new/', PostCreateView.as_view(), name='post-create'),
     path('institution/new/', InstitutionCreateView.as_view(), name='institution-create'),
     path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update'),

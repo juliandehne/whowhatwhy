@@ -9,6 +9,7 @@
         <a class="mr-2" href="{% url 'user-posts' object.author.username %}">{{ object.author }}</a>
         <small class="text-muted">{{ object.date_posted|date:"F d, Y" }}</small>
         -->
+        <a class="mr-2"><i class="{{ object.country.flag_css }}"></i>{{ object.title }}</a>
         <!-- {% if object.author == user %}
           <div>
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url 'post-update' object.id %}">Update</a>
@@ -16,8 +17,8 @@
           </div>
         {% endif %} -->
       </div>
-      <h2 class="article-title">  <i class="{{ object.country.flag_css }}"></i> {{ object.title }}</h2>
       <p class="article-content">{{ object.description }}</p>
+      <a class="nav-link" href="{% url 'institution-posts' object.id %}"></i> all posts by this institution</a>
     </div>
   </article>
 {% endblock content %}

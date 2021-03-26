@@ -96,3 +96,23 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
+
+
+class InstitutionPostList(ListView):
+    model = Post
+    template_name = 'blog/institution_posts.html'  # <app>/<model>_<viewtype>.html
+    context_object_name = 'posts'
+    paginate_by = 5
+
+    # fields = ['title', 'content', 'institution']
+
+    def get_queryset(self):
+        institution = get_object_or_404(Institution, id=self.request.resolver_match.kwargs['pk'])
+        return Post.objects.filter(institution=institution).order_by('-date_posted')
+
+    def get_context_data(self, **kwargs):
+        context = super(InstitutionPostList, self).get_context_data(**kwargs)
+        institution = get_object_or_404(Institution, id=self.request.resolver_match.kwargs['pk'])
+        context['institution_title'] = institution.title
+        return context
+
