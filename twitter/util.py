@@ -4,12 +4,18 @@ import json
 import yaml
 import io
 import requests
+from pathlib import Path
 
 
 class TwitterConnector:
 
     def get_from_twitter(self, search_url, params, is_oauth2=False):
-        filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
+        settings_dir = os.path.dirname(__file__)
+        project_root = Path(os.path.dirname(settings_dir)).absolute()
+        keys_path = os.path.join(project_root, 'twitter\\secret\\keys_simple.yaml')
+
+        # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
+        filename = keys_path
 
         consumer_key = os.environ.get("CONSUMER_KEY")
         consumer_secret = os.environ.get("CONSUMER_SECRET")

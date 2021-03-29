@@ -43,11 +43,17 @@ class Institution(models.Model):
 
 class Post(models.Model):
     readonly_fields = ('id',)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
     content = models.TextField()
+    supporting_document = models.URLField(max_length=200, verbose_name="Supporting Document Link")
     date_posted = models.DateTimeField(default=timezone.now)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE, default=None)
+
+    class Meta:
+        verbose_name = "Position"
+        verbose_name_plural = "Positions"
+        ordering = ['title']
 
     def __str__(self):
         return self.title
