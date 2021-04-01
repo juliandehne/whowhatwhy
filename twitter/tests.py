@@ -38,6 +38,4 @@ class TwitterSandbox(TestCase):
 
         addresses = TwitterAddresses(data_map)
         pp = pprint.PrettyPrinter(indent=4)
-        ##pp.pprint(addresses)
-
         pp.pprint(addresses.institutions[0])
