@@ -9,31 +9,11 @@ from pathlib import Path
 
 class TwitterConnector:
 
+    def __init__(self, instance_number=2):
+        self.lines = None
+        self.instance_number = instance_number
+
     def get_from_twitter(self, search_url, params, is_oauth2=False):
-        settings_dir = os.path.dirname(__file__)
-        project_root = Path(os.path.dirname(settings_dir)).absolute()
-        keys_path = os.path.join(project_root, 'twitter\\secret\\keys_simple.yaml')
-
-        # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
-        filename = keys_path
-
-        consumer_key = os.environ.get("CONSUMER_KEY")
-        consumer_secret = os.environ.get("CONSUMER_SECRET")
-
-        # access_token = ""
-        # access_token_secret = ""
-        # bearer_token = ""
-
-        with open(filename) as f:
-            my_dict = yaml.safe_load(f)
-            if consumer_key != "":
-                consumer_key = my_dict.get("consumer_key")
-            if consumer_secret != "":
-                consumer_secret = my_dict.get("consumer_secret")
-            access_token = my_dict.get("access_token")
-            access_token_secret = my_dict.get("access_token_secret")
-            bearer_token = my_dict.get("bearer_token")
-
         # Tweet fields are adjustable.
         # Options include:
         # attachments, author_id, context_annotations,
@@ -46,7 +26,7 @@ class TwitterConnector:
         # oauth = OAuth1Session(consumer_key, client_secret=consumer_secret)
 
         if is_oauth2:
-            headers = self.__create_headers(bearer_token)
+            headers = self.create_headers()
             json_response = self.__connect_to_endpoint(search_url, headers, params)
             return json_response
         else:
@@ -76,7 +56,30 @@ class TwitterConnector:
             return json_response
 
     @staticmethod
-    def __create_headers(bearer_token):
+    def get_secret():
+        settings_dir = os.path.dirname(__file__)
+        project_root = Path(os.path.dirname(settings_dir)).absolute()
+        keys_path = os.path.join(project_root, 'twitter\\secret\\keys_simple.yaml')
+        # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
+        filename = keys_path
+        consumer_key = os.environ.get("CONSUMER_KEY")
+        consumer_secret = os.environ.get("CONSUMER_SECRET")
+        # access_token = ""
+        # access_token_secret = ""
+        # bearer_token = ""
+        with open(filename) as f:
+            my_dict = yaml.safe_load(f)
+            if consumer_key != "":
+                consumer_key = my_dict.get("consumer_key")
+            if consumer_secret != "":
+                consumer_secret = my_dict.get("consumer_secret")
+            access_token = my_dict.get("access_token")
+            access_token_secret = my_dict.get("access_token_secret")
+            bearer_token = my_dict.get("bearer_token")
+        return access_token, access_token_secret, bearer_token, consumer_key, consumer_secret
+
+    def create_headers(self):
+        access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = self.get_secret()
         headers = {"Authorization": "Bearer {}".format(bearer_token)}
         return headers
 
@@ -87,3 +90,4 @@ class TwitterConnector:
         if response.status_code != 200:
             raise Exception(response.status_code, response.text)
         return response.json()
+
