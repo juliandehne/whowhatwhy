@@ -8,15 +8,34 @@ institutions:
       name: 'Norwegian Refugee Council'
       twitter_account: '@NRC_Norway'
       gouvernemental: 'false'
+      migration: 'true'
   - institution:
       name: 'UN Refugee Agency'
       twitter_account: '@Refugees'
       twitter_alt_account: '@unhcr'
       gouvernemental: 'true'
+      migration: 'true'
   - institution:
       name: 'IOM - UN Migration'
       twitter_account: '@UNmigration'
       gouvernemental: 'true'
+      migration: 'true'
+  - institution:
+      name: 'WIPO'
+      twitter_account: '@WIPO'
+      gouvernemental: 'true'
+      migration: 'false'
+  - institution:
+      name: 'IAEA'
+      twitter_account: '@iaeaorg'
+      gouvernemental: 'true'
+      migration: 'false'
+  - institution:
+      name: 'UNESCO'
+      twitter_account: '@UNESCO'
+      gouvernemental: 'true'
+      migration: 'false'
+
 
 parties:
   - party:
