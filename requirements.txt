@@ -33,4 +33,4 @@ requests==2.24.0
 googletrans==3.1.0a0
 python-twitter==3.5
 numpy==1.20.3
-
+djutils==1.0.13
