@@ -5,6 +5,7 @@ from functools import reduce
 from django.db import IntegrityError
 from twitter.models import Tweet, Conversation, TwTopic
 from twitter.tw_connection_util import TwitterConnector
+from twitter.tw_connection_util import TwitterStreamConnector
 from twitter.magic_http_strings import TWEETS_SEARCH_All_URL
 
 
@@ -41,25 +42,46 @@ def get_matching_conversation(connector, hashtags, topic, query, logger, max_res
         max_results -- the max number of results
         min_results -- the min number of results
     """
+    tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, 30)
+    candidates = convert_tweet_result_to_list(tweets_result, topic, query, full_tweet=False)
+    for candidate in candidates:
+        print("selected candidate tweet {}".format(candidate))
+        conversation_id = candidate.conversation.conversation_id
+        print("conversation_id is {}".format(conversation_id))
+        # get the conversation from twitter
+        stream_connector = TwitterStreamConnector()
 
-    conversation = []
-    while len(conversation) < min_results:
-        tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, 30)
-        candidates = convert_tweet_result_to_list(tweets_result, topic, query, full_tweet=False)
-        for candidate in candidates:
-            print("selected candidate tweet {}".format(candidate))
-            conversation_id = candidate.conversation.conversation_id
-            print("conversation_id is {}".format(conversation_id))
-            # get the conversation from twitter
-            conversation_query = "conversation_id:{}".format(conversation_id)
-            params = {'query': '{}'.format(conversation_query), 'max_results': max_results,
-                      "tweet.fields": "created_at,author_id"}
-            json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)
-            # logger.info(json.dumps(json_result, indent=4, sort_keys=True))
-            conversation = convert_tweet_result_to_list(json_result, topic, query, full_tweet=True, has_conversation_id=True)
-            if len(conversation) >= min_results:
-                break
-    return conversation
+        # TODO add rules
+        sample_rules = [
+            {"value": "dog has:images", "tag": "dog pictures"},
+            {"value": "cat has:images -grumpy", "tag": "cat pictures"},
+        ]
+        stream_connector.set_rules(sample_rules)
+        query = {"tweet.fields": "created_at", "expansions": "author_id", "user.fields": "created_at"}
+
+        # TODO wright partial expression
+        checkstream_partial
+
+        stream_connector.get_stream(query, pretty_print_stream)
+
+
+# TODO write a function that writes a valid conversation to the database after parsing
+def check_stream_result_for_valid_conversation(hashtags, topic, min_results, max_results, streaming_result):
+    """ The conversation should contain more then one tweet.
+
+        Keyword arguments:
+        streaming_result -- the json payload to examine
+        hashtags -- a string that represents the original hashtags entered
+        topic -- a general TwTopic of the query
+
+
+        Returns:
+        Boolean if valid set was found
+
+        Sideeffects:
+        Writes the valid conversation to the db
+    """
+    pass
 
 
 def get_tweets_for_hashtags(connector, hashtags, logger, max_results):

@@ -10,6 +10,9 @@ import time
 from twitter.magic_http_strings import TWEETS_RULES_URL, TWEETS_SEARCH_All_URL, TWEETS_STREAM_URL
 
 
+from functools import partial
+
+
 class TwitterUtil:
 
     @staticmethod
@@ -140,7 +143,14 @@ class TwitterStreamConnector:
             )
         print(json.dumps(response.json()))
 
-    def get_stream(self, query_params):
+    def get_stream(self, query_params, callback=print):
+        """ because the stream is ... well ... a stream, a delegate function is needed.
+
+            Keyword arguments:
+            query_params -- dictionary with the fields that are wanted from the result set
+            callback -- a function that takes a json resultset as the only argument
+                        should return FALSE if the connection is not needed anymore
+        """
         response = requests.get(
             TWEETS_STREAM_URL, auth=self.bearer_oauth, stream=True,  params=query_params
         )
@@ -154,7 +164,10 @@ class TwitterStreamConnector:
         for response_line in response.iter_lines():
             if response_line:
                 json_response = json.loads(response_line)
-                print(json.dumps(json_response, indent=4, sort_keys=True))
+                should_continue = callback(json_response)
+                if not should_continue:
+                    break
+                #print(json.dumps(json_response, indent=4, sort_keys=True))
 
     def get_from_twitter(self):
         pass
