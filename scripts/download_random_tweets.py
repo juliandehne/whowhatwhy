@@ -2,7 +2,7 @@ import json
 
 from django.db import IntegrityError
 
-from twitter.util import TwitterConnector
+from twitter.tw_connection_util import TwitterConnector
 
 from twitter.models import Tweet, TwTopic
 import logging

@@ -1,66 +1,112 @@
 import json
 import logging
 from functools import reduce
+
 from django.db import IntegrityError
-from twitter.models import Tweet
-from twitter.util import TwitterConnector
-from twitter.magic_strings import SEARCH_ALL_URL
+from twitter.models import Tweet, Conversation, TwTopic
+from twitter.tw_connection_util import TwitterConnector
+from twitter.magic_http_strings import TWEETS_SEARCH_All_URL
 
 
-def download_conversations(topic, hashtags):
+def download_conversations(topic_string, hashtags):
     """ This downloads a random twitter conversation with the given hashtags.
+        The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
+        was possible. https://stackoverflow.com/questions/24791980/is-there-any-work-around-on-fetching-twitter-conversations-using-latest-twitter/24799336
 
         Keyword arguments:
-        arg1 -- the topic of the hashtags
-        arg2 -- [hashtag1, hashtag2, ...]
+        topic_string -- the topic of the hashtags
+        hashtags -- [hashtag1, hashtag2, ...]
     """
     logger = logging.getLogger(__name__)
-    get_matching_conversation_id(hashtags, logger, 10)
+    topic, created = TwTopic.objects.get_or_create(
+        title=topic_string
+    )
+    connector = TwitterConnector(1)
+    conversation = get_matching_conversation(connector, hashtags, topic, ''.join(hashtags), logger, 10)
+    connector = None  # precaution to terminate the thread and the http socket
     # save_tweets(json_result, topic, twitter_accounts_query_3)
 
 
-def get_tweets_for_hashtags(hashtags, logger, max_results):
+def create_topic(topic_string):
+    topic_to_save = TwTopic.create(topic_string)
+    topic, created = TwTopic.objects.get_or_create(topic_to_save)
+    return topic, created
+
+
+def get_matching_conversation(connector, hashtags, topic, query, logger, max_results, min_results=3):
+    """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
+
+        Keyword arguments:
+        hashtags -- the hashtags that constitute the query
+        max_results -- the max number of results
+        min_results -- the min number of results
+    """
+
+    conversation = []
+    while len(conversation) < min_results:
+        tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, 30)
+        candidates = convert_tweet_result_to_list(tweets_result, topic, query, full_tweet=False)
+        for candidate in candidates:
+            print("selected candidate tweet {}".format(candidate))
+            conversation_id = candidate.conversation.conversation_id
+            print("conversation_id is {}".format(conversation_id))
+            # get the conversation from twitter
+            conversation_query = "conversation_id:{}".format(conversation_id)
+            params = {'query': '{}'.format(conversation_query), 'max_results': max_results,
+                      "tweet.fields": "created_at,author_id"}
+            json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)
+            # logger.info(json.dumps(json_result, indent=4, sort_keys=True))
+            conversation = convert_tweet_result_to_list(json_result, topic, query, full_tweet=True, has_conversation_id=True)
+            if len(conversation) >= min_results:
+                break
+    return conversation
+
+
+def get_tweets_for_hashtags(connector, hashtags, logger, max_results):
+    """ downloads the tweets matching the hashtag list.
+
+        Keyword arguments:
+        connector -- TwitterConnector
+        hashtags -- list of hashtags
+        logger -- Logger
+        max_results -- the number of max length the conversation should have
+    """
     twitter_accounts_query_1 = map(lambda x: "(from:{}) OR ".format(x), hashtags)
     twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
     twitter_accounts_query_3 = twitter_accounts_query_2[:-4]
     twitter_accounts_query_3 += " lang:en"
     logger.debug(twitter_accounts_query_3)
-    params = {'query': '{}'.format(twitter_accounts_query_3), 'max_results': max_results, "tweet.fields": "conversation_id"}
-    connector = TwitterConnector(1)
-    json_result = connector.get_from_twitter(SEARCH_ALL_URL, params, True)
+    params = {'query': '{}'.format(twitter_accounts_query_3), 'max_results': max_results,
+              "tweet.fields": "conversation_id"}
+
+    json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)
     # logger.info(json.dumps(json_result, indent=4, sort_keys=True))
     return json_result
 
 
-def get_matching_conversation_id(hashtags, logger, max_results):
-    conversation = []
-    while len(conversation) < 6:
-        tweets_result = get_tweets_for_hashtags(hashtags, logger, 10)
-        conversation_id = tweets_result.get("data")[0].get("conversation_id")
-        print("conversation_id is {}".format(conversation_id))
-        # get the conversation from twitter
-        conversation_query = "conversation_id:{}".format(conversation_id)
-        params = {'query': '{}'.format(conversation_query), 'max_results': max_results}
-        connector = TwitterConnector(1)
-        json_result = connector.get_from_twitter(SEARCH_ALL_URL, params, True)
-        logger.info(json.dumps(json_result, indent=4, sort_keys=True))
-        # TODO finish the code and implement download the whole conversation
-        break
-        # get_conversation_for_id()
-    pass
+def convert_tweet_result_to_list(tweets_result, topic, query, full_tweet=False, has_conversation_id=True):
+    """ converts the raw data to python objects.
 
-
-
-
-def save_tweets(json_result, topic, query):
-    twitter_data: list = json_result.get("data")
+        Keyword arguments:
+        tweets_result -- the json objeect
+        topic -- the TwTopic object
+        query -- the used query
+        full_tweet -- a flag indicating whether author_id and other specific fields where queried
+        has_conversation_id -- a flag if the conversation_id was added as a field
+    """
+    result_list = []
+    twitter_data: list = tweets_result.get("data")
     for tweet_raw in twitter_data:
-        try:
-            tweet = Tweet()
-            tweet.topic = topic
-            tweet.query_string = query
-            tweet.text = tweet_raw.get("text")
-            tweet.twitter_id = tweet_raw.get("id")
-            tweet.save()
-        except IntegrityError:
-            pass
+        tweet = Tweet()
+        tweet.topic = topic
+        tweet.query_string = query
+        tweet.text = tweet_raw.get("text")
+        tweet.twitter_id = tweet_raw.get("id")
+        if full_tweet:
+            tweet.author_id = tweet_raw.get("author_id")
+            tweet.created_at = tweet_raw.get("created_at")
+        if has_conversation_id:
+            conversation = Conversation.create(tweet_raw.get("conversation_id"))
+            tweet.conversation = conversation
+        result_list.append(tweet)
+    return result_list

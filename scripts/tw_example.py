@@ -1,5 +1,5 @@
 import json
-from twitter.util import TwitterConnector
+from twitter.tw_connection_util import TwitterConnector
 
 # You can adjust ids to include a single Tweets
 # Or you can add to up to 100 comma-separated IDs
