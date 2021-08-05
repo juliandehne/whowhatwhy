@@ -44,3 +44,13 @@ class TreeNode:
             child_id.append(child.data['id'])
             text.append(child.data['text'])
         return conv_id, child_id, text
+
+    def flat_size(self):
+        children_size = 0
+        for child in self.children:
+            children_size += child.flat_size()
+        return 1 + children_size
+
+    def save_to_db(self):
+        # TODO implement
+        pass

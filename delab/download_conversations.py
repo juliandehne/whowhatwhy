@@ -2,6 +2,7 @@ import json
 import logging
 from functools import reduce
 
+import requests
 from django.db import IntegrityError
 
 from twitter.TwConversationTree import TreeNode
@@ -31,7 +32,7 @@ def download_conversations(topic_string, hashtags):
         title=topic_string
     )
     connector = TwitterConnector(1)
-    get_matching_conversation(connector, hashtags, topic, ''.join(hashtags), logger, 10)
+    get_matching_conversation(connector, hashtags, topic, ''.join(hashtags), logger)
 
     connector = None  # precaution to terminate the thread and the http socket
     # save_tweets(json_result, topic, twitter_accounts_query_3)
@@ -43,7 +44,7 @@ def create_topic(topic_string):
     return topic, created
 
 
-def get_matching_conversation(connector, hashtags, topic, query, logger, max_results, min_results=3,
+def get_matching_conversation(connector, hashtags, topic, query, logger, max_results=1000, min_results=50,
                               language="lang:en"):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
@@ -52,14 +53,27 @@ def get_matching_conversation(connector, hashtags, topic, query, logger, max_res
         max_results -- the max number of results
         min_results -- the min number of results
     """
-    tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, 30)
+    tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, 300, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, query, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     for candidate in candidates:
         logger.info("selected candidate tweet {}".format(candidate))
         candidate_id = candidate.conversation.conversation_id
-        root_node = retrieve_replies(candidate_id)
-        root_node.print_tree(0)
+        try:
+            root_node = retrieve_replies(candidate_id)
+        except requests.exceptions.Timeout:
+            print("Timeout occurred")
+        if root_node is None:
+            logger.error("found conversation_id that could not be processed")
+            continue
+        else:
+            flat_tree_size = root_node.flat_size()
+            logger.info("retrieved node with number of children: {}".format(flat_tree_size))
+        if min_results < flat_tree_size < max_results:
+            root_node.save_to_db()
+            print("found suitable conversation {}".format(candidate_id))
+            root_node.print_tree(0)
+            break
 
 
 def retrieve_replies(conversation_id):
@@ -72,6 +86,7 @@ def retrieve_replies(conversation_id):
     """
 
     twapi = TwitterAPIWrapper.get_twitter_API()
+    root = None
 
     try:
         # GET ROOT OF THE CONVERSATION
@@ -233,7 +248,7 @@ def check_stream_result_for_valid_conversation(hashtags, topic, min_results, max
     return True
 
 
-def get_tweets_for_hashtags(connector, hashtags, logger, max_results):
+def get_tweets_for_hashtags(connector, hashtags, logger, max_results, language="lang:en"):
     """ downloads the tweets matching the hashtag list.
         using https://api.twitter.com/2/tweets/search/all
 
@@ -246,7 +261,7 @@ def get_tweets_for_hashtags(connector, hashtags, logger, max_results):
     twitter_accounts_query_1 = map(lambda x: "(from:{}) OR ".format(x), hashtags)
     twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
     twitter_accounts_query_3 = twitter_accounts_query_2[:-4]
-    twitter_accounts_query_3 += " lang:en"
+    twitter_accounts_query_3 += " " + language
     logger.debug(twitter_accounts_query_3)
     params = {'query': '{}'.format(twitter_accounts_query_3), 'max_results': max_results,
               "tweet.fields": "conversation_id,author_id"}
