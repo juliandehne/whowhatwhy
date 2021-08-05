@@ -1,3 +1,6 @@
+from typing import Callable
+
+from TwitterAPI import TwitterAPI
 from requests_oauthlib import OAuth1Session, OAuth2Session
 import os
 import json
@@ -9,8 +12,16 @@ import time
 
 from twitter.magic_http_strings import TWEETS_RULES_URL, TWEETS_SEARCH_All_URL, TWEETS_STREAM_URL
 
-
 from functools import partial
+
+
+class TwitterAPIWrapper:
+
+    @staticmethod
+    def get_twitter_API():
+        access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
+        api = TwitterAPI(consumer_key, consumer_secret, access_token, access_token_secret, api_version='2')
+        return api
 
 
 class TwitterUtil:
@@ -60,7 +71,7 @@ class TwitterConnector:
     @staticmethod
     def __connect_to_endpoint(search_url, headers, params):
         response = requests.request("GET", search_url, headers=headers, params=params)
-        print(response.status_code)
+        # print(response.status_code)
         if response.status_code != 200:
             raise Exception(response.status_code, response.text)
         time.sleep(2)
@@ -96,7 +107,7 @@ class TwitterStreamConnector:
             raise Exception(
                 "Cannot get rules (HTTP {}): {}".format(response.status_code, response.text)
             )
-        print(json.dumps(response.json()))
+        # print(json.dumps(response.json()))
         return response.json()
 
     def delete_all_rules(self, rules):
@@ -116,7 +127,7 @@ class TwitterStreamConnector:
                     response.status_code, response.text
                 )
             )
-        print(json.dumps(response.json()))
+        # print(json.dumps(response.json()))
 
     def set_rules(self, rules):
         """ description.
@@ -141,9 +152,9 @@ class TwitterStreamConnector:
             raise Exception(
                 "Cannot add rules (HTTP {}): {}".format(response.status_code, response.text)
             )
-        print(json.dumps(response.json()))
+        # print(json.dumps(response.json()))
 
-    def get_stream(self, query_params, callback=print):
+    def get_stream(self, query_params, callback: Callable = print):
         """ because the stream is ... well ... a stream, a delegate function is needed.
 
             Keyword arguments:
@@ -152,9 +163,9 @@ class TwitterStreamConnector:
                         should return FALSE if the connection is not needed anymore
         """
         response = requests.get(
-            TWEETS_STREAM_URL, auth=self.bearer_oauth, stream=True,  params=query_params
+            TWEETS_STREAM_URL, auth=self.bearer_oauth, stream=True, params=query_params
         )
-        print(response.status_code)
+        # print(response.status_code)
         if response.status_code != 200:
             raise Exception(
                 "Cannot get stream (HTTP {}): {}".format(
@@ -162,12 +173,16 @@ class TwitterStreamConnector:
                 )
             )
         for response_line in response.iter_lines():
+            if response_line == b'':
+                break
             if response_line:
                 json_response = json.loads(response_line)
+                if json_response is None:
+                    break
                 should_continue = callback(json_response)
                 if not should_continue:
                     break
-                #print(json.dumps(json_response, indent=4, sort_keys=True))
+                # print(json.dumps(json_response, indent=4, sort_keys=True))
 
     def get_from_twitter(self):
         pass

@@ -39,6 +39,7 @@ logging.config.dictConfig({
     },
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
