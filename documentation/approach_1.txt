@@ -1,9 +1,0 @@
-1. download twitter data with #immigration (n=1000)
-2. download random twitter data (https://developer.twitter.com/en/docs/twitter-api/tweets/sampled-stream/introduction) (n=1000)
-3. train a classification that identifies if tweet is migration related
-4. test classification internally (with test set)
-5. download tweets from Trump and Merkel
-6. classifiy tweets from 5 into migration related and list them in website (without "for" and "against" labels)
-7. train a sentiment analysis classifier on the migration tweets
-8. list them in website with positive and negative
-9. show a correlation matrix of "against" and "positive sentiment"
