@@ -1,4 +1,4 @@
-from twitter.sentiment_analysis import classify_tweet_sentiment
+from delab.sentiment_training import classify_tweet_sentiment
 
 """ This is a django runscript, it can be started in the django home directory with
     $ python manage.py runscript [filename_no_ending]    

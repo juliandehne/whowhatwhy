@@ -1,37 +1,33 @@
 import string
 import re
-import os
-import nltk
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords, twitter_samples
 from nltk.stem import PorterStemmer
 
-nltk.download('twitter_samples')
-nltk.download('stopwords')
-
-tweet_tokenizer = TweetTokenizer(preserve_case=False, strip_handles=True, reduce_len=True)
-
-# Stop words are messy and not that compelling;
-# "very" and "not" are considered stop words, but they are obviously expressing sentiment
-
-# The porter stemmer lemmatizes "was" to "wa".  Seriously???
-
-# I'm not sure we want to get into stop words
-stopwords_english = stopwords.words('english')
-
-# Also have my doubts about stemming...
-stemmer = PorterStemmer()
-
 
 def process_tweet(tweet):
-    '''
+    """
     Input:
         tweet: a string containing a tweet
         This was downloaded from the coursera project on NLP https://www.coursera.org/learn/sequence-models-in-nlp/programming/DyPCv/sentiment-with-deep-neural-networks/lab
     Output:
         tweets_clean: a list of words containing the processed tweet
 
-    '''
+    """
+
+    tweet_tokenizer = TweetTokenizer(preserve_case=False, strip_handles=True, reduce_len=True)
+
+    # Stop words are messy and not that compelling;
+    # "very" and "not" are considered stop words, but they are obviously expressing sentiment
+
+    # The porter stemmer lemmatizes "was" to "wa".  Seriously???
+
+    # I'm not sure we want to get into stop words
+    stopwords_english = stopwords.words('english')
+
+    # Also have my doubts about stemming...
+    stemmer = PorterStemmer()
+
     # remove stock market tickers like $GE
     tweet = re.sub(r'\$\w*', '', tweet)
     # remove old style retweet text "RT"
@@ -44,7 +40,7 @@ def process_tweet(tweet):
     # tokenize tweets
     tokenizer = TweetTokenizer(preserve_case=False, strip_handles=True, reduce_len=True)
     tweet_tokens = tokenizer.tokenize(tweet)
-    ### START CODE HERE ###
+
     tweets_clean = []
     for word in tweet_tokens:
         if (word not in stopwords_english and  # remove stopwords
@@ -52,7 +48,7 @@ def process_tweet(tweet):
             # tweets_clean.append(word)
             stem_word = stemmer.stem(word)  # stemming word
             tweets_clean.append(stem_word)
-    ### END CODE HERE ###
+
     return tweets_clean
 
 

@@ -1,20 +1,16 @@
-from nltk.corpus import twitter_samples
-
+import json
+import nltk
+from delab.models import SADictionary
 from twitter.nlp_util import load_tweets, process_tweet
 import os
 import random as rnd
-
-# import relevant libraries
 import trax
 import trax.fastmath.numpy as np
-# import trax.fastmath.numpy
-# import trax.layers
 from trax import layers as tl
 from trax.supervised import training
 
-
-# set random seeds to make this notebook easier to replicate
-# trax.supervised.trainer_lib.init_random_number_generators(31)
+TASK_DESCRIPTION = "sentiment analysis"
+trax.fastmath.use_backend('jax')
 
 
 # import Layer from the utils.py file
@@ -33,6 +29,50 @@ def classify_tweet_sentiment(tweet_string):
         type
             description
     """
+
+    # Initialize using pre-trained weights.
+
+    django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
+    vocab_dict = json.loads(django_dictionary.dictionary_string)
+
+    model = classifier(len(vocab_dict))
+    model.init_from_file(get_model_path() + "model.pkl.gz")
+
+    predictions, sentiment = predict(tweet_string, model, vocab_dict)
+    print("the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment, predictions))
+
+
+def get_model_path():
+    output_dir = 'model/'
+    output_dir_expand = os.path.expanduser(output_dir)
+    print(output_dir_expand)
+    return output_dir_expand
+
+
+# this is used to predict on your own sentence
+def predict(sentence, model, vocab_dict):
+    inputs = np.array(tweet_to_tensor(sentence, vocab_dict=vocab_dict))
+
+    # Batch size 1, add dimension for batch, to work with the model
+    inputs = inputs[None, :]
+
+    # predict with the model
+    preds_probs = model(inputs)
+
+    # Turn probabilities into categories
+    preds = int(preds_probs[0, 1] > preds_probs[0, 0])
+
+    sentiment = "negative"
+    if preds == 1:
+        sentiment = 'positive'
+
+    return preds_probs, sentiment
+
+
+def train_sentiment_classification():
+    nltk.download('twitter_samples')
+    nltk.download('stopwords')
+
     all_positive_tweets, all_negative_tweets = load_tweets()
 
     # View the total number of positive and negative tweets.
@@ -76,19 +116,28 @@ def classify_tweet_sentiment(tweet_string):
 
     # Build the vocabulary
     # Unit Test Note - There is no test set here only train/val
+    django_dictionary_count = SADictionary.objects.filter(title=TASK_DESCRIPTION).count()
 
-    # Include special tokens
-    # started with pad, end of line and unk tokens
-    vocab_dict = {'__PAD__': 0, '__</e>__': 1, '__UNK__': 2}
+    # the dictionary is always written to the db, needs to run only once
+    if django_dictionary_count > 0:
+        django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
+        vocab_dict = json.loads(django_dictionary.dictionary_string)
+    else:
+        # Include special tokens
+        # started with pad, end of line and unk tokens
+        vocab_dict = {'__PAD__': 0, '__</e>__': 1, '__UNK__': 2}
 
-    # Note that we build vocab using training data
-    for tweet in train_x:
-        processed_tweet = process_tweet(tweet)
-        for word in processed_tweet:
-            if word not in vocab_dict:
-                vocab_dict[word] = len(vocab_dict)
+        # Note that we build vocab using training data
+        for tweet in train_x:
+            processed_tweet = process_tweet(tweet)
+            for word in processed_tweet:
+                if word not in vocab_dict:
+                    vocab_dict[word] = len(vocab_dict)
 
-    print("Total words in vocab are", len(vocab_dict))
+        print("Total words in vocab are", len(vocab_dict))
+
+        django_dictionary = SADictionary.create(json.dumps(vocab_dict), TASK_DESCRIPTION)
+        django_dictionary.save()  # saving the vocabulary to db for later user
 
     batch_size = 16
     random_seed = 271
@@ -108,35 +157,10 @@ def classify_tweet_sentiment(tweet_string):
 
     model = classifier(vocab_size=len(vocab_dict))
 
-    output_dir = 'model/'
-    output_dir_expand = os.path.expanduser(output_dir)
-    print(output_dir_expand)
-
-    training_loop = train_model(model, train_task, eval_task, 100, output_dir_expand, random_seed=31)
-    model = training_loop.eval_model
-
-    predictions, sentiment = predict(tweet_string, model, vocab_dict)
-    print("the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment, predictions))
-
-
-# this is used to predict on your own sentence
-def predict(sentence, model, vocab_dict):
-    inputs = np.array(tweet_to_tensor(sentence, vocab_dict=vocab_dict))
-
-    # Batch size 1, add dimension for batch, to work with the model
-    inputs = inputs[None, :]
-
-    # predict with the model
-    preds_probs = model(inputs)
-
-    # Turn probabilities into categories
-    preds = int(preds_probs[0, 1] > preds_probs[0, 0])
-
-    sentiment = "negative"
-    if preds == 1:
-        sentiment = 'positive'
-
-    return preds_probs, sentiment
+    output_dir_expand = get_model_path()
+    train_model(model, train_task, eval_task, 100, output_dir_expand, random_seed=31)
+    # training_loop = train_model(model, train_task, eval_task, 100, output_dir_expand, random_seed=31)
+    # model = training_loop.eval_model
 
 
 def train_model(classifier, train_task, eval_task, n_steps, output_dir, random_seed):

@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['myawesomedjangoapp.herokuapp.com']
 # Application definition
 
 INSTALLED_APPS = [
+    'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
     'twitter.apps.TwitterConfig',
     'users.apps.UsersConfig',
