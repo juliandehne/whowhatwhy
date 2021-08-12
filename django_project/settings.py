@@ -27,11 +27,12 @@ SECRET_KEY = 'prototypefund'
 # DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
 DEBUG = 'true'
 
-ALLOWED_HOSTS = ['myawesomedjangoapp.herokuapp.com']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
 
 # Application definition
 
 INSTALLED_APPS = [
+    'treenode',
     'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
     'twitter.apps.TwitterConfig',

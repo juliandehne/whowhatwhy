@@ -2,9 +2,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
-
-from django.core.management import call_command
-import twitter
+from treenode.models import TreeNodeModel
 
 
 # Create your models here.
@@ -47,38 +45,50 @@ class SimpleRequest(models.Model):
         # return reverse('delab-simple-request-result', kwargs={'pk': self.pk})
         return reverse('delab-create-simple-request')
 
-
-class Conversation(models.Model):
-    conversation_id = models.IntegerField()
-    simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
-
     @classmethod
-    def create(cls, conversation_id):
-        conversation = cls(conversation_id=conversation_id)
+    def create(cls, title):
+        simple_request = cls(title=title)
         # do something with the book
-        return conversation
+        return simple_request
 
 
-class Tweet(models.Model):
+class Tweet(TreeNodeModel):
+    treenode_display_field = 'text'
+
     twitter_id = models.IntegerField()
     text = models.TextField()
-    user = models.CharField(max_length=200, null=True)
     author_id = models.IntegerField()
     in_reply_to_status_id = models.IntegerField(null=True)
     in_reply_to_user_id = models.IntegerField(null=True)
     created_at = models.DateTimeField(null=True)
-    query_string = models.TextField(null=True)
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
-    conversation = models.ForeignKey(Conversation, null=True, on_delete=models.DO_NOTHING)
+    sentiment_value = models.FloatField(null=True)  # should be mapped between 0 and 1 with 1.0 being very positive
+    sentiment = models.BooleanField(null=True)  # a shortcut, true is very positive, false is very negative
+    conversation_id = models.IntegerField()
+    simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
 
     class Meta:
-        constraints = [
-            UniqueConstraint(fields=['twitter_id'], name="unique_tweet_constraint_id"),
-            UniqueConstraint(fields=['text'], name="unique_tweet_constraint_text"),
-        ]
+        verbose_name = 'Tweet'
+        verbose_name_plural = 'Tweets'
 
     def __str__(self):
         return "Twitter_ID :{} Conversation_ID:{} Text:{} Autor:{}".format(self.twitter_id,
-                                                                           self.conversation.conversation_id,
+                                                                           self.conversation_id,
                                                                            self.text,
                                                                            self.author_id)
+
+    @classmethod
+    def create(cls, topic, text, simple_request, twitter_id, author_id, conversation_id, sentiment_value=0,
+               sentiment=False,
+               parent=None, priority=0):
+        tweet = cls(topic=topic,
+                    text=text,
+                    twitter_id=twitter_id,
+                    author_id=author_id,
+                    simple_request=simple_request,
+                    conversation_id=conversation_id,
+                    sentiment_value=sentiment_value,
+                    sentiment=sentiment,
+                    tn_parent=parent,
+                    tn_priority=priority)
+        return tweet

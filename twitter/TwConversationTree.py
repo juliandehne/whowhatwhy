@@ -1,5 +1,8 @@
 """ This data structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
     It encapsulates the replies to a tweet
+
+    Eventually this should be merged with:
+    https://github.com/fabiocaccamo/django-treenode
 """
 
 
@@ -51,6 +54,3 @@ class TreeNode:
             children_size += child.flat_size()
         return 1 + children_size
 
-    def save_to_db(self):
-        # TODO implement
-        pass

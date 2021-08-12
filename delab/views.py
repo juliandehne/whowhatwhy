@@ -23,6 +23,8 @@ class SimpleRequestCreateView(CreateView):
         return super().form_valid(form)
 
 
+# @class ConversationView(ListView)
+
 logging.config.dictConfig({
     'version': 1,
     'disable_existing_loggers': False,
