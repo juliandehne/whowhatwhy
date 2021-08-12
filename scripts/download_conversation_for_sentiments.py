@@ -1,6 +1,10 @@
 from delab.download_conversations import *
 from twitter.tw_connection_util import TwitterStreamConnector
 
+""" This is a django runscript, it can be started in the django home directory with
+    $ python manage.py runscript [filename_no_ending]    
+"""
+
 
 def run():
     download_conversations("Vaccination", ["covid_19", "vaccine", "delta", "getvaccienated", "vaccination"])

@@ -4,6 +4,10 @@ from trax import layers as tl  # core building block
 from trax import shapes  # data signatures: dimensionality and type
 from trax import fastmath  # uses jax, offers numpy on steroids
 
+import trax
+trax.fastmath.set_backend('jax')
+
+
 # Layers
 # Create a relu trax layer
 relu = tl.Relu()

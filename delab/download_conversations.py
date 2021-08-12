@@ -44,7 +44,7 @@ def create_topic(topic_string):
     return topic, created
 
 
-def get_matching_conversation(connector, hashtags, topic, query, logger, max_results=1000, min_results=50,
+def get_matching_conversation(connector, hashtags, topic, query, logger, max_results=1000, min_results=10,
                               language="lang:en"):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 

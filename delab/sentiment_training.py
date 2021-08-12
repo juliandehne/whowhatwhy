@@ -5,12 +5,13 @@ from twitter.nlp_util import load_tweets, process_tweet
 import os
 import random as rnd
 import trax
-import trax.fastmath.numpy as np
+
 from trax import layers as tl
 from trax.supervised import training
+from trax.fastmath import numpy as np
+from trax import optimizers
 
 TASK_DESCRIPTION = "sentiment analysis"
-trax.fastmath.use_backend('jax')
 
 
 # import Layer from the utils.py file
@@ -146,7 +147,7 @@ def train_sentiment_classification():
     train_task = training.TrainTask(
         labeled_data=train_generator(batch_size=batch_size, shuffle=True),
         loss_layer=tl.CrossEntropyLoss(),
-        optimizer=trax.optimizers.Adam(0.01),
+        optimizer=optimizers.Adam(0.01),
         n_steps_per_checkpoint=10,
     )
 
