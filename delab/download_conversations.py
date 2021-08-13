@@ -16,8 +16,10 @@ from functools import partial
 from TwitterAPI import TwitterAPI, TwitterOAuth, TwitterRequestError, TwitterConnectionError, TwitterPager
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 
-def download_conversations(topic_string, hashtags):
+
+def download_conversations(topic_string, hashtags,  language="lang:en", simple_request=False):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -27,30 +29,40 @@ def download_conversations(topic_string, hashtags):
         topic_string -- the topic of the hashtags
         hashtags -- [hashtag1, hashtag2, ...]
     """
-    logger = logging.getLogger(__name__)
+
+    # create the topic and save it to the db
     topic, created = TwTopic.objects.get_or_create(
         title=topic_string
     )
 
-    request_string = ''.join(hashtags)
-    simple_request, created = SimpleRequest.objects.get_or_create(
-        title=request_string
-    )
+    # save the request to the db in order to link the results in the view to the hashtags entered
+    if not simple_request:
+        request_string = ''.join(hashtags)
+        simple_request, created = SimpleRequest.objects.get_or_create(
+            title=request_string
+        )
 
+    # create only one connector for quote reasons
     connector = TwitterConnector(1)
-    get_matching_conversation(connector, hashtags, topic, simple_request, logger)
 
+    # download the conversations
+    get_matching_conversation(connector, hashtags, topic, simple_request, language=language)
     connector = None  # precaution to terminate the thread and the http socket
-    # save_tweets(json_result, topic, twitter_accounts_query_3)
-
-
-def create_topic(topic_string):
-    topic_to_save = TwTopic.create(topic_string)
-    topic, created = TwTopic.objects.get_or_create(topic_to_save)
-    return topic, created
 
 
 def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, priority=0):
+    """ This method persist a conversation tree in the database
+
+        Parameters
+        ----------
+        root_node : TwConversationTree
+        topic : the topic of the query
+        simple_request: the query string in order to link the view
+        conversation_id: the conversation id of the candidate tweet that was found with the request
+        parent: TwConversationTree this is needed for the recursion, is None for root
+        priority: No idea, copied from the original git post
+
+    """
     tweet, created = Tweet.objects.get_or_create(
         topic=topic,
         text=root_node.data["text"],
@@ -58,6 +70,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         twitter_id=root_node.data["id"],
         author_id=root_node.data["author_id"],
         conversation_id=conversation_id,
+        created_at=root_node.data["created_at"],
         in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
         in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
         tn_parent=parent,
@@ -69,41 +82,50 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
             save_tree_to_db(child, topic, simple_request, conversation_id, tweet)
 
 
-def get_matching_conversation(connector, hashtags, topic, simple_request, logger,
-                              max_conversation_length=1000,
+def get_matching_conversation(connector,
+                              hashtags,
+                              topic,
+                              simple_request,
+                              max_conversation_length=30,
                               min_conversation_length=10,
                               language="lang:en",
-                              max_number_of_candidates=300):
+                              max_number_of_candidates=50):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
         hashtags -- the hashtags that constitute the query
-        max_results -- the max number of results
-        min_results -- the min number of results
+        topic : the topic of the query
+        simple_request: the query string in order to link the view
+        max_conversation_length -- the max number of results
+        min_conversation_length -- the min number of results
+        max_number_of_candidates -- the number of candidates to look at,
+                                    downloads num_candidates x max_conversation_length results
+
     """
     tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     for candidate in candidates:
-        logger.info("selected candidate tweet {}".format(candidate))
+        logger.debug("selected candidate tweet {}".format(candidate))
         candidate_id = candidate.conversation_id
         try:
-            root_node = retrieve_replies(candidate_id)
+            root_node = retrieve_replies(candidate_id, max_conversation_length, language)
         except requests.exceptions.Timeout:
-            print("Timeout occurred")
+            logger.error("Timeout occurred")
         if root_node is None:
             logger.error("found conversation_id that could not be processed")
             continue
         else:
             flat_tree_size = root_node.flat_size()
-            logger.info("retrieved node with number of children: {}".format(flat_tree_size))
-        if min_conversation_length < flat_tree_size < max_conversation_length:
-            save_tree_to_db(root_node, topic, simple_request, candidate_id)
-            print("found suitable conversation and saved to db {}".format(candidate_id))
-            root_node.print_tree(0)
+            logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
+            if min_conversation_length < flat_tree_size < max_conversation_length:
+                save_tree_to_db(root_node, topic, simple_request, candidate_id)
+                logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
+                # for debugging you can ascii art print the downloaded conversation_tree
+                # root_node.print_tree(0)
 
 
-def retrieve_replies(conversation_id):
+def retrieve_replies(conversation_id, max_replies):
     """
     follows the tutorial from here https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6
 
@@ -135,7 +157,12 @@ def retrieve_replies(conversation_id):
                              })
         orphans = []
 
+        reply_count = 0
         for item in pager.get_iterator(wait=2):
+            if reply_count > 10:
+                logger.debug("downloading bigger conversation with current size {}".format(reply_count))
+            if reply_count >= max_replies:
+                break
             node = TreeNode(item)
             # print(f'{node.id()} => {node.reply_to()}')
             # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
@@ -143,6 +170,7 @@ def retrieve_replies(conversation_id):
             # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
             if not root.find_parent_of(node):
                 orphans.append(node)
+            reply_count += 1
 
         conv_id, child_id, text = root.list_l1()
         #         print('\nTREE...')
@@ -285,9 +313,9 @@ def get_tweets_for_hashtags(connector, hashtags, logger, max_results, language="
         logger -- Logger
         max_results -- the number of max length the conversation should have
     """
-    twitter_accounts_query_1 = map(lambda x: "(from:{}) OR ".format(x), hashtags)
+    twitter_accounts_query_1 = map(lambda x: "{} OR ".format(x), hashtags)
     twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
-    twitter_accounts_query_3 = twitter_accounts_query_2[:-4]
+    twitter_accounts_query_3 = "(" + twitter_accounts_query_2[:-4] + ")"
     twitter_accounts_query_3 += " " + language
     logger.debug(twitter_accounts_query_3)
     params = {'query': '{}'.format(twitter_accounts_query_3), 'max_results': max_results,

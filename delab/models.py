@@ -10,6 +10,10 @@ from django.core.management import call_command
 import twitter
 
 
+class ConversationFlow(models.Model):
+    image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
+
+
 # Create your models here.
 class SADictionary(models.Model):
     """ A with json serialized python dictionary that contains the vocabulary for the

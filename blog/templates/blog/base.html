@@ -45,8 +45,9 @@
                     {% else %}
                         <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
                         <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
-                        <a class="nav-item nav-link" href="{% url 'delab-create-simple-request' %}">Delab Sentiment Test</a>
                     {% endif %}
+                    <a class="nav-item nav-link" href="{% url 'delab-create-simple-request' %}">Delab Sentiment Test</a>
+                    <a class="nav-item nav-link" href="{% url 'admin:index' %}">admin</a>
                 </div>
             </div>
         </div>

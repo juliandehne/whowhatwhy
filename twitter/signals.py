@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from twitter.models import SimpleRequest
 from twitter.tasks import download_conversations_scheduler
+from django.shortcuts import redirect
 
 
 @receiver(post_save, sender=SimpleRequest)
@@ -22,4 +23,5 @@ def process_simple_request(sender, instance, created, **kwargs):
         hashtags = instance.title.split(" ")
         for hashtag in hashtags:
             cleaned_hashtags.append(hashtag[1:])  # removes the # symbol
-        download_conversations_scheduler("Proof-of-Concept", cleaned_hashtags, schedule=timezone.now())
+        download_conversations_scheduler("Proof-of-Concept", cleaned_hashtags, simple_request=instance,
+                                         schedule=timezone.now(), simulate=True)

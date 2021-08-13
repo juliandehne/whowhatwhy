@@ -1,26 +1,51 @@
 from django.core.exceptions import ValidationError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView
 from django_countries.base import _
+from django.shortcuts import render, get_object_or_404
+from django.contrib.messages.views import SuccessMessageMixin
 
-from twitter.models import SimpleRequest
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView
+)
+
+from twitter.models import SimpleRequest, Tweet
 import logging
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ConversationListView(ListView):
+    model = Tweet
+    template_name = 'delab/tweet_list.html'  # <app>/<model>_<viewtype>.html
+    context_object_name = 'tweets'
+    fields = ['created_at', 'text', 'author_id']
+    paginate_by = 5
+
+    def get_queryset(self):
+        simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
+        return Tweet.objects.filter(simple_request=simple_request).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super(ConversationListView, self).get_context_data(**kwargs)
+        simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
+        context['simple_request'] = simple_request
+        return context
 
 
 # Create your views here.
 @method_decorator(csrf_exempt, name='dispatch')
-class SimpleRequestCreateView(CreateView):
+class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
     fields = ['title']
     initial = {"title": "#covid #vaccination"}
 
-    # success_message = "Institution %(title)s was created successfully"
-
-    def form_valid(self, form):
-        title = form.instance.title
-        return super().form_valid(form)
+    success_message = "Conversations with the request %(title)s are being downloaded now!"
 
 
 # @class ConversationView(ListView)
