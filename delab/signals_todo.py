@@ -6,24 +6,10 @@ from delab.download_conversations import download_conversations
 from delab.sentiment_training import train_sentiment_classification
 from delab.sentiment_training import classify_tweet_sentiment
 
-# this schedules longer running tasks that are regularly polled by the process task that is started in the background
-logger = logging.getLogger(__name__)
-
 
 @background(schedule=60)
-def download_conversations_scheduler(topic, hashtags, simple_request, simulate=False):
-    """
-           TODO:
-             - ensure all the downloaded tweets are in the given language
-    """
-    if simulate:
-        logger.info("pretending to downloading conversations")
-    else:
-        download_conversations(topic, hashtags, simple_request)
-
-
-@background(schedule=60)
-def train_sentiments(simulate=False):
+def train_sentiments(simulate=True):
+    logger = logging.getLogger(__name__)
     """ description
 
             TODO
@@ -36,7 +22,8 @@ def train_sentiments(simulate=False):
 
 
 @background(schedule=60)
-def calculate_sentiments(tweet_string, simulate=False):
+def calculate_sentiments(tweet_string, simulate=True):
+    logger = logging.getLogger(__name__)
     """ description
 
         TODO:
@@ -58,7 +45,8 @@ def calculate_sentiments(tweet_string, simulate=False):
 
 
 @background(schedule=60)
-def calculate_sentiment_flows(simulate=False):
+def calculate_sentiment_flows(simulate=True):
+    logger = logging.getLogger(__name__)
     """ computes the "gleitenden Mittelwert" for the conversations
         and determines tweets that escalated the sentiments by
         looking at the derivation (which is the max of the difference in a discrete setting like this)

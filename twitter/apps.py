@@ -6,4 +6,4 @@ class TwitterConfig(AppConfig):
 
     # this is so magic...
     def ready(self):
-        import twitter.signals
+        pass

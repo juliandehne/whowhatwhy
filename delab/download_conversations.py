@@ -1,25 +1,20 @@
+from delab.models import Tweet, TwTopic, SimpleRequest
+
 import json
 import logging
+from functools import partial
 from functools import reduce
-
+import pandas as pd
 import requests
-from django.db import IntegrityError
-
+from TwitterAPI import TwitterRequestError, TwitterConnectionError, TwitterPager
 from twitter.TwConversationTree import TreeNode
-from twitter.models import Tweet, TwTopic, SimpleRequest
-from twitter.tw_connection_util import TwitterConnector
-from twitter.tw_connection_util import TwitterStreamConnector
 from twitter.magic_http_strings import TWEETS_SEARCH_All_URL
 from twitter.tw_connection_util import TwitterAPIWrapper
-from functools import partial
-
-from TwitterAPI import TwitterAPI, TwitterOAuth, TwitterRequestError, TwitterConnectionError, TwitterPager
-import pandas as pd
-
-logger = logging.getLogger(__name__)
+from twitter.tw_connection_util import TwitterConnector
+from twitter.tw_connection_util import TwitterStreamConnector
 
 
-def download_conversations(topic_string, hashtags,  language="lang:en", simple_request=False):
+def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en"):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -36,7 +31,11 @@ def download_conversations(topic_string, hashtags,  language="lang:en", simple_r
     )
 
     # save the request to the db in order to link the results in the view to the hashtags entered
-    if not simple_request:
+    if request_id > 0:
+        simple_request, created = SimpleRequest.objects.get_or_create(
+            pk=request_id
+        )
+    else:
         request_string = ''.join(hashtags)
         simple_request, created = SimpleRequest.objects.get_or_create(
             title=request_string
@@ -90,6 +89,7 @@ def get_matching_conversation(connector,
                               min_conversation_length=10,
                               language="lang:en",
                               max_number_of_candidates=50):
+    logger = logging.getLogger(__name__)
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
@@ -125,7 +125,8 @@ def get_matching_conversation(connector,
                 # root_node.print_tree(0)
 
 
-def retrieve_replies(conversation_id, max_replies):
+def retrieve_replies(conversation_id, max_replies, language):
+    logger = logging.getLogger(__name__)
     """
     follows the tutorial from here https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6
 

@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
-    'twitter.apps.TwitterConfig',
     'users.apps.UsersConfig',
     'background_task',
     'django_countries',
@@ -164,7 +163,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 BACKGROUND_TASK_RUN_ASYNC = False
 MAX_RUN_TIME = 2000000
-# BACKGROUND_TASK_ASYNC_THREADS = 1
+# BACKGROUND_TASK_ASYNC_THREADS = 4
 
 TIME_ZONE = 'Europe/Berlin'
 

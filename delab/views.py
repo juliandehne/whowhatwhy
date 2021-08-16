@@ -15,8 +15,17 @@ from django.views.generic import (
     DeleteView
 )
 
-from twitter.models import SimpleRequest, Tweet
+from delab.models import SimpleRequest, Tweet
 import logging
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SimpleRequestListView(ListView):
+    model = SimpleRequest
+    template_name = 'delab/simple_request_list.html'
+    context_object_name = 'requests'
+    fields = ['created_at', 'title']
+    paginate_by = 5
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -29,7 +38,7 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(simple_request=simple_request).order_by('-created_at')
+        return Tweet.objects.filter(simple_request=simple_request, tn_siblings_count=0).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super(ConversationListView, self).get_context_data(**kwargs)
@@ -45,7 +54,8 @@ class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     fields = ['title']
     initial = {"title": "#covid #vaccination"}
 
-    success_message = "Conversations with the request %(title)s are being downloaded now!"
+    success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
+                      "You might have to refresh the page until we have build a loading screen!"
 
 
 # @class ConversationView(ListView)
@@ -66,12 +76,12 @@ logging.config.dictConfig({
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'formatter': 'file',
             'filename': 'debug.log'
