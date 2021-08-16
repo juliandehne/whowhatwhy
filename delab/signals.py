@@ -5,7 +5,7 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 from django.dispatch import receiver
 
-from delab.models import SimpleRequest
+from delab.models import SimpleRequest, Tweet
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 
@@ -53,3 +53,4 @@ def convert_request_to_hashtag_list(title):
         cleaned_hashtags.append(title[1:])
 
     return cleaned_hashtags
+

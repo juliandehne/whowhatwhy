@@ -33,7 +33,7 @@ class ConversationListView(ListView):
     model = Tweet
     template_name = 'delab/tweet_list.html'  # <app>/<model>_<viewtype>.html
     context_object_name = 'tweets'
-    fields = ['created_at', 'text', 'author_id']
+    fields = ['created_at', 'text', 'author_id', 'conversation_id']
     paginate_by = 5
 
     def get_queryset(self):
@@ -45,6 +45,27 @@ class ConversationListView(ListView):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
         context['simple_request'] = simple_request
         return context
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ConversationView(ListView):
+    model = Tweet
+    template_name = 'delab/conversation.html'  # <app>/<model>_<viewtype>.html
+    context_object_name = 'tweets'
+    fields = ['created_at', 'text', 'author_id', 'sentiment', 'conversation_id']
+    paginate_by = 5
+
+    def get_queryset(self):
+        return Tweet.objects.filter(conversation_id=self.request.resolver_match.kwargs['conversation_id']) \
+            .order_by("-tn_order")
+
+    """
+    def get_context_data(self, **kwargs):
+        context = super(ConversationListView, self).get_context_data(**kwargs)
+        simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
+        context['simple_request'] = simple_request
+        return context
+    """
 
 
 # Create your views here.

@@ -9,5 +9,5 @@ def run():
     # tweet = "I really love hot bagels and I do not hate ice cream"
     # tweet = "love love love happiness great awesome story"
     # tweet = "if only it was a good day."
-    tweet = "This movie was almost good"
+    tweet = ["This movie was almost good"]
     classify_tweet_sentiment(tweet)

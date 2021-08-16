@@ -1,73 +1,17 @@
 import json
-import nltk
-from delab.models import SADictionary
-from twitter.nlp_util import load_tweets, process_tweet
-import os
-import random as rnd
-import trax
+import logging
 
+import nltk
+from nltk.corpus import twitter_samples
+
+from delab.models import SADictionary
+from twitter.nlp_util import process_tweet
+import random as rnd
 from trax import layers as tl
 from trax.supervised import training
 from trax.fastmath import numpy as np
 from trax import optimizers
-
-TASK_DESCRIPTION = "sentiment analysis"
-
-
-# import Layer from the utils.py file
-def classify_tweet_sentiment(tweet_string):
-    """ classifies the sentiment of a tweet based on classic NLP example with trax
-
-        Parameters
-        ----------
-        param 1 : type
-            [optional] description
-        param 2 : type
-            [optional] description
-
-        Returns
-        -------
-        type
-            description
-    """
-
-    # Initialize using pre-trained weights.
-
-    django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
-    vocab_dict = json.loads(django_dictionary.dictionary_string)
-
-    model = classifier(len(vocab_dict))
-    model.init_from_file(get_model_path() + "model.pkl.gz")
-
-    predictions, sentiment = predict(tweet_string, model, vocab_dict)
-    print("the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment, predictions))
-
-
-def get_model_path():
-    output_dir = 'model/'
-    output_dir_expand = os.path.expanduser(output_dir)
-    print(output_dir_expand)
-    return output_dir_expand
-
-
-# this is used to predict on your own sentence
-def predict(sentence, model, vocab_dict):
-    inputs = np.array(tweet_to_tensor(sentence, vocab_dict=vocab_dict))
-
-    # Batch size 1, add dimension for batch, to work with the model
-    inputs = inputs[None, :]
-
-    # predict with the model
-    preds_probs = model(inputs)
-
-    # Turn probabilities into categories
-    preds = int(preds_probs[0, 1] > preds_probs[0, 0])
-
-    sentiment = "negative"
-    if preds == 1:
-        sentiment = 'positive'
-
-    return preds_probs, sentiment
+from delab.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
 
 
 def train_sentiment_classification():
@@ -187,48 +131,6 @@ def train_model(classifier, train_task, eval_task, n_steps, output_dir, random_s
 
     # Return the training_loop, since it has the model.
     return training_loop
-
-
-def tweet_to_tensor(tweet, vocab_dict, unk_token='__UNK__', verbose=False):
-    """
-    Input:
-        tweet - A string containing a tweet
-        vocab_dict - The words dictionary
-        unk_token - The special string for unknown tokens
-        verbose - Print info durign runtime
-    Output:
-        tensor_l - A python list with
-
-    """
-
-    # Process the tweet into a list of words
-    # where only important words are kept (stop words removed)
-    word_l = process_tweet(tweet)
-
-    if verbose:
-        print("List of words from the processed tweet:")
-        print(word_l)
-
-    # Initialize the list that will contain the unique integer IDs of each word
-    tensor_l = []
-
-    # Get the unique integer ID of the __UNK__ token
-    unk_ID = vocab_dict[unk_token]
-
-    if verbose:
-        print(f"The unique integer ID for the unk_token is {unk_ID}")
-
-    # for each word in the list:
-    for word in word_l:
-        # Get the unique integer ID.
-        # If the word doesn't exist in the vocab dictionary,
-        # use the unique ID for __UNK__ instead.
-        word_ID = vocab_dict.get(word, unk_ID)
-
-        # Append the unique integer ID to the tensor list.
-        tensor_l.append(word_ID)
-
-    return tensor_l
 
 
 def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=False):
@@ -399,29 +301,11 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
         yield inputs, targets, example_weights
 
 
-def classifier(vocab_size, embedding_dim=256, output_dim=2, mode='train'):
-    # create embedding layer
-    embed_layer = tl.Embedding(
-        vocab_size=vocab_size,  # Size of the vocabulary
-        d_feature=embedding_dim)  # Embedding dimension
+# let's not reuse variables
+# all_positive_tweets = twitter_samples.strings('positive_tweets.json')
+# all_negative_tweets = twitter_samples.strings('negative_tweets.json')
 
-    # Create a mean layer, to create an "average" word embedding
-    mean_layer = tl.Mean(axis=1)
-
-    # Create a dense layer, one unit for each output
-    dense_output_layer = tl.Dense(n_units=output_dim)
-
-    # Create the log softmax layer (no parameters needed)
-    log_softmax_layer = tl.LogSoftmax()
-
-    # Use tl.Serial to combine all layers
-    # and create the classifier
-    # of type trax.layers.combinators.Serial
-    model = tl.Serial(
-        embed_layer,  # embedding layer
-        mean_layer,  # mean layer
-        dense_output_layer,  # dense output layer
-        log_softmax_layer  # log softmax layer
-    )
-    # return the model of type
-    return model
+def load_tweets():
+    all_positive_tweets = twitter_samples.strings('positive_tweets.json')
+    all_negative_tweets = twitter_samples.strings('negative_tweets.json')
+    return all_positive_tweets, all_negative_tweets

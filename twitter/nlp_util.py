@@ -1,11 +1,12 @@
 import string
 import re
-from nltk.tokenize import TweetTokenizer
-from nltk.corpus import stopwords, twitter_samples
-from nltk.stem import PorterStemmer
 
 
 def process_tweet(tweet):
+    from nltk.tokenize import TweetTokenizer
+    from nltk.stem import PorterStemmer
+    from nltk.corpus import stopwords
+
     """
     Input:
         tweet: a string containing a tweet
@@ -50,13 +51,3 @@ def process_tweet(tweet):
             tweets_clean.append(stem_word)
 
     return tweets_clean
-
-
-# let's not reuse variables
-# all_positive_tweets = twitter_samples.strings('positive_tweets.json')
-# all_negative_tweets = twitter_samples.strings('negative_tweets.json')
-
-def load_tweets():
-    all_positive_tweets = twitter_samples.strings('positive_tweets.json')
-    all_negative_tweets = twitter_samples.strings('negative_tweets.json')
-    return all_positive_tweets, all_negative_tweets

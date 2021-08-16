@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import (
     SimpleRequestCreateView,
-    ConversationListView, SimpleRequestListView
+    ConversationListView, SimpleRequestListView, ConversationView
 )
 from blog.views import PostListView
 from . import views
@@ -12,4 +12,6 @@ urlpatterns = [
     path('requests', SimpleRequestListView.as_view(), name='delab-conversations-requests'),
     path('conversations/simplerequest/<int:pk>', ConversationListView.as_view(),
          name='delab-conversations-for-request'),
+    path('conversation/<int:conversation_id>', ConversationView.as_view(),
+         name='delab-conversation'),
 ]

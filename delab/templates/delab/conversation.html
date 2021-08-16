@@ -1,6 +1,6 @@
 {% extends "blog/base.html" %}
 {% block content %}
-    <h1 class="mb-3">Conversations for {{ simple_request.title }} ({{ page_obj.paginator.count }})</h1>
+    <h1 class="mb-3">Conversation with id {{ view.kwargs.conversation_id }} ({{ page_obj.paginator.count }})</h1>
     {% for tweet in tweets %}
         <article class="media content-section">
             <div class="media-body">
@@ -10,7 +10,6 @@
                     <small class="text-muted">{{ tweet.created_at|date:"F d, Y" }}</small>
                 </div>
                 <p class="article-content">{{ tweet.text }}</p>
-                <h2><a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation here</a></h2>
             </div>
         </article>
     {% endfor %}
