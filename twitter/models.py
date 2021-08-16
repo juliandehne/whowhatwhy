@@ -3,10 +3,13 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
 from treenode.models import TreeNodeModel
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+
+from django.urls import resolve
 
 # Create your models here.
 from delab.models import ConversationFlow
+from django.utils.safestring import mark_safe
 
 
 class TwTopic(models.Model):
@@ -34,19 +37,19 @@ SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-Z
 def validate_exists(title):
     try:
         simple_request = SimpleRequest.objects.filter(title=title).get()
-        reverse('delab-conversations-for-request', kwargs={'pk': simple_request.pk})
+        redirect_url = reverse('delab-conversations-for-request', kwargs={'pk': simple_request.pk})
+        # redirect_url = resolve('/conversations/simplerequest/{}'.format(simple_request.pk))
     except ObjectDoesNotExist:
-        return True
+        message_exists = '{} was queried before. Go to <a href="{}"> Result Page </a> to see the results'.format(
+            redirect_url)
+        raise ValidationError(
+            mark_safe(message_exists)
+        )
 
 
 class SimpleRequest(models.Model):
     title = models.CharField(max_length=200, validators=[SIMPLE_REQUEST_VALIDATOR, validate_exists])
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-
-    class Meta:
-        constraints = [
-            UniqueConstraint(fields=['title'], name="unique_simple_request_constraint_title"),
-        ]
 
     def __str__(self):
         return self.title

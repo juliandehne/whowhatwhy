@@ -23,17 +23,20 @@ def download_conversations_scheduler(topic, hashtags, simple_request, simulate=F
 
 
 @background(schedule=60)
-def train_sentiments():
+def train_sentiments(simulate=False):
     """ description
 
             TODO
              - ensure the model is trained only once or per request in the UI
     """
-    train_sentiment_classification()
+    if simulate:
+        logger.info("pretending to calculate sentiments")
+    else:
+        train_sentiment_classification()
 
 
 @background(schedule=60)
-def calculate_sentiments(tweet_string):
+def calculate_sentiments(tweet_string, simulate=False):
     """ description
 
         TODO:
@@ -47,12 +50,15 @@ def calculate_sentiments(tweet_string):
             the tweet to classify
 
     """
-    classify_tweet_sentiment(tweet_string)
+    if simulate:
+        logger.info("pretending to calculate sentiments")
+    else:
+        classify_tweet_sentiment(tweet_string)
     # update tweet field in db
 
 
 @background(schedule=60)
-def calculate_sentiment_flows():
+def calculate_sentiment_flows(simulate=False):
     """ computes the "gleitenden Mittelwert" for the conversations
         and determines tweets that escalated the sentiments by
         looking at the derivation (which is the max of the difference in a discrete setting like this)
@@ -69,4 +75,7 @@ def calculate_sentiment_flows():
         type
             description
     """
-    pass
+    if simulate:
+        logger.info("pretending to calculatue sentiment flows")
+    else:
+        pass

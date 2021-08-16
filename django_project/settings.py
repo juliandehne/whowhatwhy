@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'exhlfdat&vfum(-34*c2uroi(($ww(yo$9pv98=e6p^gl(-eoj'
 # SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = 'prototypefund'
+SECRET_KEY = 'delab'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
 
 INSTALLED_APPS = [
     'treenode',
+    'debug_toolbar',
     'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
     'twitter.apps.TwitterConfig',
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
 ROOT_URLCONF = 'django_project.urls'
@@ -85,11 +87,11 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-    'lite': {
+    'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     },
-    'default': {
+    'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'delab',
         'USER': 'delab',
@@ -160,8 +162,13 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-BACKGROUND_TASK_RUN_ASYNC = True
+BACKGROUND_TASK_RUN_ASYNC = False
 MAX_RUN_TIME = 2000000
-BACKGROUND_TASK_ASYNC_THREADS = 100
+# BACKGROUND_TASK_ASYNC_THREADS = 1
 
 TIME_ZONE = 'Europe/Berlin'
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    '0.0.0.0'
+]
