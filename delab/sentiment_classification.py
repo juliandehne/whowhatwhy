@@ -35,20 +35,23 @@ def classify_tweet_sentiment(tweet_strings, verbose=False):
 
     prediction_dictionary = {}
     sentiment_dictionary = {}
+    sentiment_value_dictionary = {}
 
     for tweet_string in tweet_strings:
         try:
-            predictions, sentiment = predict(tweet_string, model, vocab_dict)
+            predictions, sentiment, sentiment_value = predict(tweet_string, model, vocab_dict)
             if verbose:
                 logger.debug(
                     "the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment,
                                                                                      predictions))
             prediction_dictionary[tweet_string] = predictions
             sentiment_dictionary[tweet_string] = sentiment
+            sentiment_value_dictionary[tweet_string] = sentiment_value
         except:
             logger.error("could not analyze sentiment of: {} ".format(tweet_string))
             continue
-    return prediction_dictionary, sentiment_dictionary
+
+    return prediction_dictionary, sentiment_dictionary, sentiment_value_dictionary
 
 
 # this is used to predict on your own sentence
@@ -61,6 +64,9 @@ def predict(sentence, model, vocab_dict):
     # predict with the model
     preds_probs = model(inputs)
 
+    # combine the probabilities into one dimension (higher is positiver)
+    sentiment_value = preds_probs[0, 1] - preds_probs[0, 0]
+
     # Turn probabilities into categories
     preds = int(preds_probs[0, 1] > preds_probs[0, 0])
 
@@ -68,4 +74,4 @@ def predict(sentence, model, vocab_dict):
     if preds == 1:
         sentiment = 'positive'
 
-    return preds_probs, sentiment
+    return preds_probs, sentiment, sentiment_value
