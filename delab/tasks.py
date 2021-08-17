@@ -22,14 +22,19 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
         update_sentiments()
 
 
+# // #fafafa
+
 def update_sentiments():
     from delab.sentiment_classification import classify_tweet_sentiment
-
+    logger = logging.getLogger(__name__)
+    logger.info("updating sentiments")
     # importing here to improve server startup time
 
     tweets = Tweet.objects.filter(sentiment=None).all()
-    predictions, sentiments = classify_tweet_sentiment(tweets.values_list(["text"], flat=True))
+    # tweet_strings = tweets.values_list(["text"], flat=True)
+    # print(tweet_strings[1:3])
+    tweet_strings = list(map(lambda x: x.text, tweets))
+    predictions, sentiments = classify_tweet_sentiment(tweet_strings)
     for tweet in tweets:
-        tweet.sentiment = sentiments[tweet.text]
-
-    # TODO make this import faster and fix bug
+        tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
+        tweet.save()

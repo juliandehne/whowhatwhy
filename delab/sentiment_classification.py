@@ -8,7 +8,7 @@ from delab.models import SADictionary
 from delab.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
 
 
-def classify_tweet_sentiment(tweet_strings):
+def classify_tweet_sentiment(tweet_strings, verbose=False):
     logger = logging.getLogger(__name__)
     """ classifies the sentiment of a tweet based on classic NLP example with trax
 
@@ -37,11 +37,17 @@ def classify_tweet_sentiment(tweet_strings):
     sentiment_dictionary = {}
 
     for tweet_string in tweet_strings:
-        predictions, sentiment = predict(tweet_string, model, vocab_dict)
-        logger.debug(
-            "the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment, predictions))
-        prediction_dictionary[tweet_string] = predictions
-        sentiment_dictionary[tweet_string] = sentiment
+        try:
+            predictions, sentiment = predict(tweet_string, model, vocab_dict)
+            if verbose:
+                logger.debug(
+                    "the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment,
+                                                                                     predictions))
+            prediction_dictionary[tweet_string] = predictions
+            sentiment_dictionary[tweet_string] = sentiment
+        except:
+            logger.error("could not analyze sentiment of: {} ".format(tweet_string))
+            continue
     return prediction_dictionary, sentiment_dictionary
 
 
