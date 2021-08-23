@@ -3,12 +3,13 @@ from treenode.admin import TreeNodeModelAdmin
 from treenode.forms import TreeNodeForm
 
 # Register your models here.
-from .models import SimpleRequest
+from .models import SimpleRequest, ConversationFlow
 from .models import TwTopic
 from .models import Tweet
 
 admin.site.register(SimpleRequest)
 admin.site.register(TwTopic)
+admin.site.register(ConversationFlow)
 
 
 class TweetAdmin(TreeNodeModelAdmin):

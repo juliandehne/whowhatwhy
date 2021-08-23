@@ -11,6 +11,12 @@ from treenode.models import TreeNodeModel
 class ConversationFlow(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
+    @classmethod
+    def create(cls, image):
+        conversation_flow = cls(image=image)
+        # do something with the book
+        return conversation_flow
+
 
 SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-ZÖÄÜ]+)*$)",
                                           'Please enter hashtags seperated by spaces!')

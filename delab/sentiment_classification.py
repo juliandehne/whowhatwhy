@@ -43,7 +43,7 @@ def classify_tweet_sentiment(tweet_strings, verbose=False):
             if verbose:
                 logger.debug(
                     "the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment,
-                                                                                     predictions))
+                                                                                         sentiment_value))
             prediction_dictionary[tweet_string] = predictions
             sentiment_dictionary[tweet_string] = sentiment
             sentiment_value_dictionary[tweet_string] = sentiment_value

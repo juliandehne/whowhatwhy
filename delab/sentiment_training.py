@@ -104,8 +104,11 @@ def train_sentiment_classification():
 
     output_dir_expand = get_model_path()
     train_model(model, train_task, eval_task, 100, output_dir_expand, random_seed=31)
-    # training_loop = train_model(model, train_task, eval_task, 100, output_dir_expand, random_seed=31)
-    # model = training_loop.eval_model
+    # train_model(model, train_task, eval_task, 1000, output_dir_expand, random_seed=31)
+    # interestingly the model gets worse after 100 iterations
+
+    # training_loop = train_model(model, train_task, eval_task, 100, output_dir_expand,
+    # random_seed=31) model = training_loop.eval_model
 
 
 def train_model(classifier, train_task, eval_task, n_steps, output_dir, random_seed):
