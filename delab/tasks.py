@@ -3,6 +3,7 @@ import logging
 from background_task import background
 
 from delab.download_conversations import download_conversations
+from delab.sentiment_flow_analysis import update_sentiment_flows
 
 # this schedules longer running tasks that are regularly polled by the process task that is started in the background
 from delab.models import Tweet
@@ -21,6 +22,7 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
     else:
         download_conversations(topic_string, hashtags, simple_request_id)
         update_sentiments()
+        update_sentiment_flows()
 
 
 def update_sentiments():

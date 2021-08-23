@@ -3,8 +3,9 @@ import io
 from django.core.files.images import ImageFile
 from django.db.models import Q
 from django_pandas.io import read_frame
-
+import logging
 from delab.models import Tweet, ConversationFlow
+from django_project import settings
 
 
 def update_sentiment_flows():
@@ -30,11 +31,16 @@ def compute_sentiment_flow_for_conversation(conversation_id, df):
     rolling_column = df_subset['sentiment_value'].rolling(3).mean()
     df_subset = df_subset.assign(rolling_sentiment=rolling_column)
     plot = df_subset.plot(y=['rolling_sentiment', 'sentiment_value'], use_index=True)
-    figure = io.BytesIO()
-    plot.figure.savefig(figure, format="jpg")
-    content_file = ImageFile(figure)
-    flow = ConversationFlow.create(content_file)
+    image_path = ConversationFlow.image.field.upload_to + "/" \
+                    + str(conversation_id) + ".jpg"
+    download_path = settings.MEDIA_ROOT + "/" \
+                    + image_path
+    logging.debug("saving the conversation_flow_pic to {}".format(download_path))
+
+    plot.figure.savefig(download_path, format="jpg")
+    # content_file = ImageFile(download_path)
+    flow = ConversationFlow.create(image_path)
     flow.save()
+
     tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
     tweets.update(conversation_flow=flow)
-

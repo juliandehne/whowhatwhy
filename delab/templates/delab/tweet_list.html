@@ -10,8 +10,9 @@
                     <small class="text-muted">{{ tweet.created_at|date:"F d, Y" }}</small>
                 </div>
                 <p class="article-content">{{ tweet.text }}</p>
-                <img class="rounded-circle article-img" src="{{ tweet.conversation_flow.image }}">
-                <h2><a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation here</a></h2>
+                <img src="{{ tweet.conversation_flow.image.url }}">
+                <br>
+                <a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation here</a>
             </div>
         </article>
     {% endfor %}

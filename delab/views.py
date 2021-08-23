@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -38,7 +39,8 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(simple_request=simple_request, tn_siblings_count=0).order_by('-created_at')
+        return Tweet.objects.filter(Q(simple_request=simple_request) | Q(tn_parent_id__isnull=True))\
+            .order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super(ConversationListView, self).get_context_data(**kwargs)
@@ -52,7 +54,7 @@ class ConversationView(ListView):
     model = Tweet
     template_name = 'delab/conversation.html'  # <app>/<model>_<viewtype>.html
     context_object_name = 'tweets'
-    fields = ['created_at', 'text', 'author_id', 'sentiment', 'conversation_id']
+    fields = ['created_at', 'text', 'author_id', 'sentiment', 'conversation_id', 'simple_request_id']
     paginate_by = 5
 
     def get_queryset(self):
