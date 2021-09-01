@@ -1,5 +1,5 @@
 # whowhatwhy
-Open Source Project to bundle political opinions in a concise and validated fashion. Uses natural language processing to sort out inflammatory or overly positive comments.
+Open Source Project to bundle political opinions in a concise and validated fashion. Uses natural language processing to sort out inflammatory or overly positive comments. The branch delab is the temporary repository for the delab project of Uni Göttingen.
 
 
 # for programmers
