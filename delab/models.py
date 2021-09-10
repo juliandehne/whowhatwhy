@@ -152,3 +152,13 @@ class Tweet(TreeNodeModel):
                     tn_parent=parent,
                     tn_priority=priority)
         return tweet
+
+
+class Timeline(models.Model):
+    author_id = models.IntegerField()
+    tweet_id = models.IntegerField(unique=True)
+    text = models.TextField()
+    created_at = models.DateTimeField()
+    conversation_id = models.IntegerField(null=True)
+    in_reply_to_user_id = models.IntegerField(null=True)
+    lang = models.TextField()

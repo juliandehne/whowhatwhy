@@ -56,11 +56,14 @@ class TwitterConnector:
         self.lines = None
         self.instance_number = instance_number
 
-    def get_from_twitter(self, search_url, params, is_oauth2=False):
+    def get_from_twitter(self, search_url, params, is_oauth2=True):
         if is_oauth2:
             headers = self.create_headers()
             json_response = self.__connect_to_endpoint(search_url, headers, params)
             return json_response
+        else:
+            # TODO implement other connection methods
+            pass
 
     @staticmethod
     def create_headers():

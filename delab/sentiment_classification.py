@@ -8,6 +8,23 @@ from delab.models import SADictionary
 from delab.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
 
 
+## not implemented, just ofr later use trained sentiment classifier using BERT
+def classify_german_sentiment(tweet_string):
+    '''
+    from germansentiment import SentimentModel
+
+    model = SentimentModel()
+
+    texts = [
+        "Mit keinem guten Ergebniss", "Das ist gar nicht mal so gut",
+        "Total awesome!", "nicht so schlecht wie erwartet",
+        "Der Test verlief positiv.", "Sie fährt ein grünes Auto."]
+
+    result = model.predict_sentiment(texts)
+    print(result)
+    '''
+
+
 def classify_tweet_sentiment(tweet_strings, verbose=False):
     logger = logging.getLogger(__name__)
     """ classifies the sentiment of a tweet based on classic NLP example with trax
