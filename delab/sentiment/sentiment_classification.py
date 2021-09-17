@@ -5,7 +5,7 @@ import logging
 import numpy as np
 
 from delab.models import SADictionary
-from delab.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
+from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
 
 
 ## not implemented, just ofr later use trained sentiment classifier using BERT

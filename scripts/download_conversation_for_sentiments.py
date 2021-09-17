@@ -1,4 +1,4 @@
-from delab.download_conversations import *
+from delab.data.download_conversations import *
 from twitter.tw_connection_util import TwitterStreamConnector
 
 """ This is a django runscript, it can be started in the django home directory with

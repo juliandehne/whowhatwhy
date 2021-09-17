@@ -27,7 +27,6 @@ def compute_sentiment_flow_for_conversation(conversation_id, df):
     df_subset = df[df.conversation_id == conversation_id]
     df_subset = df_subset.sort_values(by=['created_at'])
     df_subset.reset_index(drop=True, inplace=True)
-    df_subset.head(5)
     rolling_column = df_subset['sentiment_value'].rolling(3).mean()
     df_subset = df_subset.assign(rolling_sentiment=rolling_column)
     plot = df_subset.plot(y=['rolling_sentiment', 'sentiment_value'], use_index=True)

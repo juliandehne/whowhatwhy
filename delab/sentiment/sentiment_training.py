@@ -1,5 +1,4 @@
 import json
-import logging
 
 import nltk
 from nltk.corpus import twitter_samples
@@ -11,7 +10,7 @@ from trax import layers as tl
 from trax.supervised import training
 from trax.fastmath import numpy as np
 from trax import optimizers
-from delab.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
+from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
 
 
 def train_sentiment_classification():

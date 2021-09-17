@@ -2,9 +2,8 @@ import logging
 
 from background_task import background
 
-from delab.download_conversations import download_conversations
-from delab.sentiment_training import train_sentiment_classification
-from delab.sentiment_training import classify_tweet_sentiment
+from delab.sentiment.sentiment_training import train_sentiment_classification
+from delab.sentiment.sentiment_training import classify_tweet_sentiment
 
 
 @background(schedule=60)

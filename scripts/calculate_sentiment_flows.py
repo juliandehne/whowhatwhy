@@ -1,4 +1,4 @@
-from delab.sentiment_flow_analysis import update_sentiment_flows
+from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
 
 
 def run():

@@ -162,3 +162,4 @@ class Timeline(models.Model):
     conversation_id = models.IntegerField(null=True)
     in_reply_to_user_id = models.IntegerField(null=True)
     lang = models.TextField()
+    ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field
