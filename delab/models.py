@@ -115,7 +115,7 @@ class Tweet(TreeNodeModel):
     treenode_display_field = 'text'
 
     twitter_id = models.IntegerField()
-    text = models.TextField()
+    text = models.TextField(unique=True)
     author_id = models.IntegerField()
     in_reply_to_status_id = models.IntegerField(null=True)
     in_reply_to_user_id = models.IntegerField(null=True)
@@ -126,6 +126,7 @@ class Tweet(TreeNodeModel):
     conversation_id = models.IntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
+    language = models.TextField(default="unk")
 
     class Meta:
         verbose_name = 'Tweet'
@@ -140,7 +141,7 @@ class Tweet(TreeNodeModel):
     @classmethod
     def create(cls, topic, text, simple_request, twitter_id, author_id, conversation_id, sentiment_value=0,
                sentiment=False,
-               parent=None, priority=0):
+               parent=None, priority=0, language="unk"):
         tweet = cls(topic=topic,
                     text=text,
                     twitter_id=twitter_id,
@@ -150,7 +151,9 @@ class Tweet(TreeNodeModel):
                     sentiment_value=sentiment_value,
                     sentiment=sentiment,
                     tn_parent=parent,
-                    tn_priority=priority)
+                    tn_priority=priority,
+                    language=language
+                    )
         return tweet
 
 

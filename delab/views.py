@@ -39,7 +39,7 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(Q(simple_request=simple_request) | Q(tn_parent_id__isnull=True))\
+        return Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent_id__isnull=True))\
             .order_by('-created_at')
 
     def get_context_data(self, **kwargs):

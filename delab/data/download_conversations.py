@@ -73,7 +73,8 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
         in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
         tn_parent=parent,
-        tn_priority=priority
+        tn_priority=priority,
+        language=root_node.data["lang"]
     )
 
     if not len(root_node.children) == 0:
@@ -142,7 +143,7 @@ def retrieve_replies(conversation_id, max_replies, language):
         # GET ROOT OF THE CONVERSATION
         r = twapi.request(f'tweets/:{conversation_id}',
                           {
-                              'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id'
+                              'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
                           })
 
         for item in r:
@@ -154,7 +155,7 @@ def retrieve_replies(conversation_id, max_replies, language):
         pager = TwitterPager(twapi, 'tweets/search/recent',
                              {
                                  'query': f'conversation_id:{conversation_id}',
-                                 'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id'
+                                 'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
                              })
         orphans = []
 
