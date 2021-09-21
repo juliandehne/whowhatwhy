@@ -137,4 +137,3 @@ error.log
 
 learning/*
 documentation/reveal/reveal.js/*
-!documentation/reveal/reveal.js/index.html
