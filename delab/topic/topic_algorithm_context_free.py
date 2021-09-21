@@ -16,10 +16,54 @@
     h) store the updated picture alongside the sentiment one
 
 """
+import json
+
+from bertopic import BERTopic
+
+import delab.topic.train_topic_model
+import fasttext.util
+
+from delab.models import TopicDictionary
+import numpy as np
+import logging
 
 
-def calculate_topic_flow(train=False):
+def calculate_topic_flow(train=False, bertopic_location="berttopic_1", lang="en"):
     """ This function takes the tweets of the authors' conversations and uses them as a context for the authors'
         regular topics. They are analyzed by how related their NER are.
     """
-    pass
+
+    logging.getLogger('numba').setLevel(logging.WARNING)
+
+    if train:
+        bertopic_location = delab.topic.train_topic_model.train_topic_model_from_db(lang)
+
+    # topic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True)
+    topic_model = BERTopic().load(bertopic_location, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    topic_info = topic_model.get_topic_info()
+
+    # fasttext.load_model('cc.en.300.bin') # comment this in instead of the next line, if you are not Julian
+    ft = fasttext.load_model('/home/julian/nltk_data/fasttext/cc.{}.300.bin'.format(lang))
+
+    n_words_nin_voc = 0
+    n_words_in_voc = 0
+    for topic_id in topic_info.Topic:
+        topic_model = topic_model.get_topic(topic_id)
+        for t_word in topic_model:
+            str_w = t_word[0]
+            if str_w not in ft.words:
+                n_words_nin_voc += 1
+            else:
+                n_words_in_voc += 1
+                ft_vector = ft.get_word_vector(str_w)
+                TopicDictionary.objects.get_or_create(word=str_w, ft_vector=json.dumps(ft_vector, cls=NumpyEncoder))
+    print("saved ft_vectors. The hit rate was: {}".format(n_words_in_voc / (n_words_in_voc + n_words_nin_voc)))
+
+    # restore as json.loads with a_restored = np.asarray(json_load["a"])
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)

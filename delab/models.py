@@ -82,7 +82,7 @@ class TopicDictionary(models.Model):
     """
     This contains the pickled Vocabulary for the Topic Distances
     """
-    word = models.CharField(max_length=200)  # the word that needs embedding
+    word = models.CharField(max_length=200,unique=True)  # the word that needs embedding
     ft_vector = models.TextField()  # the json serialized fasttext vector
 
 
