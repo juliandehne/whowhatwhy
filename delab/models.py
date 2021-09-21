@@ -78,6 +78,14 @@ class SimpleRequest(models.Model):
         return simple_request
 
 
+class TopicDictionary(models.Model):
+    """
+    This contains the pickled Vocabulary for the Topic Distances
+    """
+    word = models.CharField(max_length=200)  # the word that needs embedding
+    ft_vector = models.TextField()  # the json serialized fasttext vector
+
+
 # Create your models here.
 class SADictionary(models.Model):
     """ A with json serialized python dictionary that contains the vocabulary for the
