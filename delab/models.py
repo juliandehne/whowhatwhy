@@ -82,7 +82,7 @@ class TopicDictionary(models.Model):
     """
     This contains the pickled Vocabulary for the Topic Distances
     """
-    word = models.CharField(max_length=200,unique=True)  # the word that needs embedding
+    word = models.CharField(max_length=200, unique=True)  # the word that needs embedding
     ft_vector = models.TextField()  # the json serialized fasttext vector
 
 
@@ -135,6 +135,7 @@ class Tweet(TreeNodeModel):
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default="unk")
+    bertopic_id = models.IntegerField(null=True)
 
     class Meta:
         verbose_name = 'Tweet'

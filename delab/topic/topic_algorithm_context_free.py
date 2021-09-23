@@ -1,12 +1,12 @@
 """
 1. Create a seperate file and run the bert_topic fitting there, call this function with train = True for testing
-    a) run the fitting
-    b) use the bert_topic transform to get all the the topic words
-    c) get embedding vectors from fasttest using the topic words
-    d) store the embeddings vectors in database
-    e) store the bert_topic model
+    a) run the fitting [x]
+    b) use the bert_topic transform to get all the the topic words [x]
+    c) get embedding vectors from fasttest using the topic words [x]
+    d) store the embeddings vectors in database [x]
+    e) store the bert_topic model [x]
 2. Calculate conversation flow (this file)
-    a) load the bert_topic model
+    a) load the bert_topic model [x]
     b) classify the tweets, and store the model_id/topic_id in the db
     c) create dictionary (tweet: topic)
     d) create a dictionary (topic_1, topic_2) -> distance (by loading fasttext vectors for the tweets and cosine)
@@ -19,16 +19,20 @@
 import json
 
 from bertopic import BERTopic
+from django.db.models import Q
 
-import delab.topic.train_topic_model
+import delab.topic.train_topic_model as tm
 import fasttext.util
 
-from delab.models import TopicDictionary
+from util import TVocabulary
+
+from delab.models import TopicDictionary, Tweet
 import numpy as np
 import logging
 
 
-def calculate_topic_flow(train=False, bertopic_location="berttopic_1", lang="en"):
+def calculate_topic_flow(train=False, bertopic_location=tm.BERTOPIC_MODEL_LOCATION, lang="en", store_vectors=True,
+                         store_topics=True, update_topics=False):
     """ This function takes the tweets of the authors' conversations and uses them as a context for the authors'
         regular topics. They are analyzed by how related their NER are.
     """
@@ -36,34 +40,16 @@ def calculate_topic_flow(train=False, bertopic_location="berttopic_1", lang="en"
     logging.getLogger('numba').setLevel(logging.WARNING)
 
     if train:
-        bertopic_location = delab.topic.train_topic_model.train_topic_model_from_db(lang)
+        bertopic_location = tm.train_topic_model_from_db(lang,
+                                                         store_vectors=store_vectors,
+                                                         store_topics=store_topics,
+                                                         update_topics=update_topics)
 
-    # topic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True)
-    topic_model = BERTopic().load(bertopic_location, embedding_model="sentence-transformers/all-mpnet-base-v2")
-    topic_info = topic_model.get_topic_info()
+    bertopic_model = BERTopic().load(bertopic_location, embedding_model="sentence-transformers/all-mpnet-base-v2")
 
-    # fasttext.load_model('cc.en.300.bin') # comment this in instead of the next line, if you are not Julian
-    ft = fasttext.load_model('/home/julian/nltk_data/fasttext/cc.{}.300.bin'.format(lang))
+    # get the filtered topic model
+    topic_info = tm.filter_bad_topics(bertopic_model, tm.get_vocab(lang))
 
-    n_words_nin_voc = 0
-    n_words_in_voc = 0
-    for topic_id in topic_info.Topic:
-        topic_model = topic_model.get_topic(topic_id)
-        for t_word in topic_model:
-            str_w = t_word[0]
-            if str_w not in ft.words:
-                n_words_nin_voc += 1
-            else:
-                n_words_in_voc += 1
-                ft_vector = ft.get_word_vector(str_w)
-                TopicDictionary.objects.get_or_create(word=str_w, ft_vector=json.dumps(ft_vector, cls=NumpyEncoder))
-    print("saved ft_vectors. The hit rate was: {}".format(n_words_in_voc / (n_words_in_voc + n_words_nin_voc)))
+    # calculate distances
 
     # restore as json.loads with a_restored = np.asarray(json_load["a"])
-
-
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)

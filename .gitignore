@@ -136,4 +136,5 @@ debug.log
 error.log
 
 learning/*
-documentation/reveal/reveal.js/*
+documentation/reveal/**/*
+
