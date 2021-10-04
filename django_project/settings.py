@@ -15,28 +15,27 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'exhlfdat&vfum(-34*c2uroi(($ww(yo$9pv98=e6p^gl(-eoj'
 # SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = 'prototypefund'
+SECRET_KEY = 'delab'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
 DEBUG = 'true'
 
-
-ALLOWED_HOSTS = ['myawesomedjangoapp.herokuapp.com']
-
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
 
 # Application definition
 
 INSTALLED_APPS = [
+    'treenode',
+    'debug_toolbar',
+    'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
-    'twitter.apps.TwitterConfig',
     'users.apps.UsersConfig',
     'background_task',
     'django_countries',
@@ -60,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
 ROOT_URLCONF = 'django_project.urls'
@@ -82,7 +82,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
@@ -90,9 +89,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'delab',
+        'USER': 'delab',
+        'PASSWORD': 'delab',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -112,7 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
@@ -125,7 +130,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -157,18 +161,14 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-django_heroku.settings(locals())
+BACKGROUND_TASK_RUN_ASYNC = True
+MAX_RUN_TIME = 2000000
+BACKGROUND_TASK_ASYNC_THREADS = 300
+# BACKGROUND_TASK_ASYNC_THREADS = 4
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-}
+TIME_ZONE = 'Europe/Berlin'
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    '0.0.0.0'
+]

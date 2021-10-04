@@ -16,8 +16,8 @@
             </div>
             <h2 class="article-title">{{ object.title }}</h2>
             <p class="article-content">{{ object.content }}</p>
-            <a href="{% url 'institution-detail' object.institution.id %} ">{{ object.institution.title }}<img
-                    class="rounded-circle article-img" src="{{ object.institution.image.url }}"></a>
+            <a href="{% url 'institution-detail' object.institution.id %} ">{{ object.institution.title }}
+                <img class="rounded-circle article-img" src="{{ object.institution.image.url }}"></a>
         </div>
     </article>
 {% endblock content %}

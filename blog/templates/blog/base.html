@@ -16,16 +16,16 @@
     <link rel="stylesheet" type="text/css" href="{% static 'blog/main.css' %}">
 
     {% if title %}
-        <title>WhoWhatWhy - {{ title }}</title>
+        <title>Delab - {{ title }}</title>
     {% else %}
-        <title>WhoWhatWhy</title>
+        <title>Delab</title>
     {% endif %}
 </head>
 <body>
 <header class="site-header">
     <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
         <div class="container">
-            <a class="navbar-brand mr-4" href="{% url 'blog-home' %}">WhoWhatWhy - Trying to get the facts</a>
+            <a class="navbar-brand mr-4" href="{% url 'blog-home' %}">Deliberation Laboratory - Political Discussions with AI</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle"
                     aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -34,6 +34,9 @@
                 <div class="navbar-nav mr-auto">
                     <a class="nav-item nav-link" href="{% url 'blog-home' %}">Home</a>
                     <a class="nav-item nav-link" href="{% url 'blog-about' %}">About</a>
+                    <a class="nav-item nav-link" href="{% url 'delab-create-simple-request' %}">Delab Start</a>
+                    <a class="nav-item nav-link" href="{% url 'delab-conversations-requests' %}">Delab Results</a>
+                    <a class="nav-item nav-link" href="{% url 'admin:index' %}">admin</a>
                 </div>
                 <!-- Navbar Right Side -->
                 <div class="navbar-nav">

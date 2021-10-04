@@ -1,0 +1,6 @@
+# create pipeline that allows download of twitter conversations given hashtags in the background
+# persist conversations to database
+# train sentiment analysis on the existing vocabulary
+# classify single tweets in conversations with sentiment analysis
+# display the "heat-graph" given a conversation
+# further analysis and modelling to find out moderation/escalating tweets

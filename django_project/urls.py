@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from users import views as user_views
+import debug_toolbar
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,6 +48,8 @@ urlpatterns = [
          ),
          name='password_reset_complete'),
     path('', include('blog.urls')),
+    path('delab/', include('delab.urls')),
+    path('__debug__/', include(debug_toolbar.urls)),
 ]
 
 
