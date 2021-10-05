@@ -9,10 +9,12 @@ import io
 import requests
 from pathlib import Path
 import time
-
+import logging
 from twitter.magic_http_strings import TWEETS_RULES_URL, TWEETS_SEARCH_All_URL, TWEETS_STREAM_URL
 
 from functools import partial
+
+logger = logging.getLogger(__name__)
 
 
 class TwitterAPIWrapper:
@@ -76,7 +78,12 @@ class TwitterConnector:
         response = requests.request("GET", search_url, headers=headers, params=params)
         # print(response.status_code)
         if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
+            if response.status_code == 429:  # too many requests
+                logger.info("############# Rate limit was exceeded. Starting sleep for 15 min now!")
+                time.sleep(60 * 15)
+                return json.loads("{}")
+            else:
+                logger.error("{}{}".format(response.status_code, response.text))
         time.sleep(2)
 
         return response.json()

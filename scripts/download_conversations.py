@@ -7,8 +7,9 @@ from twitter.tw_connection_util import TwitterStreamConnector
 
 
 def run():
+    download_conversations("migration", ["wall", "border"], max_data=True)
+
     # download_conversations("Vaccination", ["covid_19", "vaccine", "getvaccienated", "vaccination"])
-    download_conversations("Migration", ["migrations", "migrationisbeautiful"])
     # download_conversations("Migration", ["migration", "UNHCR"])
     # download_conversations("Impfung", ["rki_de"])
     # run_demo()

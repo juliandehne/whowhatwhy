@@ -133,8 +133,8 @@ from django.utils.safestring import mark_safe
 class Tweet(TreeNodeModel):
     treenode_display_field = 'text'
 
-    twitter_id = models.IntegerField()
-    text = models.TextField(unique=True)
+    twitter_id = models.IntegerField(unique=True)
+    text = models.TextField()
     author_id = models.IntegerField()
     in_reply_to_status_id = models.IntegerField(null=True)
     in_reply_to_user_id = models.IntegerField(null=True)

@@ -9,25 +9,21 @@ from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
 from delab.models import Tweet
 from django.db.models import Q
 
+logger = logging.getLogger(__name__)
+
 
 @background(schedule=1)
 def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True, max_data=False):
-    logger = logging.getLogger(__name__)
-    """
-           TODO:
-             - ensure all the downloaded tweets are in the given language
-    """
     if simulate:
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
-        download_conversations(topic_string, hashtags, simple_request_id,max_data=max_data)
-        update_sentiments()
-        update_sentiment_flows()
+        download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data)
+        # update_sentiments()
+        # update_sentiment_flows()
 
 
 def update_sentiments():
     from delab.sentiment.sentiment_classification import classify_tweet_sentiment
-    logger = logging.getLogger(__name__)
     logger.info("updating sentiments")
     # importing here to improve server startup time
 

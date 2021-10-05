@@ -1,3 +1,6 @@
+from django.db.backends import sqlite3
+from tqdm import tqdm
+
 from delab.models import Tweet, TwTopic, SimpleRequest
 
 import json
@@ -13,6 +16,8 @@ from twitter.tw_connection_util import TwitterAPIWrapper
 from twitter.tw_connection_util import TwitterConnector
 from twitter.tw_connection_util import TwitterStreamConnector
 from util.abusing_lists import powerset
+
+logger = logging.getLogger(__name__)
 
 
 def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en", max_data=False):
@@ -37,7 +42,7 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
             pk=request_id
         )
     else:
-        request_string = ' '.join(hashtags)
+        request_string = "#" + ' #'.join(hashtags)
         simple_request, created = SimpleRequest.objects.get_or_create(
             title=request_string
         )
@@ -47,14 +52,24 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
 
     # download the conversations
     if max_data:
-        for hashtag_set in powerset(hashtags):
-            get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language)
+        combinations = list(powerset(hashtags))
+        combinations_l = len(combinations) - 1
+        combination_counter = 0
+        for hashtag_set in combinations:
+            if len(hashtag_set) > 0:
+                combination_counter += 1
+                get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language)
+                logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
+    else:
+        # in case max_data is false we don't compute the powerset of the hashtags
+        get_matching_conversation(connector, hashtags, topic, simple_request, language=language)
 
     connector = None  # precaution to terminate the thread and the http socket
 
 
 def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, priority=0):
     """ This method persist a conversation tree in the database
+
 
         Parameters
         ----------
@@ -66,24 +81,27 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         priority: No idea, copied from the original git post
 
     """
-    tweet, created = Tweet.objects.get_or_create(
-        topic=topic,
-        text=root_node.data["text"],
-        simple_request=simple_request,
-        twitter_id=root_node.data["id"],
-        author_id=root_node.data["author_id"],
-        conversation_id=conversation_id,
-        created_at=root_node.data["created_at"],
-        in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
-        in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-        tn_parent=parent,
-        tn_priority=priority,
-        language=root_node.data["lang"]
-    )
+    try:
+        tweet, created = Tweet.objects.get_or_create(
+            topic=topic,
+            text=root_node.data["text"],
+            simple_request=simple_request,
+            twitter_id=root_node.data["id"],
+            author_id=root_node.data["author_id"],
+            conversation_id=conversation_id,
+            created_at=root_node.data["created_at"],
+            in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
+            in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
+            tn_parent=parent,
+            tn_priority=priority,
+            language=root_node.data["lang"]
+        )
 
-    if not len(root_node.children) == 0:
-        for child in root_node.children:
-            save_tree_to_db(child, topic, simple_request, conversation_id, tweet)
+        if not len(root_node.children) == 0:
+            for child in root_node.children:
+                save_tree_to_db(child, topic, simple_request, conversation_id, tweet)
+    except sqlite3.IntegrityError:
+        logger.debug("found tweet existing in database, not downloading the tree again")
 
 
 def get_matching_conversation(connector,
@@ -94,7 +112,6 @@ def get_matching_conversation(connector,
                               min_conversation_length=10,
                               language="lang:en",
                               max_number_of_candidates=500):
-    logger = logging.getLogger(__name__)
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
@@ -135,7 +152,6 @@ def get_matching_conversation(connector,
 
 
 def retrieve_replies(conversation_id, max_replies, language):
-    logger = logging.getLogger(__name__)
     """
     follows the tutorial from here https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6
 
