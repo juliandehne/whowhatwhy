@@ -47,3 +47,5 @@ tqdm==4.62.2
 ipython-cache==0.2.6
 sentence-transformers==2.0.0
 bertopic==0.9.1
+djangorestframework==3.12.4
+drf-renderer-xlsx==0.4.1

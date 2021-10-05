@@ -12,9 +12,10 @@ from twitter.magic_http_strings import TWEETS_SEARCH_All_URL
 from twitter.tw_connection_util import TwitterAPIWrapper
 from twitter.tw_connection_util import TwitterConnector
 from twitter.tw_connection_util import TwitterStreamConnector
+from util.abusing_lists import powerset
 
 
-def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en"):
+def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en", max_data=False):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -22,7 +23,7 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
 
         Keyword arguments:
         topic_string -- the topic of the hashtags
-        hashtags -- [hashtag1, hashtag2, ...]
+        hashtags -- [hashtag1, hashtag2, ...], i.e. ["migration", "chainmigration"]
     """
 
     # create the topic and save it to the db
@@ -36,7 +37,7 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
             pk=request_id
         )
     else:
-        request_string = ''.join(hashtags)
+        request_string = ' '.join(hashtags)
         simple_request, created = SimpleRequest.objects.get_or_create(
             title=request_string
         )
@@ -45,7 +46,10 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
     connector = TwitterConnector(1)
 
     # download the conversations
-    get_matching_conversation(connector, hashtags, topic, simple_request, language=language)
+    if max_data:
+        for hashtag_set in powerset(hashtags):
+            get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language)
+
     connector = None  # precaution to terminate the thread and the http socket
 
 
@@ -86,10 +90,10 @@ def get_matching_conversation(connector,
                               hashtags,
                               topic,
                               simple_request,
-                              max_conversation_length=30,
+                              max_conversation_length=10000,
                               min_conversation_length=10,
                               language="lang:en",
-                              max_number_of_candidates=50):
+                              max_number_of_candidates=500):
     logger = logging.getLogger(__name__)
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
@@ -100,7 +104,11 @@ def get_matching_conversation(connector,
         max_conversation_length -- the max number of results
         min_conversation_length -- the min number of results
         max_number_of_candidates -- the number of candidates to look at,
-                                    downloads num_candidates x max_conversation_length results
+                                    downloads num_candidates x max_conversation_length results (max results are 500)
+                                    If a higher number of results are wanted, change the query or
+                                    implement the streaming API. 
+                                    The actual number of is the number of subsets from a given query 
+                                    times the max_number of candidates given here!
 
     """
     tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
@@ -315,7 +323,8 @@ def get_tweets_for_hashtags(connector, hashtags, logger, max_results, language="
         logger -- Logger
         max_results -- the number of max length the conversation should have
     """
-    twitter_accounts_query_1 = map(lambda x: "{} OR ".format(x), hashtags)
+    # twitter_accounts_query_1 = map(lambda x: "{} OR".format(x), hashtags)
+    twitter_accounts_query_1 = map(lambda x: "{} ".format(x), hashtags)
     twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
     twitter_accounts_query_3 = "(" + twitter_accounts_query_2[:-4] + ")"
     twitter_accounts_query_3 += " " + language

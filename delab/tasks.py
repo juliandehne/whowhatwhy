@@ -11,7 +11,7 @@ from django.db.models import Q
 
 
 @background(schedule=1)
-def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True):
+def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True, max_data=False):
     logger = logging.getLogger(__name__)
     """
            TODO:
@@ -20,7 +20,7 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
     if simulate:
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
-        download_conversations(topic_string, hashtags, simple_request_id)
+        download_conversations(topic_string, hashtags, simple_request_id,max_data=max_data)
         update_sentiments()
         update_sentiment_flows()
 

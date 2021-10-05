@@ -16,7 +16,7 @@ from django.views.generic import (
     DeleteView
 )
 
-from delab.models import SimpleRequest, Tweet
+from delab.models import SimpleRequest, Tweet, TwTopic
 import logging
 
 
@@ -74,11 +74,21 @@ class ConversationView(ListView):
 @method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['title']
+    fields = ['title', 'max_data', 'topic']
     initial = {"title": "#covid #vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
                       "You might have to refresh the page until we have build a loading screen!"
+
+
+# Create your views here.
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicCreateView(SuccessMessageMixin, CreateView):
+    model = TwTopic
+    fields = ['title']
+    initial = {"title": "migration"}
+
+    success_message = "The Topic has been created!"
 
 
 # @class ConversationView(ListView)

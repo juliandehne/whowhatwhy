@@ -48,6 +48,9 @@ class TwTopic(models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return reverse('delab-create-simple-request')
+
     @classmethod
     def create(cls, title):
         topic = cls(title=title)
@@ -60,10 +63,18 @@ def get_sentinel_topic():
     return TwTopic.objects.get_or_create(title="TopicNotGiven")[0].id
 
 
+'''
+    the idea here is that for a given topic there 
+    needs to be a series of hashtags to get a certain part of the twitter conversations from the web.
+    The title is a string that could be used as a twitter search query
+'''
+
+
 class SimpleRequest(models.Model):
-    title = models.CharField(max_length=200, validators=[SIMPLE_REQUEST_VALIDATOR, validate_exists])
+    title = models.CharField(max_length=2000, validators=[SIMPLE_REQUEST_VALIDATOR, validate_exists])
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic)
+    max_data = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
