@@ -11,11 +11,11 @@ Prerequisites:
 - You need an academic account at Twitter in order to use the interactive features (Download Tweets and analyze them on the fly)
 - Add a yaml file in /twitter/secret/keys_simple.yaml that contains the following fields
 
-consumer_key:
-consumer_secret:
-bearer_token:
-access_token:
-access_token_secret: 
+  consumer_key:
+  consumer_secret:
+  bearer_token:
+  access_token:
+  access_token_secret: 
 
 You can start the project with python3:
 
