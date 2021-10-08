@@ -26,7 +26,7 @@ class TweetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 def get_migration_query_set():
-    queryset = Tweet.objects.filter(simple_request__topic__title="migration", language="en").all()
+    queryset = Tweet.objects.filter(simple_request__topic__title="migration").all()
     return queryset
 
 
@@ -35,7 +35,7 @@ class TweetViewSet(viewsets.ModelViewSet):
     queryset = get_migration_query_set()
     serializer_class = TweetSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['conversation_id', 'tn_order', 'author_id']
+    filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
 
 
@@ -46,7 +46,7 @@ class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
     renderer_classes = (XLSXRenderer,)
     filename = 'twitter_migration_export.xlsx'
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['conversation_id', 'tn_order', 'author_id']
+    filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
 
 
 # Routers provide a way of automatically determining the URL conf.

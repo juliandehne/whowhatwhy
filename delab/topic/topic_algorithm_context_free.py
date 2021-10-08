@@ -31,6 +31,8 @@ import numpy as np
 import logging
 
 
+# TODO implement this as part of the pipeline
+
 def calculate_topic_flow(train=False, bertopic_location=tm.BERTOPIC_MODEL_LOCATION, lang="en", store_vectors=True,
                          store_topics=True, update_topics=False):
     """ This function takes the tweets of the authors' conversations and uses them as a context for the authors'
