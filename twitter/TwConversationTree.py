@@ -11,6 +11,7 @@ class TreeNode:
         """data is a tweet's json object"""
         self.data = data
         self.children = []
+        self.max_path_length = 0
 
     def id(self):
         """a node is identified by its author"""
@@ -32,7 +33,7 @@ class TreeNode:
 
     def print_tree(self, level):
         """level 0 is the root node, then incremented for subsequent generations"""
-        print(f'{level*"_"}{level}: {self.data}')
+        print(f'{level * "_"}{level}: {self.data}')
         level += 1
         for child in self.children:
             child.print_tree(level)
@@ -54,3 +55,29 @@ class TreeNode:
             children_size += child.flat_size()
         return 1 + children_size
 
+    def compute_max_path_length(self, level=0):
+        # print(level)
+        if len(self.children) > 0:
+            child_max_paths = []
+            for child in self.children:
+                # print(["child"]*level)
+                child_max_paths.append(child.compute_max_path_length(level + 1))
+            return max(child_max_paths)
+        return level
+
+    def get_max_path_length(self):
+        # print("hello julian")
+        if self.max_path_length == 0:
+            self.max_path_length = self.compute_max_path_length()
+        return self.max_path_length
+
+    def crop_orphans(self, max_orphan_count=4):
+        favourite_children = []
+        if len(self.children) > 0:
+            counter = 0
+            for child in self.children:
+                if len(child.children) > 0 and counter < max_orphan_count:
+                    favourite_children.append(child)
+                    counter += 1
+                    child.crop_orphans(max_orphan_count)
+        self.children = favourite_children
