@@ -17,6 +17,9 @@ class TreeNode:
         """a node is identified by its author"""
         return self.data['author_id']
 
+    def tweet_id(self):
+        return self.data["id"]
+
     def reply_to(self):
         """the reply-to user is the parent of the node"""
         return self.data['in_reply_to_user_id']
