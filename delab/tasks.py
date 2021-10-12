@@ -2,7 +2,7 @@ import logging
 
 from background_task import background
 
-from delab.data.download_conversations import download_conversations
+from delab.corpus.download_conversations import download_conversations
 from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
 
 # this schedules longer running tasks that are regularly polled by the process task that is started in the background

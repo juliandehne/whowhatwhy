@@ -2,16 +2,9 @@ import json
 
 from django.db import IntegrityError
 
-from twitter.tw_connection_util import TwitterConnector
+from delab.tw_connection_util import TwitterConnector
 
 from twitter.models import Tweet, TwTopic
-import logging
-from googletrans import Translator
-import os
-from pathlib import Path
-import yaml
-import pprint
-from functools import reduce
 import requests
 
 
@@ -45,7 +38,7 @@ def run():
             while True:
                 if count == 0:
                     break
-                twitter_data: list = json_response.get("data")
+                twitter_data: list = json_response.get("corpus")
                 if twitter_data.get("lang") == "en":
                     print(json.dumps(json_response, indent=4, sort_keys=True))
                     count += -1

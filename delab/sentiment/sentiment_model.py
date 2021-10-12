@@ -1,7 +1,7 @@
 import os
 from trax import layers as tl
 
-from twitter.nlp_util import process_tweet
+from delab.nlp_util import process_tweet
 
 TASK_DESCRIPTION = "sentiment analysis"
 

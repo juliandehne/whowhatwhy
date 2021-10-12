@@ -1,5 +1,4 @@
 from django.db.backends import sqlite3
-from tqdm import tqdm
 
 from delab.models import Tweet, TwTopic, SimpleRequest
 
@@ -10,11 +9,11 @@ from functools import reduce
 import pandas as pd
 import requests
 from TwitterAPI import TwitterRequestError, TwitterConnectionError, TwitterPager
-from twitter.TwConversationTree import TreeNode
-from twitter.magic_http_strings import TWEETS_SEARCH_All_URL
-from twitter.tw_connection_util import TwitterAPIWrapper
-from twitter.tw_connection_util import TwitterConnector
-from twitter.tw_connection_util import TwitterStreamConnector
+from delab.TwConversationTree import TreeNode
+from delab.magic_http_strings import TWEETS_SEARCH_All_URL
+from delab.tw_connection_util import TwitterAPIWrapper
+from delab.tw_connection_util import TwitterConnector
+from delab.tw_connection_util import TwitterStreamConnector
 from util.abusing_lists import powerset
 
 logger = logging.getLogger(__name__)
@@ -243,7 +242,7 @@ def reply_thread_maker(conv_ids):
 
 def deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results,
                                                 max_results):
-    """ The idea of this function is to user the filtered stream api to get real time data to a conversation
+    """ The idea of this function is to user the filtered stream api to get real time corpus to a conversation
         and also leverage the sentiment analysis build in
 
         {
@@ -320,10 +319,10 @@ def check_stream_result_for_valid_conversation(hashtags, topic, min_results, max
 
     # TODO implement
 
-    if "data" not in streaming_result:
+    if "corpus" not in streaming_result:
         return False
 
-    print("Streaming RESULT for conversation:{}\n".format(conversation_id) + json.dumps(streaming_result.get("data"),
+    print("Streaming RESULT for conversation:{}\n".format(conversation_id) + json.dumps(streaming_result.get("corpus"),
                                                                                         indent=4,
                                                                                         sort_keys=True))
     return True
@@ -354,7 +353,7 @@ def get_tweets_for_hashtags(connector, hashtags, logger, max_results, language="
 
 
 def convert_tweet_result_to_list(tweets_result, topic, full_tweet=False, has_conversation_id=True):
-    """ converts the raw data to python objects.
+    """ converts the raw corpus to python objects.
 
         Keyword arguments:
         tweets_result -- the json objeect
@@ -366,10 +365,10 @@ def convert_tweet_result_to_list(tweets_result, topic, full_tweet=False, has_con
         returns [Tweet]
     """
     result_list = []
-    if "data" not in tweets_result:
+    if "corpus" not in tweets_result:
         return result_list
     else:
-        twitter_data: list = tweets_result.get("data")
+        twitter_data: list = tweets_result.get("corpus")
         for tweet_raw in twitter_data:
             tweet = Tweet()
             tweet.topic = topic

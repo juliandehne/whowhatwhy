@@ -1,4 +1,4 @@
-""" This data structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
+""" This corpus structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
     It encapsulates the replies to a tweet
 
     Eventually this should be merged with:
@@ -8,13 +8,13 @@
 
 class TreeNode:
     def __init__(self, data):
-        """data is a tweet's json object"""
+        """corpus is a tweet's json object"""
         self.data = data
         self.children = []
         self.max_path_length = 0
 
     def id(self):
-        """a node is identified by its author"""
+        """a node is identified by its author because the tree works with response 2s"""
         return self.data['author_id']
 
     def tweet_id(self):
@@ -41,11 +41,38 @@ class TreeNode:
         for child in self.children:
             child.print_tree(level)
 
+    def to_string(self, level=0):
+        result = ""
+        if level == 0:
+            result += "Conversation: " + str(self.data["conversation_id"]) + "\n\n"
+        result += (level * "\t") + self.data_to_string(level)
+        for child in self.children:
+            result += child.to_string(level + 1)
+        return result
+
+    def data_to_string(self, level):
+
+        text = self.data["text"].split(".")
+        tabbed_text = []
+        for sentence in text:
+            sentence = sentence.replace('\n', ' ').replace('\r', '')
+            tabbed_sentence = ""
+            if len(sentence) > 125:
+                tabbed_sentence += sentence[0:125]
+                tabbed_sentence += "\n" + (level * "\t")
+                tabbed_sentence += sentence[125:]
+            else:
+                tabbed_sentence = sentence
+            tabbed_text.append(tabbed_sentence)
+        separator = ".\n" + (level * "\t")
+        tabbed_text = "\n" + (level * "\t") + separator.join(tabbed_text)
+        return str(self.data["conversation_id"]) + "/" + str(self.data["author_id"]) + ":" + tabbed_text + "\n\n"
+
     def list_l1(self):
         conv_id = []
         child_id = []
         text = []
-        # print(self.data['id'])
+        # print(self.corpus['id'])
         for child in self.children:
             conv_id.append(self.data['id'])
             child_id.append(child.data['id'])
@@ -84,3 +111,9 @@ class TreeNode:
                     counter += 1
                     child.crop_orphans(max_orphan_count)
         self.children = favourite_children
+
+    def all_tweet_ids(self):
+        result = [self.tweet_id()]
+        for child in self.children:
+            result.append(child.tweet_id())
+        return result

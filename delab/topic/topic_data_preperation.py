@@ -5,15 +5,15 @@ import time
 from django.db.models import Exists, OuterRef
 
 from delab.models import Timeline, Tweet
-from twitter.magic_http_strings import TWEETS_USER_URL
-from twitter.tw_connection_util import TwitterConnector
+from delab.magic_http_strings import TWEETS_USER_URL
+from delab.tw_connection_util import TwitterConnector
 
 logger = logging.getLogger(__name__)
 
 
 def save_author_tweet_to_tb(json_result, author_id):
-    if "data" in json_result:
-        data = json_result["data"]
+    if "corpus" in json_result:
+        data = json_result["corpus"]
         for tweet_dict in data:
             if "in_reply_to_user_id" in tweet_dict:
                 in_reply_to_user_id = tweet_dict["in_reply_to_user_id"]

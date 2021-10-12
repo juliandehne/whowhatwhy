@@ -1,6 +1,6 @@
 import pandas as pd
 
-from twitter.TwConversationTree import TreeNode
+from delab.TwConversationTree import TreeNode
 from util.sql_switch import query_sql
 
 
@@ -14,7 +14,7 @@ def get_standard_field_names():
 
 
 def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True, fieldnames=None):
-    # a utility so I don't have to rewrite the get twitter data for both django and jupyter context
+    # a utility so I don't have to rewrite the get twitter corpus for both django and jupyter context
     if fieldnames is None:
         fieldnames = get_standard_field_names()
 
@@ -24,7 +24,7 @@ def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True,
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
 
-def crop_trees(df, max_orphan_count, min_depth, merge_subsequent=True):
+def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
     '''
 
     :param merge_subsequent: Boolean merge subsequent tweets from same authors
@@ -57,14 +57,16 @@ def crop_trees(df, max_orphan_count, min_depth, merge_subsequent=True):
             #  print(tree.get_max_path_length())
             useful_trees.append(tree)
     useful_trees_ids = []
+    useful_trees_conversation_ids = []
     # useful_number_of_tweets = 0
     for useful_tree in useful_trees:
         useful_tree.crop_orphans(max_orphan_count)
-        useful_trees_ids.append(useful_tree.tweet_id())
+        useful_trees_ids += (useful_tree.all_tweet_ids())
+        useful_trees_conversation_ids.append(useful_tree.data["conversation_id"])
         # useful_number_of_tweets += useful_tree.flat_size()
         # useful_tree.print_tree(0)
     # print("we found {} useful tweets".format(useful_number_of_tweets))
-    return useful_trees, useful_trees_ids
+    return useful_trees, useful_trees_ids, useful_trees_conversation_ids
 
 
 def merge_subsequent_tweets(df):
@@ -85,3 +87,5 @@ def merge_subsequent_tweets(df):
         result.append(current)
     df = pd.DataFrame(result, columns=fieldnames)
     return df
+
+# https://stackoverflow.com/questions/67454/serving-dynamically-generated-zip-archives-in-django

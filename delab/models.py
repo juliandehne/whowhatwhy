@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
+from django_pandas.managers import DataFrameManager
 from treenode.models import TreeNodeModel
 
 
@@ -148,6 +149,8 @@ class Tweet(TreeNodeModel):
     language = models.TextField(default="unk")
     bertopic_id = models.IntegerField(null=True)
 
+    objects = DataFrameManager()
+
     class Meta:
         verbose_name = 'Tweet'
         verbose_name_plural = 'Tweets'
@@ -157,6 +160,8 @@ class Tweet(TreeNodeModel):
                                                                            self.conversation_id,
                                                                            self.text,
                                                                            self.author_id)
+
+
 
     @classmethod
     def create(cls, topic, text, simple_request, twitter_id, author_id, conversation_id, sentiment_value=0,

@@ -1,18 +1,14 @@
 from typing import Callable
 
 from TwitterAPI import TwitterAPI
-from requests_oauthlib import OAuth1Session, OAuth2Session
 import os
 import json
 import yaml
-import io
 import requests
 from pathlib import Path
 import time
 import logging
-from twitter.magic_http_strings import TWEETS_RULES_URL, TWEETS_SEARCH_All_URL, TWEETS_STREAM_URL
-
-from functools import partial
+from delab.magic_http_strings import TWEETS_RULES_URL, TWEETS_STREAM_URL
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +86,7 @@ class TwitterConnector:
 
 
 class TwitterStreamConnector:
-    """ Get twitter data from rule based stream API.
+    """ Get twitter corpus from rule based stream API.
         code adapted from the official example:
         https://github.com/twitterdev/Twitter-API-v2-sample-code/blob/main/Filtered-Stream/filtered_stream.py
 
@@ -121,10 +117,10 @@ class TwitterStreamConnector:
         return response.json()
 
     def delete_all_rules(self, rules):
-        if rules is None or "data" not in rules:
+        if rules is None or "corpus" not in rules:
             return None
 
-        ids = list(map(lambda rule: rule["id"], rules["data"]))
+        ids = list(map(lambda rule: rule["id"], rules["corpus"]))
         payload = {"delete": {"ids": ids}}
         response = requests.post(
             TWEETS_RULES_URL,

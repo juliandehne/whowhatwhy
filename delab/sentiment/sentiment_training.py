@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import twitter_samples
 
 from delab.models import SADictionary
-from twitter.nlp_util import process_tweet
+from delab.nlp_util import process_tweet
 import random as rnd
 from trax import layers as tl
 from trax.supervised import training
@@ -31,10 +31,10 @@ def train_sentiment_classification():
     val_neg = all_negative_tweets[4000:]  # generating validation set for negative tweets
     train_neg = all_negative_tweets[:4000]  # generating training set for nagative tweets
 
-    # Combine training data into one set
+    # Combine training corpus into one set
     train_x = train_pos + train_neg
 
-    # Combine validation data into one set
+    # Combine validation corpus into one set
     val_x = val_pos + val_neg
 
     # Set the labels for the training set (1 for positive, 0 for negative)
@@ -46,15 +46,15 @@ def train_sentiment_classification():
     # Set the random number generator for the shuffle procedure
     rnd.seed(30)
 
-    # Create the training data generator
+    # Create the training corpus generator
     def train_generator(batch_size, shuffle=False):
         return data_generator(train_pos, train_neg, batch_size, True, vocab_dict, shuffle)
 
-    # Create the validation data generator
+    # Create the validation corpus generator
     def val_generator(batch_size, shuffle=False):
         return data_generator(val_pos, val_neg, batch_size, True, vocab_dict, shuffle)
 
-    # Create the validation data generator
+    # Create the validation corpus generator
     def test_generator(batch_size, shuffle=False):
         return data_generator(val_pos, val_neg, batch_size, False, vocab_dict, shuffle)
 
@@ -71,7 +71,7 @@ def train_sentiment_classification():
         # started with pad, end of line and unk tokens
         vocab_dict = {'__PAD__': 0, '__</e>__': 1, '__UNK__': 2}
 
-        # Note that we build vocab using training data
+        # Note that we build vocab using training corpus
         for tweet in train_x:
             processed_tweet = process_tweet(tweet)
             for word in processed_tweet:
@@ -143,7 +143,7 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
         batch_size - number of samples per batch. Must be even
         loop - True or False
         vocab_dict - The words dictionary
-        shuffle - Shuffle the data order
+        shuffle - Shuffle the corpus order
     Yield:
         inputs - Subset of positive and negative examples
         targets - The corresponding labels for the subset
@@ -166,7 +166,7 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
     len_data_pos = len(data_pos)
     len_data_neg = len(data_neg)
 
-    # Get and array with the data indexes
+    # Get and array with the corpus indexes
     pos_index_lines = list(range(len_data_pos))
     neg_index_lines = list(range(len_data_neg))
 
@@ -196,7 +196,7 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
                     stop = True;
                     break;
 
-                # If user wants to keep re-using the data, reset the index
+                # If user wants to keep re-using the corpus, reset the index
                 pos_index = 0
 
                 if shuffle:
@@ -228,7 +228,7 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
                     stop = True;
                     break;
 
-                # If user wants to keep re-using the data, reset the index
+                # If user wants to keep re-using the corpus, reset the index
                 neg_index = 0
 
                 if shuffle:
@@ -249,11 +249,11 @@ def data_generator(data_pos, data_neg, batch_size, loop, vocab_dict, shuffle=Fal
         if stop:
             break;
 
-        # Update the start index for positive data
+        # Update the start index for positive corpus
         # so that it's n_to_take positions after the current pos_index
         pos_index += n_to_take
 
-        # Update the start index for negative data
+        # Update the start index for negative corpus
         # so that it's n_to_take positions after the current neg_index
         neg_index += n_to_take
 

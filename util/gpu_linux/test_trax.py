@@ -1,7 +1,7 @@
 import numpy as np  # regular ol' numpy
 
 from trax import layers as tl  # core building block
-from trax import shapes  # data signatures: dimensionality and type
+from trax import shapes  # corpus signatures: dimensionality and type
 from trax import fastmath  # uses jax, offers numpy on steroids
 
 import trax
