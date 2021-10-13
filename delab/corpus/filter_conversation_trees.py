@@ -1,6 +1,8 @@
 import pandas as pd
+from django_pandas.io import read_frame
 
 from delab.TwConversationTree import TreeNode
+from delab.models import Tweet
 from util.sql_switch import query_sql
 
 
@@ -20,6 +22,17 @@ def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True,
 
     df = query_sql(
         fieldnames=fieldnames)
+
+    return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
+
+
+def get_filtered_conversations(conversation_id, max_orphan_count=4, min_depth=3, merge_subsequent=True, fieldnames=None):
+    # rewrite this for the query_sql-utility
+    if fieldnames is None:
+        fieldnames = get_standard_field_names()
+
+    qs = Tweet.objects.filter(conversation_id=conversation_id).all()
+    df = read_frame(qs, fieldnames=fieldnames)
 
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
@@ -62,6 +75,7 @@ def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
     for useful_tree in useful_trees:
         useful_tree.crop_orphans(max_orphan_count)
         useful_trees_ids += (useful_tree.all_tweet_ids())
+        # TODO why the heck are the integers rounded down at the last two positions!
         useful_trees_conversation_ids.append(useful_tree.data["conversation_id"])
         # useful_number_of_tweets += useful_tree.flat_size()
         # useful_tree.print_tree(0)

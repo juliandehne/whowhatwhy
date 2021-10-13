@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations
+from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations, get_filtered_conversations
 from delab.models import Tweet
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
@@ -28,6 +28,10 @@ class TweetSerializer(serializers.HyperlinkedModelSerializer):
 
 def get_migration_query_set():
     queryset = Tweet.objects.filter(simple_request__topic__title="migration")
+    return get_cropped_tweet_set(queryset)
+
+
+def get_cropped_tweet_set(queryset):
     df = queryset.all().to_dataframe(tweet_fields_used)
     trees, ids, conversation_ids = crop_trees(df)
     queryset = queryset.filter(id__in=ids)
@@ -44,6 +48,15 @@ class TweetViewSet(viewsets.ModelViewSet):
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
 
 
+class TweetSingleViewSet(TweetViewSet):
+    def get_queryset(self):
+        conversation_id = self.kwargs["conversation_id"]
+        queryset = Tweet.objects.filter(simple_request__topic__title="migration", conversation_id=conversation_id)
+        queryset = get_cropped_tweet_set(queryset)
+        # TODO find out why the text api produces more tweets then this one
+        return queryset
+
+
 # ViewSets define the view behavior.
 class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
     queryset = get_migration_query_set()
@@ -53,6 +66,14 @@ class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = tweet_fields_used
     # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
+
+
+class TweetExcelSingleViewSet(TweetExcelViewSet):
+    def get_queryset(self):
+        conversation_id = self.kwargs["conversation_id"]
+        queryset = Tweet.objects.filter(simple_request__topic__title="migration", conversation_id=conversation_id)
+        queryset = get_cropped_tweet_set(queryset)
+        return queryset
 
 
 class TabbedTextRenderer(renderers.BaseRenderer):
@@ -67,7 +88,7 @@ class TabbedTextRenderer(renderers.BaseRenderer):
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
 def get_tabbed_conversation_view(request, conversation_id):
-    trees, ids, conversation_ids = filter_conversations()
+    trees, ids, conversation_ids = get_filtered_conversations(conversation_id)
     if not conversation_id:
         return " ".join(conversation_ids)
 
@@ -76,10 +97,8 @@ def get_tabbed_conversation_view(request, conversation_id):
 
     result = ""
     for tree in trees:
-        if tree.data["conversation_id"] == conversation_id:
-            result = "found the tree, working on the tabbing view"
-
-    return Response(result + str(conversation_id))
+        result += tree.to_string() + "\n\n"
+    return Response(result)
 
 
 @api_view(['GET'])
