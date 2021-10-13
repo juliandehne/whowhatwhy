@@ -1,6 +1,9 @@
+import io
 import json
+import tempfile
+import zipfile
 
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseNotFound, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_renderer_xlsx.mixins import XLSXFileMixin
 from drf_renderer_xlsx.renderers import XLSXRenderer
@@ -9,13 +12,16 @@ from django.utils.encoding import smart_text
 from rest_framework import renderers
 
 # Serializers define the API representation.
-from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.decorators import api_view, renderer_classes, action
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations, get_filtered_conversations, \
     get_conversation_tree
 from delab.models import Tweet
+from .api_util import get_file_name
+
+from .conversation_zip_renderer import create_zip_response_conversation
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
                      'tn_children_pks',
@@ -84,6 +90,11 @@ class TweetExcelSingleViewSet(TweetExcelViewSet):
         queryset = get_cropped_conversation_qs_modelview(self)
         return queryset
 
+    def get_filename(self):
+        conversation_id = self.kwargs["conversation_id"]
+        full = self.kwargs["full"]
+        return get_file_name(conversation_id, full, ".xlsx")
+
 
 def get_cropped_conversation_qs_modelview(model_view):
     conversation_id = model_view.kwargs["conversation_id"]
@@ -108,7 +119,9 @@ def get_all_tabbed_conversation_view(request):
     result = ""
     for tree in trees:
         result += tree.to_string() + "\n\n"
-    return Response(result)
+    response = Response(result)
+    response['Content-Disposition'] = ('attachment; filename={0}'.format(get_file_name("all", "cropped", ".txt")))
+    return response
 
 
 @api_view(['GET'])
@@ -128,4 +141,23 @@ def get_tabbed_conversation_view(request, conversation_id, full):
     result = ""
     for tree in conversation_trees:
         result += tree.to_string() + "\n\n"
-    return Response(result)
+    response = Response(result)
+    response['Content-Disposition'] = ('attachment; filename={0}'.format(get_file_name(conversation_id, full, ".txt")))
+    return response
+
+
+class PassthroughRenderer(renderers.BaseRenderer):
+    """
+        Return data as-is. View should supply a Response.
+    """
+    media_type = ''
+    format = ''
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
+@api_view(['GET'])
+@renderer_classes([PassthroughRenderer])
+def get_zip_view(request, conversation_id):
+    return create_zip_response_conversation(conversation_id, get_file_name(conversation_id, "both", ".zip"))
