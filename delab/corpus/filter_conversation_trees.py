@@ -26,15 +26,25 @@ def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True,
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
 
-def get_filtered_conversations(conversation_id, max_orphan_count=4, min_depth=3, merge_subsequent=True, fieldnames=None):
+def get_filtered_conversations(conversation_id, topic_string, max_orphan_count=4, min_depth=3, merge_subsequent=True,
+                               fieldnames=None):
+    df = get_conversation_dataframe(conversation_id, fieldnames, topic_string)
+
+    return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
+
+
+def get_conversation_dataframe(conversation_id, fieldnames, topic_string):
     # rewrite this for the query_sql-utility
     if fieldnames is None:
         fieldnames = get_standard_field_names()
-
-    qs = Tweet.objects.filter(conversation_id=conversation_id).all()
+    qs = Tweet.objects.filter(conversation_id=conversation_id, simple_request__topic__title=topic_string).all()
     df = read_frame(qs, fieldnames=fieldnames)
+    return df
 
-    return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
+
+def get_conversation_tree(conversation_id, topic_string, fieldnames=None):
+    df = get_conversation_dataframe(conversation_id, fieldnames, topic_string)
+    return convert_to_conversation_trees(df)
 
 
 def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
@@ -49,6 +59,28 @@ def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
     if merge_subsequent:
         df = merge_subsequent_tweets(df)
 
+    trees_roots = convert_to_conversation_trees(df)
+    trees = list(trees_roots.values())
+    # filtering out the trees that are too short
+    useful_trees = []
+    for tree in trees:
+        if tree.get_max_path_length() > min_depth:
+            #  print(tree.get_max_path_length())
+            useful_trees.append(tree)
+    useful_trees_ids = []
+    useful_trees_conversation_ids = []
+    # useful_number_of_tweets = 0
+    for useful_tree in useful_trees:
+        useful_tree.crop_orphans(max_orphan_count)
+        useful_trees_ids += (useful_tree.all_tweet_ids())
+        useful_trees_conversation_ids.append(useful_tree.data["conversation_id"])
+        # useful_number_of_tweets += useful_tree.flat_size()
+        # useful_tree.print_tree(0)
+    # print("we found {} useful tweets".format(useful_number_of_tweets))
+    return useful_trees, useful_trees_ids, useful_trees_conversation_ids
+
+
+def convert_to_conversation_trees(df):
     roots = df[df["in_reply_to_user_id"].isnull()]
     not_roots = df[df["in_reply_to_user_id"].notnull()]
     # print(not_roots.shape)
@@ -62,25 +94,7 @@ def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
     for not_root in not_roots_as_rec:
         if not_root["conversation_id"] in trees_roots:
             trees_roots.get(not_root["conversation_id"]).find_parent_of(TreeNode(not_root))
-    # filtering out the trees that are too short
-    useful_trees = []
-    trees = list(trees_roots.values())
-    for tree in trees:
-        if tree.get_max_path_length() > min_depth:
-            #  print(tree.get_max_path_length())
-            useful_trees.append(tree)
-    useful_trees_ids = []
-    useful_trees_conversation_ids = []
-    # useful_number_of_tweets = 0
-    for useful_tree in useful_trees:
-        useful_tree.crop_orphans(max_orphan_count)
-        useful_trees_ids += (useful_tree.all_tweet_ids())
-        # TODO why the heck are the integers rounded down at the last two positions!
-        useful_trees_conversation_ids.append(useful_tree.data["conversation_id"])
-        # useful_number_of_tweets += useful_tree.flat_size()
-        # useful_tree.print_tree(0)
-    # print("we found {} useful tweets".format(useful_number_of_tweets))
-    return useful_trees, useful_trees_ids, useful_trees_conversation_ids
+    return trees_roots
 
 
 def merge_subsequent_tweets(df):
