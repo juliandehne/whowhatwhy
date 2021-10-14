@@ -1,5 +1,5 @@
 """
-In this file we bundle the methods used for exporting our current corpus as a zip file
+In this file we bundle the methods used for exporting our current data as a zip file
 
 """
 import io

@@ -24,14 +24,14 @@ analyzer = vectorizer.build_analyzer()
 words = vectorizer.get_feature_names()
 tokens = [analyzer(doc) for doc in cleaned_docs]
 dictionary = corpora.Dictionary(tokens)
-corpus = [dictionary.doc2bow(token) for token in tokens]
+data = [dictionary.doc2bow(token) for token in tokens]
 topic_words = [[words for words, _ in topic_model.get_topic(topic)]
                for topic in range(len(set(topics))-1)]
 
 # Evaluate
 coherence_model = CoherenceModel(topics=topic_words,
                                  texts=tokens,
-                                 corpus=corpus,
+                                 data=data,
                                  dictionary=dictionary,
                                  coherence='c_v')
 coherence = coherence_model.get_coherence()

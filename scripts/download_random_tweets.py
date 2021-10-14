@@ -38,7 +38,7 @@ def run():
             while True:
                 if count == 0:
                     break
-                twitter_data: list = json_response.get("corpus")
+                twitter_data: list = json_response.get("data")
                 if twitter_data.get("lang") == "en":
                     print(json.dumps(json_response, indent=4, sort_keys=True))
                     count += -1

@@ -31,10 +31,10 @@ def train_sentiment_classification():
     val_neg = all_negative_tweets[4000:]  # generating validation set for negative tweets
     train_neg = all_negative_tweets[:4000]  # generating training set for nagative tweets
 
-    # Combine training corpus into one set
+    # Combine training data into one set
     train_x = train_pos + train_neg
 
-    # Combine validation corpus into one set
+    # Combine validation data into one set
     val_x = val_pos + val_neg
 
     # Set the labels for the training set (1 for positive, 0 for negative)
@@ -46,11 +46,11 @@ def train_sentiment_classification():
     # Set the random number generator for the shuffle procedure
     rnd.seed(30)
 
-    # Create the training corpus generator
+    # Create the training data generator
     def train_generator(batch_size, shuffle=False):
         return data_generator(train_pos, train_neg, batch_size, True, vocab_dict, shuffle)
 
-    # Create the validation corpus generator
+    # Create the validation data generator
     def val_generator(batch_size, shuffle=False):
         return data_generator(val_pos, val_neg, batch_size, True, vocab_dict, shuffle)
 

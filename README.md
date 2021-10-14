@@ -33,11 +33,12 @@ You can start the project with python3:
 
 # REST API
 
-In order to get the conversations there are three endpoints
+In order to get the conversations there are four endpoints
 
 - <serverurl>/delab/rest/migration/tweets_json/
 - <serverurl>/delab/rest/migration/tweets_excel/
 - <serverurl>/delab/rest/migration/tweets_text/
+- <serverurl>/delab/rest/migration/tweets_zip/
 
 In order to get single conversations you need to specify id and (full|cropped), i.e.
 
@@ -48,3 +49,7 @@ In order to get all conversation_ids that contain a valid cropped conversation t
 - <serverurl>/delab/rest/migration/tweets_text/conversation_ids
 - Note: Firefox will round the last two decimals so use another tool to read the json response, i.e. curl, chrome,
   intellij 
+
+In order to get all conversations bundled as a zip file you can use:
+
+- <serverurl>/delab/rest/migration/tweets_zip/all/(both|cropped|full)

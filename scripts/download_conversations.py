@@ -1,3 +1,5 @@
+import json
+
 from delab.corpus.download_conversations import *
 from delab.tw_connection_util import TwitterStreamConnector
 
@@ -7,7 +9,7 @@ from delab.tw_connection_util import TwitterStreamConnector
 
 
 def run():
-    download_conversations("migration", ["wall", "border"], max_data=True)
+    download_conversations("migration", ["chain", "wall", "immigration", "visa", "europe", "policy", "border"], max_data=True)
 
     # download_conversations("Vaccination", ["covid_19", "vaccine", "getvaccienated", "vaccination"])
     # download_conversations("Migration", ["migration", "UNHCR"])

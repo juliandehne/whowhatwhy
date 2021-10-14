@@ -1,4 +1,4 @@
-""" This corpus structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
+""" This data structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
     It encapsulates the replies to a tweet
 
     Eventually this should be merged with:
@@ -8,7 +8,7 @@
 
 class TreeNode:
     def __init__(self, data):
-        """corpus is a tweet's json object"""
+        """data is a tweet's json object"""
         self.data = data
         self.children = []
         self.max_path_length = 0
@@ -72,7 +72,7 @@ class TreeNode:
         conv_id = []
         child_id = []
         text = []
-        # print(self.corpus['id'])
+        # print(self.data['id'])
         for child in self.children:
             conv_id.append(self.data['id'])
             child_id.append(child.data['id'])

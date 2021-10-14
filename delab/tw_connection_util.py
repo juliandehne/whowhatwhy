@@ -117,10 +117,10 @@ class TwitterStreamConnector:
         return response.json()
 
     def delete_all_rules(self, rules):
-        if rules is None or "corpus" not in rules:
+        if rules is None or "data" not in rules:
             return None
 
-        ids = list(map(lambda rule: rule["id"], rules["corpus"]))
+        ids = list(map(lambda rule: rule["id"], rules["data"]))
         payload = {"delete": {"ids": ids}}
         response = requests.post(
             TWEETS_RULES_URL,

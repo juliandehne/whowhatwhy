@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def save_author_tweet_to_tb(json_result, author_id):
-    if "corpus" in json_result:
-        data = json_result["corpus"]
+    if "data" in json_result:
+        data = json_result["data"]
         for tweet_dict in data:
             if "in_reply_to_user_id" in tweet_dict:
                 in_reply_to_user_id = tweet_dict["in_reply_to_user_id"]
