@@ -37,7 +37,7 @@ def get_conversation_dataframe(conversation_id, fieldnames, topic_string):
     # rewrite this for the query_sql-utility
     if fieldnames is None:
         fieldnames = get_standard_field_names()
-    qs = Tweet.objects.filter(conversation_id=conversation_id, simple_request__topic__title=topic_string).all()
+    qs = Tweet.objects.filter(conversation_id=conversation_id, topic__title=topic_string).all()
     df = read_frame(qs, fieldnames=fieldnames)
     return df
 

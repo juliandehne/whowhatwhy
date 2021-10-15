@@ -22,7 +22,7 @@ from delab.models import Tweet
 from .api_util import get_file_name
 
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
-from ..corpus.api_settings import MERGE_SUBSEQUENT
+from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
                      'tn_children_pks',
@@ -99,7 +99,7 @@ class TweetExcelSingleViewSet(TweetExcelViewSet):
 
 def get_cropped_conversation_qs_modelview(model_view):
     conversation_id = model_view.kwargs["conversation_id"]
-    queryset = Tweet.objects.filter(simple_request__topic__title="migration", conversation_id=conversation_id)
+    queryset = Tweet.objects.filter(topic__title=TOPIC, conversation_id=conversation_id)
     if model_view.kwargs["full"] == "cropped":
         queryset = get_cropped_tweet_set(queryset)
     return queryset
@@ -130,14 +130,8 @@ def get_all_cropped_conversation_ids(request):
 def get_tabbed_conversation_view(request, conversation_id, full):
     if full == "cropped":
         # get_conversation_tree
-        trees, ids, conversation_ids = get_filtered_conversations(conversation_id, "migration",
-                                                                  merge_subsequent=MERGE_SUBSEQUENT)
-        conversation_trees = trees
-        if not conversation_id:
-            return " ".join(conversation_ids)
-
-        if conversation_id not in conversation_ids:
-            return HttpResponseNotFound("The conversation id was not found within the cropped trees")
+        conversation_trees, ids, conversation_ids = get_filtered_conversations(conversation_id, "migration",
+                                                                               merge_subsequent=MERGE_SUBSEQUENT)
     else:
         conversation_trees = get_conversation_tree(conversation_id, "migration", tweet_fields_used).values()
     result = ""

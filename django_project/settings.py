@@ -22,7 +22,7 @@ SECRET_KEY = 'delab'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
-DEBUG = 'true'
+# DEBUG = 'true'
 
 ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
 
@@ -96,8 +96,18 @@ DATABASES = {
         'PASSWORD': 'delab',
         'HOST': 'localhost',
         'PORT': '',
+    },
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
+default_database = os.environ.get('DJANGO_DATABASE', 'default')
+DATABASES['default'] = DATABASES[default_database]
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

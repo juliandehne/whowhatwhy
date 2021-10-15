@@ -46,12 +46,13 @@ def download_conversations_in_all_formats(conversation_id, request, topic, zip_f
         cropped_response = get_file_from_rest(conversation_id, "tweets_excel", full_cropped_string, server_adress,
                                               topic)
         zip_file.writestr(get_file_name(conversation_id, full_cropped_string, ".xlsx"), cropped_response.content)
-        cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_cropped_string, server_adress, topic)
-        zip_file.writestr(get_file_name(conversation_id, full_cropped_string, ".json"), cropped_response.content)
+
+        # cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_cropped_string, server_adress, topic)
+        # zip_file.writestr(get_file_name(conversation_id, full_cropped_string, ".json"), cropped_response.content)
 
     if full == "full" or full == "both":
-        cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_string, server_adress, topic)
-        zip_file.writestr(get_file_name(conversation_id, full_string, ".json"), cropped_response.content)
+        # cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_string, server_adress, topic)
+        # zip_file.writestr(get_file_name(conversation_id, full_string, ".json"), cropped_response.content)
         cropped_response = get_file_from_rest(conversation_id, file_type_text, full_string, server_adress, topic)
         zip_file.writestr(get_file_name(conversation_id, full_string, ".txt"), cropped_response.content)
         cropped_response = get_file_from_rest(conversation_id, "tweets_excel", full_string, server_adress, topic)
@@ -64,8 +65,11 @@ def get_file_from_rest(conversation_id, file_type, full, server_address, topic):
                                                                       file_type,
                                                                       str(conversation_id),
                                                                       full)
+    if file_type == "tweets_json":
+        txt_cropped_url += "?format=json"
     # Get file
     cropped_response = requests.get(txt_cropped_url)
+    cropped_response
     return cropped_response
 
 
