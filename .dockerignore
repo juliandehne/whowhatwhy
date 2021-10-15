@@ -1,0 +1,12 @@
+database/*
+venv/*
+BERTopic/*
+model/*
+
+
+debug.log
+error.log
+
+learning/*
+documentation/reveal/**/*
+

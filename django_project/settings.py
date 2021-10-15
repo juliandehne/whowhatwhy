@@ -24,7 +24,7 @@ SECRET_KEY = 'delab'
 # DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
 # DEBUG = 'true'
 
-ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 
 # Application definition
 
@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'database/sqlite/db.sqlite3'),
     },
     'mysql': {
         'ENGINE': 'django.db.backends.mysql',
@@ -199,3 +199,5 @@ INTERNAL_IPS = [
     '127.0.0.1',
     '0.0.0.0'
 ]
+
+DEBUG=True

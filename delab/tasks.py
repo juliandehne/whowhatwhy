@@ -3,11 +3,11 @@ import logging
 from background_task import background
 
 from delab.corpus.download_conversations import download_conversations
-from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
-
-# this schedules longer running tasks that are regularly polled by the process task that is started in the background
 from delab.models import Tweet
 from django.db.models import Q
+from background_task.models import Task
+from background_task.models_completed import CompletedTask
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -36,3 +36,37 @@ def update_sentiments():
         tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
         tweet.sentiment_value = sentiment_values.get(tweet.text, None)
         tweet.save()
+
+
+def get_tasks_status():
+    now = timezone.now()
+
+    # pending tasks will have `run_at` column greater than current time.
+    # Similar for running tasks, it shall be
+    # greater than or equal to `locked_at` column.
+    # Running tasks won't work with SQLite DB,
+    # because of concurrency issues in SQLite.
+    pending_tasks_qs = Task.objects.filter(run_at__gt=now).all()
+    running_tasks_qs = Task.objects.filter(locked_at__gte=now).all()
+
+    # Completed tasks goes in `CompletedTask` model.
+    # I have picked all, you can choose to filter based on what you want.
+    completed_tasks_qs = CompletedTask.objects.all()
+
+    # main logic here to return this as a response.
+
+    # just for test
+    print(pending_tasks_qs, running_tasks_qs, completed_tasks_qs)
+    return pending_tasks_qs, running_tasks_qs, completed_tasks_qs
+
+
+@background(schedule=1)
+def start_first_task():
+    print("started_first_task")
+    start_second_task(verbose_name="second_tasks",
+                      schedule=timezone.now())
+
+
+@background(schedule=1)
+def start_second_task():
+    print("started_second_task")

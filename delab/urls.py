@@ -4,7 +4,8 @@ from rest_framework import routers
 
 from delab.api.view_sets import TweetExcelViewSet, TweetViewSet, get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
-    get_all_cropped_conversation_ids, TweetExcelSingleViewSet, TweetSingleViewSet, get_zip_view, get_full_zip_view
+    get_all_cropped_conversation_ids, TweetExcelSingleViewSet, TweetSingleViewSet, get_zip_view, get_full_zip_view, \
+    start_tasks
 
 from .views import (
     SimpleRequestCreateView,
@@ -36,6 +37,7 @@ urlpatterns = [
     path('rest/migration/tweets_text/conversation_ids', get_cropped_conversation_ids),
     path('rest/migration/tweets_text/all', get_all_cropped_conversation_ids),
     path('rest/migration/tweets_zip/conversation/<int:conversation_id>', get_zip_view),
-    path('rest/migration/tweets_zip/all/<str:full>', get_full_zip_view)
+    path('rest/migration/tweets_zip/all/<str:full>', get_full_zip_view),
+    path('test/tasks', start_tasks)
     # path('rest/migration/tweets_excel/conversation/<int:conversation_id>/', TweetExcelSingleViewSet.as_view),
 ]
