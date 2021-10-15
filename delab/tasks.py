@@ -9,6 +9,8 @@ from background_task.models import Task
 from background_task.models_completed import CompletedTask
 from django.utils import timezone
 
+from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,11 +20,13 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
         download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data)
-        # update_sentiments()
-        # update_sentiment_flows()
+        update_sentiments(simple_request_id,
+                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                          schedule=timezone.now())
 
 
-def update_sentiments():
+@background(schedule=1)
+def update_sentiments(simple_request_id=-1):
     from delab.sentiment.sentiment_classification import classify_tweet_sentiment
     logger.info("updating sentiments")
     # importing here to improve server startup time
@@ -37,8 +41,16 @@ def update_sentiments():
         tweet.sentiment_value = sentiment_values.get(tweet.text, None)
         tweet.save()
 
+    update_flows(verbose_name="flow_analysis_{}".format(simple_request_id),
+                 schedule=timezone.now())
 
-def get_tasks_status():
+
+@background(schedule=1)
+def update_flows():
+    update_sentiment_flows()
+
+
+def get_tasks_status(simple_request_id):
     now = timezone.now()
 
     # pending tasks will have `run_at` column greater than current time.
@@ -46,8 +58,9 @@ def get_tasks_status():
     # greater than or equal to `locked_at` column.
     # Running tasks won't work with SQLite DB,
     # because of concurrency issues in SQLite.
-    pending_tasks_qs = Task.objects.filter(run_at__gt=now).all()
-    running_tasks_qs = Task.objects.filter(locked_at__gte=now).all()
+    # pending_tasks_qs = Task.objects.filter(run_at__gt=now).all()
+    # running_tasks_qs = Task.objects.filter(locked_at__gte=now).all()
+    running_tasks_qs = Task.objects.filter(verbose_name__contains=simple_request_id).all()
 
     # Completed tasks goes in `CompletedTask` model.
     # I have picked all, you can choose to filter based on what you want.
@@ -56,17 +69,6 @@ def get_tasks_status():
     # main logic here to return this as a response.
 
     # just for test
-    print(pending_tasks_qs, running_tasks_qs, completed_tasks_qs)
-    return pending_tasks_qs, running_tasks_qs, completed_tasks_qs
-
-
-@background(schedule=1)
-def start_first_task():
-    print("started_first_task")
-    start_second_task(verbose_name="second_tasks",
-                      schedule=timezone.now())
-
-
-@background(schedule=1)
-def start_second_task():
-    print("started_second_task")
+    # print(pending_tasks_qs, running_tasks_qs, completed_tasks_qs)
+    # return pending_tasks_qs, running_tasks_qs, completed_tasks_qs
+    return running_tasks_qs

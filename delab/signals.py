@@ -27,7 +27,7 @@ def process_simple_request(sender, instance, created, **kwargs):
         download_conversations_scheduler(instance.topic.title,
                                          cleaned_hashtags,
                                          simple_request_id=instance.pk,
-                                         verbose_name="simple_request/{}".format(instance.pk),
+                                         verbose_name="simple_request_{}".format(instance.pk),
                                          schedule=timezone.now(),
                                          simulate=False, max_data=instance.max_data)
 

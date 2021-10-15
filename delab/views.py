@@ -1,6 +1,8 @@
+from background_task.models import Task
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView
@@ -18,6 +20,7 @@ from django.views.generic import (
 
 from delab.models import SimpleRequest, Tweet, TwTopic
 import logging
+from .tasks import get_tasks_status
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -29,7 +32,21 @@ class SimpleRequestListView(ListView):
     paginate_by = 5
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+def simple_request_proxy(request, pk):
+    """
+    The idea is that if the download_process is still running in the background, the Task_Status_view shoudl be displayed.
+    Otherwise, the downloaded conversations should be displayed!
+    :param request:
+    :param simple_request_id:
+    :return:
+    """
+    running_tasks = get_tasks_status(pk)
+    if len(running_tasks) > 0:
+        return redirect('simple-request-status', pk=pk)
+    else:
+        return redirect('delab-conversations-for-request', pk=pk)
+
+
 class ConversationListView(ListView):
     model = Tweet
     template_name = 'delab/tweet_list.html'  # <app>/<model>_<viewtype>.html
@@ -39,7 +56,7 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent_id__isnull=True))\
+        return Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent_id__isnull=True)) \
             .order_by('-created_at')
 
     def get_context_data(self, **kwargs):
@@ -91,7 +108,30 @@ class TopicCreateView(SuccessMessageMixin, CreateView):
     success_message = "The Topic has been created!"
 
 
-# @class ConversationView(ListView)
+@method_decorator(csrf_exempt, name='dispatch')
+class TaskStatusView(ListView):
+    model = Task
+    template_name = 'delab/task_status.html'
+    context_object_name = 'tasks'
+    fields = ['task_name', "task_params", "verbose_name", "last_error", "run_at"]
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(TaskStatusView, self).get_context_data(**kwargs)
+        simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
+        context['simple_request'] = simple_request
+        context['tweets_downloaded'] = simple_request.tweet_set.count()
+        return context
+
+    def get_queryset(self):
+        pk = self.request.resolver_match.kwargs['pk']
+        tasks = Task.objects.filter(verbose_name__contains=pk)
+        if tasks.count() == 0:
+            redirect("delab-conversations-for-request", pk=pk)
+        else:
+            return tasks
+
+        # @class ConversationView(ListView)
+
 
 logging.config.dictConfig({
     'version': 1,

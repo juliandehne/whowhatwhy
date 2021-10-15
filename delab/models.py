@@ -26,7 +26,7 @@ SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-Z
 def validate_exists(title):
     try:
         simple_request = SimpleRequest.objects.filter(title=title).get()
-        redirect_url = reverse('delab-conversations-for-request', kwargs={'pk': simple_request.pk})
+        redirect_url = reverse('simple-request-proxy', kwargs={'pk': simple_request.pk})
         # redirect_url = resolve('/conversations/simplerequest/{}'.format(simple_request.pk))
         message_exists = '{} was queried before. Go to <a href="{}"> Result Page </a> to see the results'.format(
             simple_request.title,
@@ -81,7 +81,7 @@ class SimpleRequest(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('delab-conversations-for-request', kwargs={'pk': self.pk})
+        return reverse('simple-request-proxy', kwargs={'pk': self.pk})
 
     @classmethod
     def create(cls, title):

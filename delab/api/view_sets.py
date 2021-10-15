@@ -21,7 +21,7 @@ from delab.corpus.filter_conversation_trees import crop_trees, filter_conversati
     get_conversation_tree
 from delab.models import Tweet
 from .api_util import get_file_name
-from ..tasks import start_first_task, start_second_task, get_tasks_status
+
 
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
@@ -168,10 +168,3 @@ def get_full_zip_view(request, full):
                                                  get_file_name("all_conversations", full, ".zip"), full)
 
 
-@api_view(["GET"])
-@renderer_classes([PassthroughRenderer])
-def start_tasks(request):
-    start_first_task(verbose_name="first_tasks",
-                     schedule=timezone.now())
-    response = Response("started_cascading_tasks")
-    return response

@@ -1,0 +1,23 @@
+{% extends "blog/base.html" %}
+{% block content %}
+
+    <h4>Processing Query {% firstof simple_request.title %} ...</h4>
+    <ul>
+        {% for task in tasks %}
+            <li>
+                {% if "download" in task.task_name %}
+                    <span> Downloading Tweets ..., {{ tweets_downloaded }} tweets downloaded.  </span>
+                {% elif "sentiment" in task.task_name %}
+                    <span> Analyzing Sentiments in Tweets ...
+                         </span>
+                {% elif "flow" in task.task_name %}
+                    <span> Analyzing the Conversation Flow ...
+                          </span>
+                {% else %}
+
+                {% endif %}
+            </li>
+
+        {% endfor %}
+    </ul>
+{% endblock content %}
