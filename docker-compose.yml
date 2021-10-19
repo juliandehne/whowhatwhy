@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.3"
 
 services:
   db:
@@ -9,34 +9,21 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-  django-server:
-    image: delab-server:latest
-    command: DJANGO_DATABASE='postgres' python manage.py runserver 0.0.0.0:8000
+  migration_and_server:
+    build: .
+    image: delab-server
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
     ports:
       - "8000:8000"
     depends_on:
       - db
-  migration:
-    image: delab-server:latest
-    command: python manage.py migrate
-    volumes:
-      - .:/code
-    depends_on:
-      - db
-  train_sentiment_model:
-    image: delab-server:latest
-    command: python manage.py runscript train_sentiment_classifier
-    volumes:
-      - .:/code
-    depends_on:
-      - db
-  process_tasks:
-    image: delab-server:latest
-    command: python manage.py process_tasks -v 2 --log-std --duration -1
-    volumes:
-      - .:/code
-    depends_on:
-      - migration
+    environment:
+      - WAIT_HOSTS=db:5432
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=30
+      - WAIT_HOST_CONNECT_TIMEOUT=30
+      - DJANGO_DATABASE=postgres
+
 

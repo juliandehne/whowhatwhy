@@ -1,0 +1,18 @@
+train_sentiment_model:
+  image: delab-server:latest
+  command: python manage.py runscript train_sentiment_classifier
+  volumes:
+    - .:/code
+  depends_on:
+    - migration_and_server
+
+process_tasks:
+  image: delab-server:latest
+  command: python manage.py process_tasks -v 2 --log-std --duration -1
+  volumes:
+    - .:/code
+  depends_on:
+    - migration_and_server
+
+
+&& python manage.py migrate && python manage.py runserver 0.0.0.0:8000

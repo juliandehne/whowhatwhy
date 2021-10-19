@@ -89,25 +89,32 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'database/sqlite/db.sqlite3'),
     },
-    'mysql': {
+
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
+        'PORT': 5432,
+    }
+}
+"""
+'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'delab',
         'USER': 'delab',
         'PASSWORD': 'delab',
         'HOST': 'localhost',
         'PORT': '',
-    },
-    'postgres': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
     }
-}
-default_database = os.environ.get('DJANGO_DATABASE', 'default')
+"""
+
+
+default_database = os.getenv('DJANGO_DATABASE', 'default')
 DATABASES['default'] = DATABASES[default_database]
+print("using database: {}".format(DATABASES["default"]))
+
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -190,7 +197,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 BACKGROUND_TASK_RUN_ASYNC = False
 MAX_RUN_TIME = 2000000
-BACKGROUND_TASK_ASYNC_THREADS = 300
+# BACKGROUND_TASK_ASYNC_THREADS = 300
 # BACKGROUND_TASK_ASYNC_THREADS = 4
 
 TIME_ZONE = 'Europe/Berlin'
@@ -200,4 +207,8 @@ INTERNAL_IPS = [
     '0.0.0.0'
 ]
 
-DEBUG=True
+DEBUG = True
+
+# delab_settings
+
+MAX_CANDIDATES = 10

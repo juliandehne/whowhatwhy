@@ -11,6 +11,7 @@ from delab.magic_http_strings import TWEETS_SEARCH_All_URL
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import TwitterAPIWrapper
 from delab.tw_connection_util import TwitterConnector
+from django_project.settings import MAX_CANDIDATES
 from util.abusing_lists import powerset
 
 logger = logging.getLogger(__name__)
@@ -107,7 +108,7 @@ def get_matching_conversation(connector,
                               max_conversation_length=10000,
                               min_conversation_length=10,
                               language="lang:en",
-                              max_number_of_candidates=500):
+                              max_number_of_candidates=MAX_CANDIDATES):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:

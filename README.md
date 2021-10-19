@@ -31,6 +31,13 @@ You can start the project with python3:
 - run "python manage.py process_tasks -v 2 --log-std --duration -1 # this will allow the twitter download tasks to be
   started in the background
 
+# Deploy with docker
+sudo apt install docker docker-compose
+docker build . -t delab-server
+docker-compose down --volumes --remove-orphans
+docker-compose up
+
+
 # REST API
 
 In order to get the conversations there are four endpoints
