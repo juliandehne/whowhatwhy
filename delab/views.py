@@ -1,3 +1,5 @@
+from logging.handlers import RotatingFileHandler
+
 from background_task.models import Task
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -154,16 +156,18 @@ logging.config.dictConfig({
             'formatter': 'console'
         },
         'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'file',
-            'filename': 'debug.log'
+            'level': 'DEBUG',
+            'class': "logging.handlers.RotatingFileHandler",
+            "filename": "./database/logs/debug.log",
+            "maxBytes": 10000,
+            "backupCount": 10,
         },
         'file_error': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'formatter': 'file',
-            'filename': 'error.log'
+            'class': "logging.handlers.RotatingFileHandler",
+            "filename": "./database/logs/error.log",
+            "maxBytes": 10000,
+            "backupCount": 10,
         }
     },
     'loggers': {

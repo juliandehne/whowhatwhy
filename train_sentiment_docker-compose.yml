@@ -1,0 +1,9 @@
+train_sentiment_model:
+  image: delab-server
+  command: python manage.py runscript train_sentiment_classifier
+  volumes:
+    - ./model:/code/model
+  depends_on:
+    - migrate
+  environment:
+    - DJANGO_DATABASE=postgres

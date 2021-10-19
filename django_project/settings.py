@@ -116,8 +116,8 @@ DATABASES = {
     }
 """
 
-# default_database = os.getenv('DJANGO_DATABASE', 'default')
-default_database= "postgres_local"
+default_database = os.getenv('DJANGO_DATABASE', 'postgres_local')
+# default_database= "postgres_local"
 DATABASES['default'] = DATABASES[default_database]
 print("using database: {}".format(DATABASES["default"]))
 
