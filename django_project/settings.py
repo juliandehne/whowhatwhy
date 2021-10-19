@@ -31,7 +31,6 @@ ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 INSTALLED_APPS = [
     'treenode',
     'rest_framework',
-    'debug_toolbar',
     'django_filters',
     'delab.apps.DelabConfig',
     'blog.apps.BlogConfig',
@@ -57,8 +56,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'django_project.urls'
@@ -95,7 +93,7 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': 5432,
     }
 }

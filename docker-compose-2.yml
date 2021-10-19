@@ -14,5 +14,3 @@ process_tasks:
   depends_on:
     - migration_and_server
 
-
-&& python manage.py migrate && python manage.py runserver 0.0.0.0:8000
