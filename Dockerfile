@@ -25,3 +25,4 @@ RUN pip install trax
 COPY . /code/
 # Add docker-compose-wait tool -------------------
 RUN export DJANGO_DATABASE=postgres
+

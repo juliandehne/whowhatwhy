@@ -93,7 +93,15 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',
+        'HOST': 'postgres',
+        'PORT': 5432,
+    },
+    'postgres_local': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
         'PORT': 5432,
     }
 }
@@ -108,11 +116,10 @@ DATABASES = {
     }
 """
 
-
-default_database = os.getenv('DJANGO_DATABASE', 'default')
+# default_database = os.getenv('DJANGO_DATABASE', 'default')
+default_database= "postgres_local"
 DATABASES['default'] = DATABASES[default_database]
 print("using database: {}".format(DATABASES["default"]))
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

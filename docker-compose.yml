@@ -1,50 +1,74 @@
 version: "3.3"
 
 services:
-  db:
+  postgres:
     image: postgres
     volumes:
-      - ./database/postgresql/db:/var/lib/postgresql/data
+      - ./database/postgresql:/var/lib/postgresql
+      - ./database/postgresql/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/
 
-  migration:
-    build: .
+  makemigrations:
     image: delab-server
-    command: python manage.py makemigrations
+    command: python manage.py makemigrations blog delab users
     volumes:
       - .:/code
     depends_on:
-      - db
+      - pre_migration
     environment:
       - DJANGO_DATABASE=postgres
 
-  makemigration:
-    build: .
+  migrate:
     image: delab-server
     command: python manage.py migrate
     volumes:
       - .:/code
     depends_on:
-      - migration
+      - makemigrations
     environment:
       - DJANGO_DATABASE=postgres
 
   run_server:
-    build: .
     image: delab-server
     command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
     ports:
       - "8000:8000"
     expose:
       - "8000"
     depends_on:
-      - makemigration
+      - migrate
     environment:
       - DJANGO_DATABASE=postgres
 
+  train_sentiment_model:
+    image: delab-server
+    command: python manage.py runscript train_sentiment_classifier
+    volumes:
+      - ./model:/code/model
+    depends_on:
+      - migrate
+    environment:
+      - DJANGO_DATABASE=postgres
 
+  process_tasks:
+    image: delab-server
+    command: python manage.py process_tasks -v 2 --log-std --duration -1
+    depends_on:
+      - migrate
+    environment:
+      - DJANGO_DATABASE=postgres
+
+  create_super_user:
+    image: delab-server
+    command: python manage.py createsuperuser --noinput
+    depends_on:
+      - migrate
+    environment:
+      - DJANGO_DATABASE=postgres
+      - DJANGO_SUPERUSER_PASSWORD=delab
+      - DJANGO_SUPERUSER_USERNAME=delab
+      - DJANGO_SUPERUSER_EMAIL=julian.dehne@uni-goettingen.de

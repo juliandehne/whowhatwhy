@@ -2,11 +2,15 @@
 # which could be django or jupyter in our case
 
 import importlib
+import logging
 import sqlite3
 
 import pandas as pd
 from IPython import get_ipython
+from django.db.utils import ProgrammingError
 from django_pandas.io import read_frame
+
+from delab.models import Tweet
 
 
 def query_sql(app="delab",
@@ -25,13 +29,17 @@ def query_sql(app="delab",
             table_string,
             cnx)
     else:
-        module_name = app + ".models"
-        module = importlib.import_module(module_name)
-        class_name = get_class_mapping(table_name)
-        class_ = getattr(module, class_name)
-        instance = class_()
-        qs = class_.objects.all()
-        df = read_frame(qs, fieldnames=fieldnames)
+        try:
+            module_name = app + ".models"
+            module = importlib.import_module(module_name)
+            class_name = get_class_mapping(table_name)
+            class_ = getattr(module, class_name)
+            instance = class_()
+            qs = class_.objects.all()
+            df = read_frame(qs, fieldnames=fieldnames)
+        except ProgrammingError:
+            logging.error("tried to get query_set but gave error")
+            return Tweet.objects.none()
     return df
 
 

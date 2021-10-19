@@ -1,19 +1,14 @@
-import io
-import json
-import tempfile
-import zipfile
-from django.utils import timezone
+import logging
 
-from django.http import HttpResponseNotFound, HttpResponse
+from django.db.utils import ProgrammingError
+from django.utils.encoding import smart_text
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_renderer_xlsx.mixins import XLSXFileMixin
 from drf_renderer_xlsx.renderers import XLSXRenderer
-from rest_framework import serializers, viewsets
-from django.utils.encoding import smart_text
 from rest_framework import renderers
-
+from rest_framework import serializers, viewsets
 # Serializers define the API representation.
-from rest_framework.decorators import api_view, renderer_classes, action
+from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
@@ -21,8 +16,6 @@ from delab.corpus.filter_conversation_trees import crop_trees, filter_conversati
     get_conversation_tree
 from delab.models import Tweet
 from .api_util import get_file_name
-
-
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
 
@@ -62,26 +55,34 @@ def get_cropped_tweet_set(queryset):
 
 # ViewSets define the view behavior.
 class TweetViewSet(viewsets.ModelViewSet):
-    queryset = get_migration_query_set()
+    queryset = Tweet.objects.none()
     serializer_class = TweetSerializer
     filter_backends = [DjangoFilterBackend]
     # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
     filterset_fields = tweet_fields_used
+
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    def get_queryset(self):
+        return get_migration_query_set()
 
 
 # ViewSets define the view behavior.
 class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
-    queryset = get_migration_query_set()
+    queryset = Tweet.objects.none()
     serializer_class = TweetSerializer
     renderer_classes = (XLSXRenderer,)
     filename = 'twitter_migration_export.xlsx'
     filter_backends = [DjangoFilterBackend]
     filterset_fields = tweet_fields_used
+
     # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
+    def get_queryset(self):
+        return get_migration_query_set()
 
 
 class TweetSingleViewSet(TweetViewSet):
+    queryset = Tweet.objects.none()
+
     def get_queryset(self):
         queryset = get_cropped_conversation_qs_modelview(self)
         # TODO find out why the text api produces more tweets then this one
@@ -166,5 +167,3 @@ def get_zip_view(request, conversation_id):
 def get_full_zip_view(request, full):
     return create_full_zip_response_conversation(request,
                                                  get_file_name("all_conversations", full, ".zip"), full)
-
-
