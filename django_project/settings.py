@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import pathlib
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -215,5 +217,41 @@ INTERNAL_IPS = [
 DEBUG = True
 
 # delab_settings
-
 MAX_CANDIDATES = 10
+
+# LOGGING
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 'filename': 'debug.log'
+            'filename': os.getcwd() + "/logs/debug.log",
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+        },
+        'file_error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 'filename': 'debug.log'
+            'filename': os.getcwd() + "/logs/error.log",
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+        },
+
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'file', 'file_error'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

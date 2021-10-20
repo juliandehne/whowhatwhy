@@ -14,9 +14,6 @@ from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_mo
 
 
 def train_sentiment_classification():
-    nltk.download('twitter_samples')
-    nltk.download('stopwords')
-
     all_positive_tweets, all_negative_tweets = load_tweets()
 
     # View the total number of positive and negative tweets.
@@ -58,30 +55,7 @@ def train_sentiment_classification():
     def test_generator(batch_size, shuffle=False):
         return data_generator(val_pos, val_neg, batch_size, False, vocab_dict, shuffle)
 
-    # Build the vocabulary
-    # Unit Test Note - There is no test set here only train/val
-    django_dictionary_count = SADictionary.objects.filter(title=TASK_DESCRIPTION).count()
-
-    # the dictionary is always written to the db, needs to run only once
-    if django_dictionary_count > 0:
-        django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
-        vocab_dict = json.loads(django_dictionary.dictionary_string)
-    else:
-        # Include special tokens
-        # started with pad, end of line and unk tokens
-        vocab_dict = {'__PAD__': 0, '__</e>__': 1, '__UNK__': 2}
-
-        # Note that we build vocab using training corpus
-        for tweet in train_x:
-            processed_tweet = process_tweet(tweet)
-            for word in processed_tweet:
-                if word not in vocab_dict:
-                    vocab_dict[word] = len(vocab_dict)
-
-        print("Total words in vocab are", len(vocab_dict))
-
-        django_dictionary = SADictionary.create(json.dumps(vocab_dict), TASK_DESCRIPTION)
-        django_dictionary.save()  # saving the vocabulary to db for later user
+    vocab_dict = update_dictionary(train_x)
 
     batch_size = 16
     random_seed = 271
@@ -108,6 +82,34 @@ def train_sentiment_classification():
 
     # training_loop = train_model(model, train_task, eval_task, 100, output_dir_expand,
     # random_seed=31) model = training_loop.eval_model
+
+
+def update_dictionary(tweets):
+    # Build the vocabulary
+    # Unit Test Note - There is no test set here only train/val
+    django_dictionary_count = SADictionary.objects.filter(title=TASK_DESCRIPTION).count()
+    # the dictionary is always written to the db, needs to run only once
+    if django_dictionary_count > 0:
+        django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
+        vocab_dict = json.loads(django_dictionary.dictionary_string)
+    else:
+        # Include special tokens
+        # started with pad, end of line and unk tokens
+        vocab_dict = {'__PAD__': 0, '__</e>__': 1, '__UNK__': 2}
+
+        # Note that we build vocab using training corpus
+        for tweet in tweets:
+            processed_tweet = process_tweet(tweet)
+            for word in processed_tweet:
+                if word not in vocab_dict:
+                    vocab_dict[word] = len(vocab_dict)
+
+        print("Total words in vocab are", len(vocab_dict))
+
+        SADictionary.objects.all().filter(title=TASK_DESCRIPTION).delete()
+        django_dictionary = SADictionary.create(json.dumps(vocab_dict), TASK_DESCRIPTION)
+        django_dictionary.save()  # saving the vocabulary to db for later user
+    return vocab_dict
 
 
 def train_model(classifier, train_task, eval_task, n_steps, output_dir, random_seed):

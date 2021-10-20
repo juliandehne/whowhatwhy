@@ -134,16 +134,16 @@ from django.utils.safestring import mark_safe
 class Tweet(TreeNodeModel):
     treenode_display_field = 'text'
 
-    twitter_id = models.IntegerField(unique=True)
+    twitter_id = models.BigIntegerField(unique=True)
     text = models.TextField()
-    author_id = models.IntegerField()
-    in_reply_to_status_id = models.IntegerField(null=True)
-    in_reply_to_user_id = models.IntegerField(null=True)
+    author_id = models.BigIntegerField()
+    in_reply_to_status_id = models.BigIntegerField(null=True)
+    in_reply_to_user_id = models.BigIntegerField(null=True)
     created_at = models.DateTimeField()
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
     sentiment_value = models.FloatField(null=True)  # should be mapped between 0 and 1 with 1.0 being very positive
     sentiment = models.TextField(null=True)  # a shortcut, true is very positive, false is very negative
-    conversation_id = models.IntegerField()
+    conversation_id = models.BigIntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default="unk")

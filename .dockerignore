@@ -3,9 +3,15 @@ venv/*
 BERTopic/*
 model/*
 
+logs/debug.log
+logs/error.log
 
-debug.log
-error.log
+logs/server/debug.log
+logs/server/error.log
+
+logs/tasks/debug.log
+logs/tasks/error.log
+
 
 learning/*
 documentation/reveal/**/*

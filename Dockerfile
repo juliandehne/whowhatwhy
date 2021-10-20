@@ -23,6 +23,7 @@ RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pyto
 RUN pip install -r requirements-docker.txt
 RUN pip install trax
 COPY . /code/
+RUN python /code/delab/sentiment/download_nltk.py
 # Add docker-compose-wait tool -------------------
 RUN export DJANGO_DATABASE=postgres
 

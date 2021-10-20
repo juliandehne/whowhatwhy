@@ -35,10 +35,11 @@ def classifier(vocab_size, embedding_dim=256, output_dim=2, mode='train'):
 
 
 def get_model_path():
-    output_dir = 'model/'
-    output_dir_expand = os.path.expanduser(output_dir)
-    print(output_dir_expand)
-    return output_dir_expand
+    # output_dir = os.getcwd() + '/model/'
+    output_dir = "model/"
+    # output_dir_expand = os.path.expanduser(output_dir)
+    print("using as trained sentiment model path {}".format(output_dir))
+    return output_dir
 
 
 def tweet_to_tensor(tweet, vocab_dict, unk_token='__UNK__', verbose=False):

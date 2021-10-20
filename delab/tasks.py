@@ -28,6 +28,7 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
 @background(schedule=1)
 def update_sentiments(simple_request_id=-1):
     from delab.sentiment.sentiment_classification import classify_tweet_sentiment
+    from delab.sentiment.sentiment_training import update_dictionary
     logger.info("updating sentiments")
     # importing here to improve server startup time
 
@@ -35,6 +36,7 @@ def update_sentiments(simple_request_id=-1):
     # tweet_strings = tweets.values_list(["text"], flat=True)
     # print(tweet_strings[1:3])
     tweet_strings = list(map(lambda x: x.text, tweets))
+    update_dictionary(tweet_strings)
     predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
     for tweet in tweets:
         tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")

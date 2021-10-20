@@ -47,8 +47,8 @@ services:
     image: delab-server
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./database/logs:/code/database/logs
-      - ./model:/code/model
+      - ./logs/server:/code/logs
+      - ./media:/code/media
     ports:
       - "8000:8000"
     expose:
@@ -61,6 +61,10 @@ services:
   process_tasks:
     image: delab-server
     command: python manage.py process_tasks -v 2 --log-std --duration -1
+    volumes:
+      - ./logs/tasks:/code/logs
+      - ./model:/code/model
+      - ./media:/code/media
     depends_on:
       - migrate
     environment:
