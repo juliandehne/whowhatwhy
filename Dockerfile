@@ -21,7 +21,7 @@ COPY requirements-docker.txt /code/
 RUN pip install --upgrade pip
 RUN pip install psycopg2-binary
 RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-RUN pip install -r requirements-docker.txt \
+RUN pip install -r requirements-docker.txt
 RUN python /code/delab/sentiment/download_nltk.py
 
 RUN pip install trax==1.3.9
