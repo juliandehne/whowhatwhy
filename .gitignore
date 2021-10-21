@@ -138,3 +138,5 @@ error.log
 learning/*
 documentation/reveal/**/*
 
+/database/postgresql
+

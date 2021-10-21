@@ -12,33 +12,13 @@ services:
       - POSTGRES_PASSWORD=postgres
       - PGDATA=/var/lib/postgresql/data/
 
-  makemigrations:
-    image: delab-server
-    command: python manage.py makemigrations blog delab users
-    volumes:
-      - .:/code
-    depends_on:
-      - postgres
-    environment:
-      - DJANGO_DATABASE=postgres
-
   migrate:
     image: delab-server
-    command: python manage.py migrate
+    command: bash -c "python manage.py makemigrations blog delab users && python manage.py migrate && python manage.py createsuperuser --noinput"
     volumes:
-      - .:/code
+      - ./logs/migrate:/code/logs
     depends_on:
-      - makemigrations
-    environment:
-      - DJANGO_DATABASE=postgres
-
-  create_super_user:
-    image: delab-server
-    command: python manage.py createsuperuser --noinput
-    volumes:
-      - .:/code
-    depends_on:
-      - migrate
+      - postgres
     environment:
       - DJANGO_DATABASE=postgres
       - DJANGO_SUPERUSER_PASSWORD=delab
@@ -50,19 +30,19 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./logs/server:/code/logs
-      - ./media:/code/media
+      - ./database/media:/code/media
     ports:
       - "8000:8000"
     expose:
       - "8000"
     depends_on:
-      - create_super_user
+      - migrate
     environment:
       - DJANGO_DATABASE=postgres
 
   process_tasks:
     image: delab-server
-    command: python manage.py process_tasks -v 2 --log-std --duration -1
+    command: python manage.py process_tasks -v 2 --log-std --duration -1 --sleep 20
     volumes:
       - ./logs/tasks:/code/logs
       - ./model:/code/model
