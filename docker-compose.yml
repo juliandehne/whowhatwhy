@@ -35,6 +35,8 @@ services:
   create_super_user:
     image: delab-server
     command: python manage.py createsuperuser --noinput
+    volumes:
+      - .:/code
     depends_on:
       - migrate
     environment:
