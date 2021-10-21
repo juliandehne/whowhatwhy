@@ -46,7 +46,7 @@ services:
     volumes:
       - ./logs/tasks:/code/logs
       - ./model:/code/model
-      - ./media:/code/media
+      - ./database/media:/code/media
     depends_on:
       - migrate
     environment:
