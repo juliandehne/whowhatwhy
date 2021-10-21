@@ -24,7 +24,7 @@ RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pyto
 RUN pip install -r requirements-docker.txt
 
 RUN pip install trax==1.3.9
-RUN pip uninstall jax
+RUN pip uninstall -y jax
 RUN pip install --upgrade "jax[cpu]"
 
 COPY . /code/
