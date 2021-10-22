@@ -7,7 +7,7 @@ from delab.corpus.download_conversations import download_conversations
 from delab.models import Tweet
 from django.db.models import Q
 from background_task.models import Task
-from background_task.models_completed import CompletedTask
+from background_task.models import CompletedTask
 from django.utils import timezone
 
 from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
