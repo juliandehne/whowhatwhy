@@ -15,7 +15,7 @@ python-dateutil==2.8.0
 pytz==2018.5
 s3transfer==0.2.0
 whitenoise==4.1.2
-django-background-tasks==1.1.13
+django-background-tasks==1.2.5
 django-reset-migrations==0.4.0
 six<2.0.0
 django-utils-six==2.0

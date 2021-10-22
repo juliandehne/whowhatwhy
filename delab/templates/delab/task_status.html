@@ -6,7 +6,7 @@
         {% for task in tasks %}
             <li>
                 {% if "download" in task.task_name %}
-                    <span> Downloading Tweets ...  </span>
+                    <span> Downloading Tweets ... , {{ tweets_downloaded }} tweets downloaded. </span>
                 {% elif "author" in task.task_name %}
                     <span>{{ tweets_downloaded }} tweets downloaded.</span>
                     <span> Downloading author details ...
@@ -32,7 +32,7 @@
     <script>
         window.setTimeout(function () {
             window.location.reload();
-        }, 60000);
+        }, 20000);
     </script>
 {% endblock content %}
 
