@@ -9,11 +9,12 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import pathlib
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -224,7 +225,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'level': 'DEBUG',
         },
         'file': {
             'level': 'DEBUG',
@@ -252,7 +253,9 @@ LOGGING = {
         },
     },
 }
+logging.getLogger("treenode").setLevel(logging.WARNING)
 
 # delab_settings
-MAX_CANDIDATES = 10
+# max candidates between 10 and 500
+MAX_CANDIDATES = 30
 TRAX_CAPABILITIES = False

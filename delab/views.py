@@ -127,10 +127,13 @@ class TaskStatusView(ListView):
     def get_queryset(self):
         pk = self.request.resolver_match.kwargs['pk']
         tasks = Task.objects.filter(verbose_name__contains=pk)
+        return tasks
+
+    def dispatch(self, request, *args, **kwargs):
+        # check if there is some video onsite
+        pk = self.request.resolver_match.kwargs['pk']
+        tasks = Task.objects.filter(verbose_name__contains=pk)
         if tasks.count() == 0:
-            redirect("delab-conversations-for-request", pk=pk)
+            return redirect("delab-conversations-for-request", pk=pk)
         else:
-            return tasks
-
-        # @class ConversationView(ListView)
-
+            return super(TaskStatusView, self).dispatch(request, *args, **kwargs)

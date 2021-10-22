@@ -131,11 +131,19 @@ class SADictionary(models.Model):
 from django.utils.safestring import mark_safe
 
 
+class TweetAuthor(models.Model):
+    twitter_id = models.BigIntegerField()
+    name = models.TextField()
+    screen_name = models.TextField()
+    location = models.TextField()
+    followers_count = models.IntegerField()
+
+
 class Tweet(TreeNodeModel):
     treenode_display_field = 'text'
-
     twitter_id = models.BigIntegerField(unique=True)
     text = models.TextField()
+    tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
     author_id = models.BigIntegerField()
     in_reply_to_status_id = models.BigIntegerField(null=True)
     in_reply_to_user_id = models.BigIntegerField(null=True)
