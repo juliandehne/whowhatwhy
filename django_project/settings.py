@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import pathlib
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -258,4 +257,4 @@ logging.getLogger("treenode").setLevel(logging.WARNING)
 # delab_settings
 # max candidates between 10 and 500
 MAX_CANDIDATES = 30
-TRAX_CAPABILITIES = False
+TRAX_CAPABILITIES = True  # set this to true onl if you running on a linux and have AVX commands available

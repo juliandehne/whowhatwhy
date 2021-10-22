@@ -1,4 +1,5 @@
 import logging
+import traceback
 from functools import reduce
 
 import pandas as pd
@@ -143,23 +144,38 @@ def get_matching_conversation(connector,
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     for candidate in candidates:
-        logger.debug("selected candidate tweet {}".format(candidate))
-        candidate_id = candidate.conversation_id
         try:
+            logger.debug("selected candidate tweet {}".format(candidate))
+            candidate_id = candidate.conversation_id
+
             root_node = retrieve_replies(candidate_id, max_conversation_length, language)
+
+            if root_node is None:
+                logger.error("found conversation_id that could not be processed")
+                continue
+            else:
+                flat_tree_size = root_node.flat_size()
+                logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
+                if min_conversation_length < flat_tree_size < max_conversation_length:
+                    save_tree_to_db(root_node, topic, simple_request, candidate_id)
+                    logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
+                    # for debugging you can ascii art print the downloaded conversation_tree
+                    # root_node.print_tree(0)
+        except TwitterRequestError as e:
+            # traceback.print_exc()
+            logger.info("############# TwitterRequestError Rate limit was exceeded. 165")
+
+        except TwitterConnectionError as e:
+            # traceback.print_exc()
+            logger.info("############# TwitterConnectionError Rate limit was exceeded. 169")
+
+        except Exception as e:
+            # traceback.print_exc()
+            logger.info("############# Exception Rate limit was exceeded. 176")
+
         except requests.exceptions.Timeout:
+            # traceback.print_exc()
             logger.error("Timeout occurred")
-        if root_node is None:
-            logger.error("found conversation_id that could not be processed")
-            continue
-        else:
-            flat_tree_size = root_node.flat_size()
-            logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
-            if min_conversation_length < flat_tree_size < max_conversation_length:
-                save_tree_to_db(root_node, topic, simple_request, candidate_id)
-                logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
-                # for debugging you can ascii art print the downloaded conversation_tree
-                # root_node.print_tree(0)
 
 
 def retrieve_replies(conversation_id, max_replies, language):
@@ -170,61 +186,48 @@ def retrieve_replies(conversation_id, max_replies, language):
     Returns lists conv_id, child_id, text tuple which shows every reply's tweet_id and text in the last two lists
 
     """
-
     twapi = TwitterAPIWrapper.get_twitter_API()
     root = None
 
-    try:
-        # GET ROOT OF THE CONVERSATION
-        r = twapi.request(f'tweets/:{conversation_id}',
-                          {
-                              'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
-                          })
+    # GET ROOT OF THE CONVERSATION
+    r = twapi.request(f'tweets/:{conversation_id}',
+                      {
+                          'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
+                      })
 
-        for item in r:
-            root = TreeNode(item)
-            # print(f'ROOT {root.id()}')
+    for item in r:
+        root = TreeNode(item)
+        # print(f'ROOT {root.id()}')
 
-        # GET ALL REPLIES IN CONVERSATION
+    # GET ALL REPLIES IN CONVERSATION
 
-        pager = TwitterPager(twapi, 'tweets/search/recent',
-                             {
-                                 'query': f'conversation_id:{conversation_id}',
-                                 'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
-                             })
-        orphans = []
+    pager = TwitterPager(twapi, 'tweets/search/recent',
+                         {
+                             'query': f'conversation_id:{conversation_id}',
+                             'tweet.fields': 'author_id,conversation_id,created_at,in_reply_to_user_id,lang'
+                         })
+    orphans = []
 
-        reply_count = 0
-        for item in pager.get_iterator(wait=2):
-            if reply_count > 10:
-                logger.debug("downloading bigger conversation with current size {}".format(reply_count))
-            if reply_count >= max_replies:
-                break
-            node = TreeNode(item)
-            # print(f'{node.id()} => {node.reply_to()}')
-            # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
-            orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
-            # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
-            if not root.find_parent_of(node):
-                orphans.append(node)
-            reply_count += 1
+    reply_count = 0
+    for item in pager.get_iterator(wait=2):
+        if reply_count > 10:
+            logger.debug("downloading bigger conversation with current size {}".format(reply_count))
+        if reply_count >= max_replies:
+            break
+        node = TreeNode(item)
+        # print(f'{node.id()} => {node.reply_to()}')
+        # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
+        orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
+        # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
+        if not root.find_parent_of(node):
+            orphans.append(node)
+        reply_count += 1
 
-        conv_id, child_id, text = root.list_l1()
-        #         print('\nTREE...')
-        # 	    root.print_tree(0)
+    conv_id, child_id, text = root.list_l1()
+    #         print('\nTREE...')
+    # 	    root.print_tree(0)
 
-        assert len(orphans) == 0, f'{len(orphans)} orphaned tweets'
-
-    except TwitterRequestError as e:
-        print(e.status_code)
-        for msg in iter(e):
-            print(msg)
-
-    except TwitterConnectionError as e:
-        print(e)
-
-    except Exception as e:
-        print(e)
+    assert len(orphans) == 0, f'{len(orphans)} orphaned tweets'
 
     return root
 

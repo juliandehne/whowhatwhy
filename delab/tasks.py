@@ -2,6 +2,7 @@ import logging
 
 from background_task import background
 
+from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
 from delab.models import Tweet
 from django.db.models import Q
@@ -21,10 +22,18 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
         download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data)
-        if TRAX_CAPABILITIES:
-            update_sentiments(simple_request_id,
-                              verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                              schedule=timezone.now())
+        update_author(simple_request_id,
+                      verbose_name="author_analysis_{}".format(simple_request_id),
+                      schedule=timezone.now())
+
+
+@background(schedule=1)
+def update_author(simple_request_id=-1):
+    update_authors()
+    if TRAX_CAPABILITIES:
+        update_sentiments(simple_request_id,
+                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                          schedule=timezone.now())
 
 
 @background(schedule=1)

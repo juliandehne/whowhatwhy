@@ -6,18 +6,23 @@
         {% for task in tasks %}
             <li>
                 {% if "download" in task.task_name %}
-                    <span> Downloading Tweets ..., {{ tweets_downloaded }} tweets downloaded.  </span>
+                    <span> Downloading Tweets ...  </span>
+                {% elif "author" in task.task_name %}
+                    <span>{{ tweets_downloaded }} tweets downloaded.</span>
+                    <span> Downloading author details ...
+                     </span>
                 {% elif "sentiment" in task.task_name %}
-                    {{ tweets_downloaded }} tweets downloaded.
-                    <span> Analyzing Sentiments in Tweets ...
-                         </span>
+                    <span> {{ tweets_downloaded }} tweets downloaded. </span>
+                    <span> Author details downloaded.
+                     </span>
+                    <span> Analyzing Sentiments in Tweets ... </span>
                 {% elif "flow" in task.task_name %}
-                    {{ tweets_downloaded }} tweets downloaded.
-                    {{ tweets_downloaded }} sentiments tweets analyzed.
+                    <span> {{ tweets_downloaded }} tweets downloaded.</span>
+                    <span> {{ tweets_downloaded }} sentiments tweets analyzed.</span>
                     <span> Analyzing the Conversation Flow ...
                           </span>
                 {% else %}
-
+                    A problem has occurred! Contact Julian!
                 {% endif %}
             </li>
 
@@ -27,7 +32,7 @@
     <script>
         window.setTimeout(function () {
             window.location.reload();
-        }, 10000);
+        }, 60000);
     </script>
 {% endblock content %}
 
