@@ -4,6 +4,7 @@ from functools import reduce
 import pandas as pd
 import requests
 from TwitterAPI import TwitterRequestError, TwitterConnectionError, TwitterPager
+from django.db import IntegrityError
 from django.db.backends import sqlite3
 
 from delab.TwConversationTree import TreeNode
@@ -79,6 +80,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
 
     """
     try:
+        """
         tweet, created = Tweet.objects.get_or_create(
             topic=topic,
             text=root_node.data["text"],
@@ -92,12 +94,24 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
             tn_parent=parent,
             tn_priority=priority,
             language=root_node.data["lang"]
-        )
-
+        )"""
+        tweet = Tweet(topic=topic,
+                      text=root_node.data["text"],
+                      simple_request=simple_request,
+                      twitter_id=root_node.data["id"],
+                      author_id=root_node.data["author_id"],
+                      conversation_id=conversation_id,
+                      created_at=root_node.data["created_at"],
+                      in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
+                      in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
+                      tn_parent=parent,
+                      tn_priority=priority,
+                      language=root_node.data["lang"])
+        tweet.save()
         if not len(root_node.children) == 0:
             for child in root_node.children:
                 save_tree_to_db(child, topic, simple_request, conversation_id, tweet)
-    except sqlite3.IntegrityError:
+    except IntegrityError as e:
         logger.debug("found tweet existing in database, not downloading the tree again")
 
 

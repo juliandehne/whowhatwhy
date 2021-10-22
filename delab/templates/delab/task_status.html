@@ -8,9 +8,12 @@
                 {% if "download" in task.task_name %}
                     <span> Downloading Tweets ..., {{ tweets_downloaded }} tweets downloaded.  </span>
                 {% elif "sentiment" in task.task_name %}
+                    {{ tweets_downloaded }} tweets downloaded.
                     <span> Analyzing Sentiments in Tweets ...
                          </span>
                 {% elif "flow" in task.task_name %}
+                    {{ tweets_downloaded }} tweets downloaded.
+                    {{ tweets_downloaded }} sentiments tweets analyzed.
                     <span> Analyzing the Conversation Flow ...
                           </span>
                 {% else %}

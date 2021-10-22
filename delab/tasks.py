@@ -10,6 +10,7 @@ from background_task.models_completed import CompletedTask
 from django.utils import timezone
 
 from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
+from django_project.settings import TRAX_CAPABILITIES
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,10 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
         download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data)
-        update_sentiments(simple_request_id,
-                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                          schedule=timezone.now())
+        if TRAX_CAPABILITIES:
+            update_sentiments(simple_request_id,
+                              verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                              schedule=timezone.now())
 
 
 @background(schedule=1)

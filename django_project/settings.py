@@ -216,9 +216,6 @@ INTERNAL_IPS = [
 
 DEBUG = True
 
-# delab_settings
-MAX_CANDIDATES = 10
-
 # LOGGING
 
 LOGGING = {
@@ -255,3 +252,7 @@ LOGGING = {
         },
     },
 }
+
+# delab_settings
+MAX_CANDIDATES = 10
+TRAX_CAPABILITIES = False

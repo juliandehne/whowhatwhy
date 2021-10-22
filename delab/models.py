@@ -162,26 +162,6 @@ class Tweet(TreeNodeModel):
                                                                            self.author_id)
 
 
-
-    @classmethod
-    def create(cls, topic, text, simple_request, twitter_id, author_id, conversation_id, sentiment_value=0,
-               sentiment=False,
-               parent=None, priority=0, language="unk"):
-        tweet = cls(topic=topic,
-                    text=text,
-                    twitter_id=twitter_id,
-                    author_id=author_id,
-                    simple_request=simple_request,
-                    conversation_id=conversation_id,
-                    sentiment_value=sentiment_value,
-                    sentiment=sentiment,
-                    tn_parent=parent,
-                    tn_priority=priority,
-                    language=language
-                    )
-        return tweet
-
-
 class Timeline(models.Model):
     author_id = models.IntegerField()
     tweet_id = models.IntegerField(unique=True)
