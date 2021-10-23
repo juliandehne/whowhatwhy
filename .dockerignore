@@ -16,3 +16,6 @@ logs/tasks/error.log
 learning/*
 documentation/reveal/**/*
 
+/media/profile_pics/*
+/media/institution_pics/*
+/media/sa_flow_pics/*

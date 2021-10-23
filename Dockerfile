@@ -30,7 +30,6 @@ COPY . /code/
 RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords
 
-
 # RUN python /code/delab/sentiment/download_nltk.py
 
 RUN export DJANGO_DATABASE=postgres
