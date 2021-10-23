@@ -1,0 +1,17 @@
+version: "3.3"
+
+services:
+  run_server:
+    image: delab-server
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./logs/server:/code/logs
+      - ./database/media:/code/media
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    depends_on:
+      - migrate
+    environment:
+      - DJANGO_DATABASE=postgres
