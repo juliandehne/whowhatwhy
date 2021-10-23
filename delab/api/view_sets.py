@@ -27,6 +27,7 @@ tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id',
 
 class TweetSerializer(serializers.HyperlinkedModelSerializer):
     tw_author_name = serializers.StringRelatedField()
+    tw_author_location = serializers.StringRelatedField()
 
     class Meta:
         model = Tweet
