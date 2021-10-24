@@ -1,4 +1,5 @@
 import io
+import os
 
 from django.core.files.images import ImageFile
 from django.db.models import Q
@@ -35,8 +36,9 @@ def compute_sentiment_flow_for_conversation(conversation_id, df):
     download_path = settings.MEDIA_ROOT + "/" \
                     + image_path
     logging.debug("saving the conversation_flow_pic to {}".format(download_path))
-
-    plot.figure.savefig(download_path, format="jpg")
+    if os.path.isfile(download_path):
+        os.remove(download_path)
+        plot.figure.savefig(download_path, format="jpg")
     # content_file = ImageFile(download_path)
     flow = ConversationFlow.create(image_path)
     flow.save()
