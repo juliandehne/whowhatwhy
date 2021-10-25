@@ -122,13 +122,9 @@ dmypy.json
 .idea/
 /.idea/*
 
-/media/profile_pics/*
-!/media/
-!/media/profile_pics/
-/media/institution_pics/*
-!/media/institution_pics/
-/media/sa_flow_pics/*
-!/media/sa_flow_pics/
+/media/profile_pics/*.jpg
+/media/institution_pics/*.jpg
+/media/sa_flow_pics/*.jpg
 
 venv/
 /venv/*
@@ -145,3 +141,11 @@ learning/*
 documentation/reveal/**/*
 
 /database/*
+!/media/profile_pics/
+/media/profile_pics/*.jpg
+
+!/media/institution_pics/
+/media/institution_pics/*.jpg
+
+!/media/profile_pics/
+/media/profile_pics/*.jpg
