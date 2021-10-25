@@ -132,7 +132,7 @@ from django.utils.safestring import mark_safe
 
 
 class TweetAuthor(models.Model):
-    twitter_id = models.BigIntegerField()
+    twitter_id = models.BigIntegerField(unique=True)
     name = models.TextField()
     screen_name = models.TextField()
     location = models.TextField()
@@ -144,7 +144,7 @@ class Tweet(TreeNodeModel):
     twitter_id = models.BigIntegerField(unique=True)
     text = models.TextField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
-    author_id = models.BigIntegerField()
+    author_id = models.BigIntegerField(null=True)
     in_reply_to_status_id = models.BigIntegerField(null=True)
     in_reply_to_user_id = models.BigIntegerField(null=True)
     created_at = models.DateTimeField()

@@ -4,27 +4,30 @@
     <h4>Processing Query {% firstof simple_request.title %} ...</h4>
     <ul>
         {% for task in tasks %}
-            <li>
-                {% if "download" in task.task_name %}
-                    <span> Downloading Tweets ... , {{ tweets_downloaded }} tweets downloaded. </span>
-                {% elif "author" in task.task_name %}
-                    <span>{{ tweets_downloaded }} tweets downloaded.</span>
-                    <span> Downloading author details ...
-                     </span>
-                {% elif "sentiment" in task.task_name %}
-                    <span> {{ tweets_downloaded }} tweets downloaded. </span>
-                    <span> Author details downloaded.
-                     </span>
-                    <span> Analyzing Sentiments in Tweets ... </span>
-                {% elif "flow" in task.task_name %}
-                    <span> {{ tweets_downloaded }} tweets downloaded.</span>
-                    <span> {{ tweets_downloaded }} sentiments tweets analyzed.</span>
-                    <span> Analyzing the Conversation Flow ...
-                          </span>
-                {% else %}
-                    A problem has occurred! Contact Julian!
-                {% endif %}
-            </li>
+            {% if "download" in task.task_name %}
+                <li>
+                    Downloading Tweets ... , {{ tweets_downloaded }} tweets downloaded.
+                <li>
+            {% elif "author" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li> Downloading author details ..., {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+            {% elif "sentiment" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+                <li> Analyzing Sentiments in Tweets ...</li>
+            {% elif "flow" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+                <li> Analyzing the Conversation Flow ... </li>
+            {% else %}
+                A problem has occurred! Contact Julian!
+            {% endif %}
 
         {% endfor %}
     </ul>

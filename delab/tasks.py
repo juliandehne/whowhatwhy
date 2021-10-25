@@ -29,7 +29,7 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
 
 @background(schedule=1)
 def update_author(simple_request_id=-1):
-    update_authors()
+    update_authors(simple_request_id)
     if TRAX_CAPABILITIES:
         update_sentiments(simple_request_id,
                           verbose_name="sentiment_analysis_{}".format(simple_request_id),

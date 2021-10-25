@@ -122,6 +122,8 @@ class TaskStatusView(ListView):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
         context['simple_request'] = simple_request
         context['tweets_downloaded'] = simple_request.tweet_set.count()
+        authors_downloaded = simple_request.tweet_set.filter(tw_author__isnull=False).count()
+        context["authors_downloaded"] = authors_downloaded
         return context
 
     def get_queryset(self):

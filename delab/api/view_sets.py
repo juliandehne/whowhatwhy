@@ -14,7 +14,7 @@ from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations, get_filtered_conversations, \
     get_conversation_tree
-from delab.models import Tweet
+from delab.models import Tweet, TweetAuthor
 from .api_util import get_file_name
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
@@ -25,13 +25,24 @@ tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id',
                      'sentiment_value', 'language']
 
 
-class TweetSerializer(serializers.HyperlinkedModelSerializer):
-    tw_author_name = serializers.StringRelatedField()
-    tw_author_location = serializers.StringRelatedField()
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TweetAuthor
+        fields = '__all__'
+
+
+class TweetSerializer(serializers.ModelSerializer):
+    tw_author = AuthorSerializer()
+
+    # tw_author__name = serializers.StringRelatedField()
+    # tw_author__location = serializers.StringRelatedField()
 
     class Meta:
         model = Tweet
-        fields = tweet_fields_used + ["tw_author_name", "tw_author_location"]
+        fields = tweet_fields_used + ["tw_author"]
+        # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
+
+    # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
 
 
 class TabbedTextRenderer(renderers.BaseRenderer):
@@ -44,8 +55,10 @@ class TabbedTextRenderer(renderers.BaseRenderer):
 
 
 def get_migration_query_set():
-    queryset = Tweet.objects.filter(simple_request__topic__title="migration")
-    return get_cropped_tweet_set(queryset)
+    # queryset = Tweet.objects.filter(simple_request__topic__title="migration")
+    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title="migration")
+    return queryset
+    # return get_cropped_tweet_set(queryset)
 
 
 def get_cropped_tweet_set(queryset):
@@ -139,7 +152,8 @@ def get_tabbed_conversation_view(request, conversation_id, full):
         conversation_trees, ids, conversation_ids = get_filtered_conversations(conversation_id, "migration",
                                                                                merge_subsequent=MERGE_SUBSEQUENT)
     else:
-        conversation_trees = get_conversation_tree(conversation_id, "migration", tweet_fields_used).values()
+        conversation_trees = get_conversation_tree(conversation_id, "migration",
+                                                   tweet_fields_used).values()
     result = ""
     for tree in conversation_trees:
         result += tree.to_string() + "\n\n"

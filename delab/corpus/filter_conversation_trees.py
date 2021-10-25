@@ -12,12 +12,12 @@ def get_standard_field_names():
             "author_id",
             "created_at",
             "in_reply_to_user_id",
-            "text"]
+            "text", "tw_author__name", "tw_author__location"]
 
 
 def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True, fieldnames=None):
     # a utility so I don't have to rewrite the get twitter corpus for both django and jupyter context
-    if fieldnames is None:
+    if fieldnames is None or "tw_author_name" not in fieldnames:
         fieldnames = get_standard_field_names()
 
     df = query_sql(
@@ -35,7 +35,7 @@ def get_filtered_conversations(conversation_id, topic_string, max_orphan_count=4
 
 def get_conversation_dataframe(conversation_id, fieldnames, topic_string):
     # rewrite this for the query_sql-utility
-    if fieldnames is None:
+    if fieldnames is None or "tw_author_name" not in fieldnames:
         fieldnames = get_standard_field_names()
     qs = Tweet.objects.filter(conversation_id=conversation_id, topic__title=topic_string).all()
     df = read_frame(qs, fieldnames=fieldnames)
