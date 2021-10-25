@@ -1,8 +1,15 @@
-database/*
+database/postgres/data/*
+database/sqlite
+/database/media/profile_pics/*.jpg
+/database/media/institution_pics/*.jpg
+/database/media/sa_flow_pics/*.jpg
+
 venv/*
 BERTopic/*
 model/*
 
+
+logs/*
 logs/debug.log
 logs/error.log
 
@@ -12,10 +19,7 @@ logs/server/error.log
 logs/tasks/debug.log
 logs/tasks/error.log
 
-
 learning/*
 documentation/reveal/**/*
 
-/media/profile_pics/*
-/media/institution_pics/*
-/media/sa_flow_pics/*
+
