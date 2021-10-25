@@ -121,9 +121,14 @@ dmypy.json
 
 .idea/
 /.idea/*
+
 /media/profile_pics/*
+!/media/
+!/media/profile_pics/
 /media/institution_pics/*
+!/media/institution_pics/
 /media/sa_flow_pics/*
+!/media/sa_flow_pics/
 
 venv/
 /venv/*
