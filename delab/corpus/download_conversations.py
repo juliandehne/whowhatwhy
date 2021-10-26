@@ -9,6 +9,7 @@ from django.db import IntegrityError
 from django.db.backends import sqlite3
 
 from delab.TwConversationTree import TreeNode
+from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.magic_http_strings import TWEETS_SEARCH_All_URL
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import TwitterAPIWrapper
@@ -19,7 +20,7 @@ from util.abusing_lists import powerset
 logger = logging.getLogger(__name__)
 
 
-def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en", max_data=False):
+def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en", max_data=False, fast_mode=False):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -57,11 +58,12 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
         for hashtag_set in combinations:
             if len(hashtag_set) > 0:
                 combination_counter += 1
-                get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language)
+                get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language,
+                                          fast_mode=fast_mode)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
-        get_matching_conversation(connector, hashtags, topic, simple_request, language=language)
+        get_matching_conversation(connector, hashtags, topic, simple_request, language=language, fast_mode=fast_mode)
 
     connector = None  # precaution to terminate the thread and the http socket
 
@@ -123,7 +125,7 @@ def get_matching_conversation(connector,
                               max_conversation_length=10000,
                               min_conversation_length=10,
                               language="lang:en",
-                              max_number_of_candidates=MAX_CANDIDATES):
+                              max_number_of_candidates=MAX_CANDIDATES, fast_mode=False):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
@@ -140,10 +142,18 @@ def get_matching_conversation(connector,
                                     times the max_number of candidates given here!
 
     """
+    if fast_mode:
+        max_number_of_candidates = 5
+        min_conversation_length = 3
+        max_conversation_length = 200
+
     tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
+    downloaded_tweets = 0
     for candidate in candidates:
+        if downloaded_tweets > 2000:
+            break
         try:
             logger.debug("selected candidate tweet {}".format(candidate))
             candidate_id = candidate.conversation_id
@@ -156,6 +166,7 @@ def get_matching_conversation(connector,
             else:
                 flat_tree_size = root_node.flat_size()
                 logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
+                downloaded_tweets += flat_tree_size
                 if min_conversation_length < flat_tree_size < max_conversation_length:
                     save_tree_to_db(root_node, topic, simple_request, candidate_id)
                     logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
@@ -169,9 +180,8 @@ def get_matching_conversation(connector,
             # traceback.print_exc()
             logger.info("############# TwitterConnectionError Rate limit was exceeded. 169")
 
-        except Exception as e:
-            # traceback.print_exc()
-            logger.info("############# Exception Rate limit was exceeded. 176")
+        except ConversationNotInRangeException as e:
+            logger.debug("downloading HUGE conversation with current size {}".format(e.conversation_size))
 
         except requests.exceptions.Timeout:
             # traceback.print_exc()
@@ -210,10 +220,10 @@ def retrieve_replies(conversation_id, max_replies, language):
 
     reply_count = 0
     for item in pager.get_iterator(wait=2):
-        if reply_count > 10:
-            logger.debug("downloading bigger conversation with current size {}".format(reply_count))
+        if reply_count == 10:
+            logger.debug("downloading bigger conversation ...")
         if reply_count >= max_replies:
-            break
+            raise ConversationNotInRangeException(reply_count)
         node = TreeNode(item)
         # print(f'{node.id()} => {node.reply_to()}')
         # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
@@ -227,8 +237,8 @@ def retrieve_replies(conversation_id, max_replies, language):
     #         print('\nTREE...')
     # 	    root.print_tree(0)
 
-    assert len(orphans) == 0, f'{len(orphans)} orphaned tweets'
-
+    if len(orphans) > 0:
+        logger.error('{} orphaned tweets for conversation {}'.format(len(orphans), conversation_id))
     return root
 
 

@@ -76,6 +76,8 @@ class SimpleRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic)
     max_data = models.BooleanField(default=False)
+    fast_mode = models.BooleanField(default=False,
+                                    help_text="this is for debugging and getting quick results. It will not download the user data")
 
     def __str__(self):
         return self.title

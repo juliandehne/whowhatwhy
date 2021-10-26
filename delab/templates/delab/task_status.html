@@ -8,23 +8,26 @@
                 <li>
                     Downloading Tweets ... , {{ tweets_downloaded }} tweets downloaded.
                 <li>
-            {% elif "author" in task.task_name %}
-                <li> {{ tweets_downloaded }} tweets downloaded.</li>
-                <li> Downloading author details ..., {{ authors_downloaded }} / {{ tweets_downloaded }} authors
-                    downloaded
-                </li>
             {% elif "sentiment" in task.task_name %}
                 <li> {{ tweets_downloaded }} tweets downloaded.</li>
                 <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
                     downloaded
                 </li>
-                <li> Analyzing Sentiments in Tweets ...</li>
+                <li> Analyzing Sentiments in Tweets ..., {{ sentiments_analyzed }} / {{ tweets_downloaded }} tweets
+                    analyzed.
+                </li>
+            {% elif "author" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li> Downloading author details ..., {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
             {% elif "flow" in task.task_name %}
                 <li> {{ tweets_downloaded }} tweets downloaded.</li>
                 <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
                     downloaded
                 </li>
-                <li> Analyzing the Conversation Flow ... </li>
+                <li> {{ sentiments_analyzed }} / {{ tweets_downloaded }} tweets analyzed.</li>
+                <li> Analyzing the Conversation Flow ..., {{ flows_analyzed }} / {{ tweets_downloaded }} </li>
             {% else %}
                 A problem has occurred! Contact Julian!
             {% endif %}

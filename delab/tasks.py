@@ -17,14 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 @background(schedule=1)
-def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True, max_data=False):
+def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True,
+                                     max_data=False,
+                                     fast_mode=False):
     if simulate:
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
-        download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data)
-        update_author(simple_request_id,
-                      verbose_name="author_analysis_{}".format(simple_request_id),
-                      schedule=timezone.now())
+        download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data, fast_mode=fast_mode)
+        if fast_mode:
+            update_sentiments(simple_request_id,
+                              verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                              schedule=timezone.now())
+        else:
+            update_author(simple_request_id,
+                          verbose_name="author_analysis_{}".format(simple_request_id),
+                          schedule=timezone.now())
 
 
 @background(schedule=1)
@@ -43,7 +50,13 @@ def update_sentiments(simple_request_id=-1):
     logger.info("updating sentiments")
     # importing here to improve server startup time
 
-    tweets = Tweet.objects.filter((Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(sentiment="failed_analysis")).all()
+    if simple_request_id < 0:
+        tweets = Tweet.objects.filter(
+            (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(sentiment="failed_analysis")).all()
+    else:
+        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) &
+                                      (Q(sentiment=None) | Q(sentiment_value=None)) &
+                                      ~Q(sentiment="failed_analysis")).all()
     # tweet_strings = tweets.values_list(["text"], flat=True)
     # print(tweet_strings[1:3])
     tweet_strings = list(map(lambda x: x.text, tweets))
@@ -54,13 +67,13 @@ def update_sentiments(simple_request_id=-1):
         tweet.sentiment_value = sentiment_values.get(tweet.text, None)
         tweet.save()
 
-    update_flows(verbose_name="flow_analysis_{}".format(simple_request_id),
+    update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
 
 
 @background(schedule=1)
-def update_flows():
-    update_sentiment_flows()
+def update_flows(simple_request_id=-1):
+    update_sentiment_flows(simple_request_id)
 
 
 def get_tasks_status(simple_request_id):

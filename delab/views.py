@@ -93,7 +93,7 @@ class ConversationView(ListView):
 @method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['title', 'max_data', 'topic']
+    fields = ['title', 'max_data', 'fast_mode', 'topic']
     initial = {"title": "#covid #vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
@@ -124,6 +124,10 @@ class TaskStatusView(ListView):
         context['tweets_downloaded'] = simple_request.tweet_set.count()
         authors_downloaded = simple_request.tweet_set.filter(tw_author__isnull=False).count()
         context["authors_downloaded"] = authors_downloaded
+        sentiments_analyzed = simple_request.tweet_set.filter(sentiment_value__isnull=False).count()
+        context["sentiments_analyzed"] = sentiments_analyzed
+        flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
+        context["flows_analyzed"] = flows_analyzed
         return context
 
     def get_queryset(self):
