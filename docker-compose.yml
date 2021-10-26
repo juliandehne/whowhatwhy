@@ -13,9 +13,12 @@ services:
 
   migrate:
     image: delab-server
-    command: bash -c "python manage.py makemigrations blog delab users && python manage.py migrate && python manage.py createsuperuser --noinput"
+    command: bash -c "python manage.py makemigrations blog delab users && python manage.py migrate --noinput && python manage.py createsuperuser --noinput"
     volumes:
       - ./logs/migrate:/code/logs
+      - ./database/migrations/delab:/code/delab/migrations
+      - ./database/migrations/blog:/code/blog/migrations
+      - ./database/migrations/users:/code/users/migrations
     depends_on:
       - postgres
     environment:

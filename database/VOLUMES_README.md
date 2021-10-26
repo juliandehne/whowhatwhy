@@ -1,0 +1,3 @@
+- the database folder is used as a mount point.
+- here all the persistent data in docker volumes should be written too
+- Persistent data at the moment are: migrations, database, media files
