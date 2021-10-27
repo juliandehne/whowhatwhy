@@ -2,6 +2,7 @@ database/postgres/data/*
 database/sqlite/*
 database/postgres/*
 database/docker/*
+database/migrations/*
 /database/media/profile_pics/*.jpg
 /database/media/institution_pics/*.jpg
 /database/media/sa_flow_pics/*.jpg

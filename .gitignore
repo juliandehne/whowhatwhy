@@ -131,6 +131,7 @@ venv/
 /twitter/migrations/*
 
 /blog/migrations/*
+/delab/migrations/*
 
 debug.log
 error.log

@@ -143,9 +143,9 @@ def get_matching_conversation(connector,
 
     """
     if fast_mode:
-        max_number_of_candidates = 5
+        max_number_of_candidates = 10
         min_conversation_length = 3
-        max_conversation_length = 200
+        max_conversation_length = 1000
 
     tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
