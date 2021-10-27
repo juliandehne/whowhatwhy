@@ -37,7 +37,7 @@ def get_user_timeline(author_id, connector, params={},
         logger.debug(json.dumps(json_result, indent=4, sort_keys=True))
         save_author_tweet_to_tb(json_result, author_id)
         if "meta" in json_result:
-            if "next_token" not in json_result["meta"]:
+            if "next_token" not in json_result["meta"] or json_result["meta"]["result_count"] == 0:
                 print("reached end of results for user with id{}".format(author_id))
             else:
                 params["pagination_token"] = (json_result["meta"])["next_token"]

@@ -173,11 +173,11 @@ class Tweet(TreeNodeModel):
 
 
 class Timeline(models.Model):
-    author_id = models.IntegerField()
-    tweet_id = models.IntegerField(unique=True)
+    author_id = models.BigIntegerField()
+    tweet_id = models.BigIntegerField(unique=True)
     text = models.TextField()
     created_at = models.DateTimeField()
-    conversation_id = models.IntegerField(null=True)
-    in_reply_to_user_id = models.IntegerField(null=True)
+    conversation_id = models.BigIntegerField(null=True)
+    in_reply_to_user_id = models.BigIntegerField(null=True)
     lang = models.TextField()
     ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field
