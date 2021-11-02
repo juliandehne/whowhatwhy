@@ -1,3 +1,5 @@
+import time
+from datetime import datetime as dt
 import logging
 import traceback
 from functools import reduce
@@ -68,7 +70,7 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
     connector = None  # precaution to terminate the thread and the http socket
 
 
-def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, priority=0):
+def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None):
     """ This method persist a conversation tree in the database
 
 
@@ -98,6 +100,11 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
             tn_priority=priority,
             language=root_node.data["lang"]
         )"""
+        tn_parent = None
+        if parent is not None:
+            tn_parent = parent.data.get("id", None)
+
+        # before = dt.now()
         tweet = Tweet(topic=topic,
                       text=root_node.data["text"],
                       simple_request=simple_request,
@@ -107,13 +114,15 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
                       created_at=root_node.data["created_at"],
                       in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                       in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-                      tn_parent=parent,
-                      tn_priority=priority,
+                      tn_parent=tn_parent,
+                      # tn_priority=priority,
                       language=root_node.data["lang"])
         tweet.save()
+        # after = dt.now()
+        # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
         if not len(root_node.children) == 0:
             for child in root_node.children:
-                save_tree_to_db(child, topic, simple_request, conversation_id, tweet)
+                save_tree_to_db(child, topic, simple_request, conversation_id, root_node)
     except IntegrityError as e:
         logger.debug("found tweet existing in database, not downloading the tree again")
 
@@ -174,7 +183,10 @@ def get_matching_conversation(connector,
                     # root_node.print_tree(0)
         except TwitterRequestError as e:
             # traceback.print_exc()
-            logger.info("############# TwitterRequestError Rate limit was exceeded. 165")
+            logger.info(
+                "############# TwitterRequestError: Rate limit was exceeded while downloading conversations info." +
+                " Going to sleep for 15!")
+            time.sleep(15 * 60)
 
         except TwitterConnectionError as e:
             # traceback.print_exc()
@@ -229,11 +241,12 @@ def retrieve_replies(conversation_id, max_replies, language):
         # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
         orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
-        if not root.find_parent_of(node):
-            orphans.append(node)
+        if root is not None:
+            if not root.find_parent_of(node):
+                orphans.append(node)
         reply_count += 1
 
-    conv_id, child_id, text = root.list_l1()
+    # conv_id, child_id, text = root.list_l1()
     #         print('\nTREE...')
     # 	    root.print_tree(0)
 

@@ -1,6 +1,6 @@
 from typing import Callable
 
-from TwitterAPI import TwitterAPI
+from TwitterAPI import TwitterAPI, TwitterRequestError
 import os
 import json
 import yaml
@@ -75,9 +75,7 @@ class TwitterConnector:
         # print(response.status_code)
         if response.status_code != 200:
             if response.status_code == 429:  # too many requests
-                logger.info("############# Rate limit was exceeded. Starting sleep for 15 min now!")
-                time.sleep(60 * 15)
-                return json.loads("{}")
+                raise TwitterRequestError()
             else:
                 logger.error("{}{}".format(response.status_code, response.text))
         time.sleep(2)

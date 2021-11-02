@@ -141,7 +141,7 @@ class TweetAuthor(models.Model):
     followers_count = models.IntegerField()
 
 
-class Tweet(TreeNodeModel):
+class Tweet(models.Model):
     treenode_display_field = 'text'
     twitter_id = models.BigIntegerField(unique=True)
     text = models.TextField()
@@ -158,8 +158,9 @@ class Tweet(TreeNodeModel):
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default="unk")
     bertopic_id = models.IntegerField(null=True)
+    tn_parent = models.BigIntegerField(null=True)
 
-    objects = DataFrameManager()
+    #objects = DataFrameManager()
 
     class Meta:
         verbose_name = 'Tweet'

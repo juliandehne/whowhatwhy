@@ -252,9 +252,8 @@ LOGGING = {
         },
     },
 }
-logging.getLogger("treenode").setLevel(logging.WARNING)
 
 # delab_settings
 # max candidates between 10 and 500
-MAX_CANDIDATES = 30
+MAX_CANDIDATES = 10
 TRAX_CAPABILITIES = True  # set this to true onl if you running on a linux and have AVX commands available

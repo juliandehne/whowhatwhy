@@ -23,5 +23,4 @@ class TweetAdmin(TreeNodeModelAdmin):
     # use TreeNodeForm to automatically exclude invalid parent choices
     form = TreeNodeForm
 
-
-admin.site.register(Tweet, TweetAdmin)
+# admin.site.register(Tweet, TweetAdmin)

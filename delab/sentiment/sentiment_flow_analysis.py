@@ -22,8 +22,7 @@ def update_sentiment_flows(simple_request_id=-1):
                                         "sentiment",
                                         "sentiment_value",
                                         "created_at",
-                                        "tn_level",
-                                        "tn_order"])
+                                        ])
     conversation_ids = df['conversation_id'].unique()
     for conversation_id in conversation_ids:
         compute_sentiment_flow_for_conversation(conversation_id, df)
