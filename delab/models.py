@@ -184,6 +184,7 @@ class Tweet(models.Model):
 
 class Timeline(models.Model):
     author_id = models.BigIntegerField()
+    tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True, blank=True)
     tweet_id = models.BigIntegerField(unique=True)
     text = models.TextField()
     created_at = models.DateTimeField()

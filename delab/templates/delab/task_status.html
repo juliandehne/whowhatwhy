@@ -8,22 +8,36 @@
                 <li>
                     Downloading Tweets ... , {{ tweets_downloaded }} tweets downloaded.
                 <li>
-            {% elif "sentiment" in task.task_name %}
-                <li> {{ tweets_downloaded }} tweets downloaded.</li>
-                <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
-                    downloaded
-                </li>
-                <li> Analyzing Sentiments in Tweets ..., {{ sentiments_analyzed }} / {{ tweets_downloaded }} tweets
-                    analyzed.
-                </li>
             {% elif "author" in task.task_name %}
                 <li> {{ tweets_downloaded }} tweets downloaded.</li>
                 <li> Downloading author details ..., {{ authors_downloaded }} / {{ tweets_downloaded }} authors
                     downloaded
                 </li>
+            {% elif "timeline" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+                <li> Downloading timelines ..., {{ timelines_downloaded }} / {{ tweets_downloaded }} timelines
+                    downloaded
+                </li>
+            {% elif "sentiment" in task.task_name %}
+                <li> {{ tweets_downloaded }} tweets downloaded.</li>
+                <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+                <li>Downloaded timelines ,{{ timelines_downloaded }} / {{ tweets_downloaded }} timelines
+                    downloaded
+                </li>
+                <li> Analyzing Sentiments in Tweets ..., {{ sentiments_analyzed }} / {{ tweets_downloaded }} tweets
+                    analyzed.
+                </li>
             {% elif "flow" in task.task_name %}
                 <li> {{ tweets_downloaded }} tweets downloaded.</li>
                 <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
+                    downloaded
+                </li>
+                <li>Downloaded timelines ,{{ timelines_downloaded }} / {{ tweets_downloaded }} timelines
                     downloaded
                 </li>
                 <li> {{ sentiments_analyzed }} / {{ tweets_downloaded }} tweets analyzed.</li>

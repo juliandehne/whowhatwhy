@@ -38,7 +38,8 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
 @background(schedule=1)
 def update_author(simple_request_id=-1):
     update_authors(simple_request_id)
-    update_author_timelines(simple_request_id)
+    update_author_timelines(simple_request_id, verbose_name="timeline_download_{}".format(simple_request_id),
+                            schedule=timezone.now())
 
 
 @background(schedule=1)

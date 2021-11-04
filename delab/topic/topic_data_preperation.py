@@ -4,7 +4,7 @@ import time
 
 from django.db.models import Exists, OuterRef
 
-from delab.models import Timeline, Tweet
+from delab.models import Timeline, Tweet, TweetAuthor
 from delab.magic_http_strings import TWEETS_USER_URL
 from delab.tw_connection_util import DelabTwarc
 
@@ -27,42 +27,39 @@ def save_author_tweet_to_tb(json_result, author_id):
                 lang=tweet_dict["lang"]
             )
             t.full_clean()
-
-
-def get_user_timeline(author_id, connector, params={},
-                      iterations=1):
-    if iterations > 0:
-        json_result = connector.get_from_twitter(TWEETS_USER_URL.format(author_id), params)
-        # logger.debug(json.dumps(json_result, indent=4, sort_keys=True))
-        save_author_tweet_to_tb(json_result, author_id)
-        if "meta" in json_result:
-            if "next_token" not in json_result["meta"] or json_result["meta"]["result_count"] == 0:
-                logger.debug("reached end of results for user with id{}".format(author_id))
-            else:
-                params["pagination_token"] = (json_result["meta"])["next_token"]
-                time.sleep(2)  # twitter api expects this timeout
-                get_user_timeline(author_id, connector, params, iterations - 1)
-        else:
-            logger.debug("reached end of results for user with id{}".format(author_id))
+            try:
+                author = TweetAuthor.objects.filter(twitter_id=t.author_id).get()
+                t.tw_author = author
+                t.save(update_fields=["tw_author"])
+            except Exception:
+                logger.error("author for tweet was not downloaded")
     else:
-        logger.debug("[jd] reached max iterations")
+        logger.debug("no timeline was found for author {}".format(author_id))
 
 
 def update_timelines_from_conversation_users(simple_request_id=-1):
     if simple_request_id < 0:
         author_ids = Tweet.objects.filter(
             ~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).values_list(
-            'author_id', flat=True)
+            'author_id', flat=True).distinct()
     else:
         author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
-            simple_request_id=simple_request_id).values_list('author_id', flat=True)
+            simple_request_id=simple_request_id).values_list('author_id', flat=True).distinct()
     get_user_timeline_twarc(author_ids)
 
 
-def get_user_timeline_twarc(author_ids):
+def get_user_timeline_twarc(author_ids, max_results=10):
     twarc_connector = DelabTwarc()
 
+    author_count = 0
     for author_id in author_ids:
-        tweets = twarc_connector.timeline(user=author_id)
+        author_count += 1
+        logger.debug("computed {}/{} of the timelines".format(author_count, len(author_ids)))
+        count = 0
+        tweets = twarc_connector.timeline(user=author_id, max_results=min(max_results, 64), exclude_retweets=True,
+                                          exclude_replies=True)
         for tweet in tweets:
+            count += 1
+            if count > max_results:
+                break
             save_author_tweet_to_tb(tweet, author_id)
