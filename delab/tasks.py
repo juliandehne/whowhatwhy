@@ -11,6 +11,7 @@ from background_task.models import CompletedTask
 from django.utils import timezone
 
 from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
+from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
 from django_project.settings import TRAX_CAPABILITIES
 
 logger = logging.getLogger(__name__)
@@ -37,10 +38,7 @@ def download_conversations_scheduler(topic_string, hashtags, simple_request_id, 
 @background(schedule=1)
 def update_author(simple_request_id=-1):
     update_authors(simple_request_id)
-    if TRAX_CAPABILITIES:
-        update_sentiments(simple_request_id,
-                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                          schedule=timezone.now())
+    update_author_timelines(simple_request_id)
 
 
 @background(schedule=1)
@@ -74,6 +72,15 @@ def update_sentiments(simple_request_id=-1):
 @background(schedule=1)
 def update_flows(simple_request_id=-1):
     update_sentiment_flows(simple_request_id)
+
+
+@background(schedule=1)
+def update_author_timelines(simple_request_id=-1):
+    update_timelines_from_conversation_users(simple_request_id)
+    if TRAX_CAPABILITIES:
+        update_sentiments(simple_request_id,
+                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                          schedule=timezone.now())
 
 
 def get_tasks_status(simple_request_id):

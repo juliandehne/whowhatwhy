@@ -48,3 +48,4 @@ django-pandas==0.6.4
 gensim==4.1.0
 django-filter==21.1
 django-annoying==0.10.6
+twarc==2.8.0

@@ -20,8 +20,6 @@ from .conversation_zip_renderer import create_zip_response_conversation, create_
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
-                     'tn_children_pks',
-                     'tn_order',
                      'sentiment_value', 'language']
 
 

@@ -137,8 +137,8 @@ class TweetAuthor(models.Model):
     twitter_id = models.BigIntegerField(unique=True)
     name = models.TextField()
     screen_name = models.TextField()
-    location = models.TextField()
-    followers_count = models.IntegerField()
+    location = models.TextField(default="unknown")
+    followers_count = models.IntegerField(default=0)
 
 
 class Tweet(models.Model):
@@ -159,8 +159,17 @@ class Tweet(models.Model):
     language = models.TextField(default="unk")
     bertopic_id = models.IntegerField(null=True)
     tn_parent = models.BigIntegerField(null=True)
+    c_is_local_moderator = models.BooleanField(null=True,
+                                               help_text="True if it is the most moderating tweet in the conversation, based on m_index")
+    c_is_local_moderator_score = models.FloatField(null=True, help_text="m_index without weights")
+    h_is_moderator = models.BooleanField(null=True, help_text="True if a human thinks it is moderating")
+    h2_is_moderator = models.BooleanField(null=True, help_text="True if a second human thinks it is moderating")
 
-    #objects = DataFrameManager()
+    c_is_moderator = models.BooleanField(null=True,
+                                         help_text="True if it is the most moderating tweet in the conversation, based on moderator-classifier")
+    c_is_moderator_score = models.FloatField(null=True, help_text="moderator-classifier trained model applied")
+
+    # objects = DataFrameManager()
 
     class Meta:
         verbose_name = 'Tweet'
@@ -179,6 +188,6 @@ class Timeline(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField()
     conversation_id = models.BigIntegerField(null=True)
-    in_reply_to_user_id = models.BigIntegerField(null=True)
+    in_reply_to_user_id = models.BigIntegerField(null=True, blank=True)
     lang = models.TextField()
     ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field

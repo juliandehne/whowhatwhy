@@ -8,6 +8,9 @@ import requests
 from pathlib import Path
 import time
 import logging
+
+from twarc import Twarc2
+
 from delab.magic_http_strings import TWEETS_RULES_URL, TWEETS_STREAM_URL
 
 logger = logging.getLogger(__name__)
@@ -190,3 +193,9 @@ class TwitterStreamConnector:
 
     def get_from_twitter(self):
         pass
+
+
+class DelabTwarc(Twarc2):
+    def __init__(self):
+        access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
+        super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, bearer_token)
