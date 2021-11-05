@@ -40,6 +40,7 @@ def save_author_tweet_to_tb(json_result, author_id):
 
 
 def fix_legacy():
+    # update authors "has_timeline" field
     authors = TweetAuthor.objects.filter(has_timeline__isnull=True)
     authors_ids = authors.values_list('twitter_id', flat=True)
     existing_timelines = Timeline.objects.filter(author_id__in=authors_ids).select_related("tw_author")
@@ -55,6 +56,15 @@ def fix_legacy():
             existing_timeline.save(update_fields=["tw_author"])
         except Exception:
             logger.error("not all authors have been downloaded prior to timeline downloads")
+    # update timelines that did not store the associated author object
+    existing_timelines2 = Timeline.objects.filter(tw_author__isnull=True).all()
+    for existing_timeline2 in existing_timelines2:
+        try:
+            author = TweetAuthor.objects.get(twitter_id=existing_timeline2.author_id)
+            existing_timeline2.tw_author = author
+            existing_timeline2.save(update_fields=["tw_author"])
+        except TweetAuthor.DoesNotExist:
+            logger.error("author was not downloaded before updating timelines")
 
 
 def update_timelines_from_conversation_users(simple_request_id=-1, fix_legacy_db=True):
