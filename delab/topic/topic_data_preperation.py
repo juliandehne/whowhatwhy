@@ -29,6 +29,8 @@ def save_author_tweet_to_tb(json_result, author_id):
             t.full_clean()
             try:
                 author = TweetAuthor.objects.filter(twitter_id=t.author_id).get()
+                author.has_timeline = True
+                author.save(update_fields=["has_timeline"])
                 t.tw_author = author
                 t.save(update_fields=["tw_author"])
             except Exception:
@@ -37,11 +39,29 @@ def save_author_tweet_to_tb(json_result, author_id):
         logger.debug("no timeline was found for author {}".format(author_id))
 
 
-def update_timelines_from_conversation_users(simple_request_id=-1):
+def fix_legacy():
+    authors = TweetAuthor.objects.filter(has_timeline__isnull=True)
+    authors_ids = authors.values_list('twitter_id', flat=True)
+    existing_timelines = Timeline.objects.filter(author_id__in=authors_ids).select_related("tw_author")
+    for existing_timeline in existing_timelines:
+        try:
+            author = existing_timeline.tw_author
+            if author is None:
+                author = TweetAuthor.objects.filter(twitter_id=existing_timeline.author_id).get()
+                # author = authors.filter(twitter_id=existing_timeline.author_id).get()
+            author.has_timeline = True
+            author.save(update_fields=["has_timeline"])
+            existing_timeline.tw_author = author
+            existing_timeline.save(update_fields=["tw_author"])
+        except Exception:
+            logger.error("not all authors have been downloaded prior to timeline downloads")
+
+
+def update_timelines_from_conversation_users(simple_request_id=-1, fix_legacy_db=True):
     if simple_request_id < 0:
-        author_ids = Tweet.objects.filter(
-            ~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).values_list(
-            'author_id', flat=True).distinct()
+        author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True).values_list('twitter_id', flat=True)
+        if fix_legacy_db:
+            fix_legacy()
     else:
         author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
             simple_request_id=simple_request_id).values_list('author_id', flat=True).distinct()
@@ -63,3 +83,8 @@ def get_user_timeline_twarc(author_ids, max_results=10):
             if count > max_results:
                 break
             save_author_tweet_to_tb(tweet, author_id)
+        if count == 0:
+            logger.debug("could not find a timeline for the give")
+            author = TweetAuthor.objects.filter(twitter_id=author_id).get()
+            author.has_timeline = False
+            author.save(update_fields=["has_timeline"])

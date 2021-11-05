@@ -139,6 +139,7 @@ class TweetAuthor(models.Model):
     screen_name = models.TextField()
     location = models.TextField(default="unknown")
     followers_count = models.IntegerField(default=0)
+    has_timeline = models.BooleanField(null=True, blank=True)
 
 
 class Tweet(models.Model):
