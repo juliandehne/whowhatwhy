@@ -13,6 +13,7 @@ Prerequisites:
 - You need an academic account at Twitter in order to use the interactive features (Download Tweets and analyze them on
   the fly)
 - Add a yaml file in /twitter/secret/keys_simple.yaml that contains the following fields
+- You need a 64 bit python and enough memory availble (at least 4k) in order to run the analytics
 
 ```yaml
   consumer_key:

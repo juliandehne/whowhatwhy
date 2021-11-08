@@ -34,7 +34,7 @@ import logging
 # TODO implement this as part of the pipeline
 
 def calculate_topic_flow(train=False, bertopic_location=tm.BERTOPIC_MODEL_LOCATION, lang="en", store_vectors=True,
-                         store_topics=True, update_topics=False):
+                         store_topics=True, update_topics=False, number_of_batchs=-1):
     """ This function takes the tweets of the authors' conversations and uses them as a context for the authors'
         regular topics. They are analyzed by how related their NER are.
     """
@@ -45,13 +45,14 @@ def calculate_topic_flow(train=False, bertopic_location=tm.BERTOPIC_MODEL_LOCATI
         bertopic_location = tm.train_topic_model_from_db(lang,
                                                          store_vectors=store_vectors,
                                                          store_topics=store_topics,
-                                                         update_topics=update_topics)
+                                                         update_topics=update_topics, number_of_batchs=number_of_batchs)
 
     bertopic_model = BERTopic().load(bertopic_location, embedding_model="sentence-transformers/all-mpnet-base-v2")
 
     # get the filtered topic model
-    topic_info = tm.filter_bad_topics(bertopic_model, tm.get_vocab(lang))
-
+    # topic_info = tm.filter_bad_topics(bertopic_model, tm.get_vocab(lang))
+    topic_info = bertopic_model.get_topic_info()
+    print(topic_info)
     # calculate distances
 
     # restore as json.loads with a_restored = np.asarray(json_load["a"])
