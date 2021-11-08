@@ -18,8 +18,11 @@ from delab.models import TopicDictionary
 
 BERTOPIC_MODEL_LOCATION = "BERTopic"
 
+logger = logging.getLogger(__name__)
+
 
 def train_topic_model_from_db(lang="en", store_vectors=True, store_topics=True, update_topics=True):
+    logger.debug("starting to train the topic model")
     corpus_for_fitting_sentences = get_train_corpus_for_sentences(lang)
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -35,6 +38,7 @@ def train_topic_model_from_db(lang="en", store_vectors=True, store_topics=True, 
             store_topic_id_tweets(topic_model_2, lang, update_topics, vocab)
 
     topic_model_2.save(BERTOPIC_MODEL_LOCATION)
+    logger.debug("finished training the topic model")
     return BERTOPIC_MODEL_LOCATION
 
 
@@ -150,7 +154,6 @@ def load_conversation_tweets(lang, logger):
 
 
 def load_author_tweets(lang):
-    logger = logging.getLogger(__name__)
     tweets = Timeline.objects.filter(Q(lang=lang)).all()
     df = read_frame(tweets, fieldnames=["id",
                                         "author_id",
