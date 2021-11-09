@@ -159,6 +159,7 @@ class Tweet(models.Model):
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default="unk")
     bertopic_id = models.IntegerField(null=True)
+    bert_visual = models.TextField(null=True, blank=True)
     tn_parent = models.BigIntegerField(null=True)
     c_is_local_moderator = models.BooleanField(null=True,
                                                help_text="True if it is the most moderating tweet in the conversation, based on m_index")

@@ -1,10 +1,12 @@
 import json
 import logging
 import os
+import profile
 import re
 import sqlite3
 
 import numpy as np
+from django.db import IntegrityError
 from django.db.models import Q
 from django_pandas.io import read_frame
 
@@ -22,8 +24,18 @@ BERTOPIC_MODEL_LOCATION = "BERTopic"
 
 logger = logging.getLogger(__name__)
 
+"""
+1. Create a seperate file and run the bert_topic fitting there, call this function with train = True for testing
+    a) run the fitting [x]
+    b) use the bert_topic transform to get all the the topic words [x]
+    c) get embedding vectors from fasttest using the topic words [x]
+    d) store the embeddings vectors in database [x]
+    e) store the bert_topic model [x]
 
-def train_topic_model_from_db(lang="en", store_vectors=True, store_topics=True, update_topics=True,
+"""
+
+
+def train_topic_model_from_db(train=True, lang="en", store_vectors=True, store_topics=True, update_topics=True,
                               number_of_batchs=-1):
     """
     :param lang:
@@ -37,21 +49,32 @@ def train_topic_model_from_db(lang="en", store_vectors=True, store_topics=True, 
     logger.debug("starting to train the topic model")
     corpus_for_fitting_sentences = get_train_corpus_for_sentences(lang, max_size=number_of_batchs)
 
-    # os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True)
-    topics, probs = topic_model_2.fit_transform(corpus_for_fitting_sentences)
+    if train:
+        train_bert(corpus_for_fitting_sentences)
 
     if store_vectors or store_topics:
         vocab = create_vocabulary(corpus_for_fitting_sentences)
         if store_vectors:
-            store_embedding_vectors(topic_model_2, vocab, lang)
+            store_embedding_vectors(vocab, lang)
 
         if store_topics:
-            store_topic_id_tweets(topic_model_2, lang, update_topics, vocab)
+            store_topic_id_tweets(lang, update_topics, vocab)
 
-    topic_model_2.save(BERTOPIC_MODEL_LOCATION)
     logger.debug("finished training the topic model")
-    return BERTOPIC_MODEL_LOCATION
+    bertopic_model = BERTopic().load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+
+    # get the filtered topic model
+    # topic_info = tm.filter_bad_topics(bertopic_model, tm.get_vocab(lang))
+    topic_info = bertopic_model.get_topic_info()
+    print(topic_info)
+
+
+def train_bert(corpus_for_fitting_sentences):
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True)
+    topics, probs = topic_model_2.fit_transform(corpus_for_fitting_sentences)
+    topic_model_2.save(BERTOPIC_MODEL_LOCATION)
+    logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
 
 
 def filter_bad_topics(bertopic_model, vocab):
@@ -64,7 +87,7 @@ def filter_bad_topics(bertopic_model, vocab):
     return topic_info
 
 
-def store_embedding_vectors(bertopic_model, vocab, lang):
+def store_embedding_vectors(vocab, lang):
     """
     This calculates the words that are in the topics, finds fasttext vectors for these words
     and stores them in the database for the distance measuring later on.
@@ -73,12 +96,13 @@ def store_embedding_vectors(bertopic_model, vocab, lang):
     :param lang:
     :return:
     """
-    # fasttext.load_model('cc.en.300.bin') # comment this in instead of the next line, if you are not Julian
-    # ft = fasttext.load_model('/home/dehne/nltk_data/fasttext/cc.{}.300.bin'.format(lang))
 
-    fasttext.util.download_model('en', if_exists='ignore')  # English
-    ft = fasttext.load_model('cc.en.300.bin')
+    # fasttext.util.download_model('en', if_exists='ignore')  # English
+    ft = fasttext.load_model('cc.en.100.bin')
+    logger.debug("loaded fasttext model into memory")
     # dim = ft.get_dimension()
+    bertopic_model = BERTopic().load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    logger.debug("loaded berttopic model")
 
     # filter topics
     topic_info = filter_bad_topics(bertopic_model, vocab)
@@ -94,8 +118,12 @@ def store_embedding_vectors(bertopic_model, vocab, lang):
             else:
                 n_words_in_voc += 1
                 ft_vector = ft.get_word_vector(str_w)
-                TopicDictionary.objects.get_or_create(word=str_w, ft_vector=json.dumps(ft_vector, cls=NumpyEncoder))
+                try:
+                    TopicDictionary.objects.get_or_create(word=str_w, ft_vector=json.dumps(ft_vector, cls=NumpyEncoder))
+                except IntegrityError:
+                    logger.debug("trying to save existing vector for word {} to db".format(str_w))
     print("saved ft_vectors. The hit rate was: {}".format(n_words_in_voc / (n_words_in_voc + n_words_nin_voc)))
+    bertopic_model = None  # for the gc
 
 
 def get_bad_topics(vocab, topic_model_2):
@@ -193,7 +221,10 @@ def clean_corpus(corpus_for_fitting_sentences):
     return result
 
 
-def store_topic_id_tweets(bertopic_model, lang, update_topics, vocab):
+def store_topic_id_tweets(lang, update_topics, vocab):
+    bertopic_model = BERTopic().load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    logger.debug("loaded berttopic model")
+
     # load tweets
     topic_info = filter_bad_topics(bertopic_model, vocab)
     if update_topics:
@@ -202,20 +233,28 @@ def store_topic_id_tweets(bertopic_model, lang, update_topics, vocab):
         conversation_tweets = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True))
 
     conversation_texts = list(conversation_tweets.values_list("text", flat=True))
+    logger.debug("classifying the tweet topics...")
     suggested_topics = bertopic_model.transform(conversation_texts)[0]
     index = 0
     conversation_tweet_objs = conversation_tweets.all()
     for conversation_tweet in conversation_tweet_objs:
         if suggested_topics[index] in topic_info.Topic:
             conversation_tweet.bertopic_id = suggested_topics[index]
+            topic_model = bertopic_model.get_topic(conversation_tweet.bertopic_id)
+            visual_model = "{}".format(conversation_tweet.bertopic_id)
+            for t_word in topic_model:
+                str_w = t_word[0]
+                visual_model += "_" + str_w
+            conversation_tweet.bert_visual = visual_model
         else:
             conversation_tweet.bertopic_id = -2
         index += 1
 
-    number_before = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
-    Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id"])
-    number_after = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
-    print("Updated {} tweets with topic_ids".format(number_before - number_after))
+    bertopic_model = None  # for garbage collection
+    # number_before = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
+    Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
+    # number_after = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
+    # print("Updated {} tweets with topic_ids".format(number_before - number_after))
 
 
 def load_conversation_tweets(lang, logger):
@@ -224,7 +263,7 @@ def load_conversation_tweets(lang, logger):
                                                                    "author_id",
                                                                    "text",
                                                                    ])
-    logger.info("loaded the timeline from the database")
+    # logger.info("loaded the timeline from the database")
     conversation_tweets_texts = list(df_conversations.text)
     return conversation_tweets_texts
 
