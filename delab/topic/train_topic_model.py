@@ -59,6 +59,7 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, store_t
 
         if store_topics:
             store_topic_id_tweets(lang, update_topics, vocab)
+            classify_author_timelines(update=update_topics)
 
     logger.debug("finished training the topic model")
     bertopic_model = BERTopic(calculate_probabilities=False, low_memory=True).load(BERTOPIC_MODEL_LOCATION,
@@ -72,7 +73,7 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, store_t
 
 def train_bert(corpus_for_fitting_sentences):
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
+    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=False,
                              calculate_probabilities=False, low_memory=True)
     topics, probs = topic_model_2.fit_transform(corpus_for_fitting_sentences)
     topic_model_2.save(BERTOPIC_MODEL_LOCATION)

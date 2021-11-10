@@ -1,5 +1,5 @@
 # Create your models here.
-
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -186,6 +186,9 @@ class Tweet(models.Model):
 
 
 class Timeline(models.Model):
+    """
+    represents the twitter timelines of an author (what he has written before)
+    """
     author_id = models.BigIntegerField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True, blank=True)
     tweet_id = models.BigIntegerField(unique=True)
@@ -195,3 +198,26 @@ class Timeline(models.Model):
     in_reply_to_user_id = models.BigIntegerField(null=True, blank=True)
     lang = models.TextField()
     ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field
+
+
+class TWCandidate(models.Model):
+    tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
+    exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
+    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    manual_code = models.BooleanField(null=True) # replace with likert scale https://pypi.org/project/django-likert-field/
+    sentiment_before = models.FloatField(null=True, help_text="the normalized sentiment measure sum of previous tweets")
+    sentiment_after = models.FloatField(null=True, help_text="the normalized sentiment measure sum of following tweets")
+    n_authors_before = models.IntegerField(null=True,
+                                           help_text="the number of different authors posting before the tweet")
+    n_authors_after = models.IntegerField(null=True,
+                                          help_text="the number of different authors posting after the tweet")
+    author_topic_variance_before = models.FloatField(null=True,
+                                                     help_text="the normalized author diversity measure sum of previous tweets")
+    author_topic_variance_after = models.FloatField(null=True,
+                                                    help_text="the normalized author diversity measure sum of following tweets")
+    moderator_index = models.FloatField()
+
+    class Meta:
+        unique_together = ('tweet', 'coder',)
+
+
