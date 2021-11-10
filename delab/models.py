@@ -140,6 +140,7 @@ class TweetAuthor(models.Model):
     location = models.TextField(default="unknown")
     followers_count = models.IntegerField(default=0)
     has_timeline = models.BooleanField(null=True, blank=True)
+    timeline_bertopic_id = models.IntegerField(null=True, blank=True)
 
 
 class Tweet(models.Model):

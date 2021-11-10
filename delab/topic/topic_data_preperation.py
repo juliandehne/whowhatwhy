@@ -7,6 +7,7 @@ from django.db.models import Exists, OuterRef
 from delab.models import Timeline, Tweet, TweetAuthor
 from delab.magic_http_strings import TWEETS_USER_URL
 from delab.tw_connection_util import DelabTwarc
+from .train_topic_model import classify_author_timelines
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,10 @@ def fix_legacy():
             logger.error("author was not downloaded before updating timelines")
 
 
-def update_timelines_from_conversation_users(simple_request_id=-1, fix_legacy_db=True):
+def update_timelines_from_conversation_users(simple_request_id=-1,
+                                             fix_legacy_db=True,
+                                             classify_author_topics=False,
+                                             update_author_topics=False):
     if simple_request_id < 0:
         author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True).values_list('twitter_id', flat=True)
         if fix_legacy_db:
@@ -76,6 +80,8 @@ def update_timelines_from_conversation_users(simple_request_id=-1, fix_legacy_db
         author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
             simple_request_id=simple_request_id).values_list('author_id', flat=True).distinct()
     get_user_timeline_twarc(author_ids)
+    if classify_author_topics:
+        classify_author_timelines(batch=False, update=update_author_topics)
 
 
 def get_user_timeline_twarc(author_ids, max_results=10):

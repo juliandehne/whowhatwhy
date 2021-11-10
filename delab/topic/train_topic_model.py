@@ -10,7 +10,7 @@ from django.db import IntegrityError
 from django.db.models import Q
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet
+from delab.models import Timeline, Tweet, TweetAuthor
 from bertopic import BERTopic
 import random
 
@@ -61,7 +61,8 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, store_t
             store_topic_id_tweets(lang, update_topics, vocab)
 
     logger.debug("finished training the topic model")
-    bertopic_model = BERTopic().load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    bertopic_model = BERTopic(calculate_probabilities=False, low_memory=True).load(BERTOPIC_MODEL_LOCATION,
+                                                                                   embedding_model="sentence-transformers/all-mpnet-base-v2")
 
     # get the filtered topic model
     # topic_info = tm.filter_bad_topics(bertopic_model, tm.get_vocab(lang))
@@ -71,7 +72,8 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, store_t
 
 def train_bert(corpus_for_fitting_sentences):
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True)
+    topic_model_2 = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
+                             calculate_probabilities=False, low_memory=True)
     topics, probs = topic_model_2.fit_transform(corpus_for_fitting_sentences)
     topic_model_2.save(BERTOPIC_MODEL_LOCATION)
     logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
@@ -293,3 +295,42 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+
+def classify_author_timelines(batch=False, update=False):
+    bertopic_model = BERTopic(calculate_probabilities=False, low_memory=True).load(BERTOPIC_MODEL_LOCATION,
+                                                                                   embedding_model="sentence-transformers/all-mpnet-base-v2")
+    logger.debug("loaded berttopic model")
+    if update:
+        tweet_authors = TweetAuthor.objects.all()
+    else:
+        tweet_authors = TweetAuthor.objects.filter(timeline_bertopic_id__isnull=True).all()
+    author_texts = []
+    # currently there is a bug with the batch processing
+    # https://github.com/MaartenGr/BERTopic/issues/322
+    if batch:
+        for tweet_author in tweet_authors:
+            if tweet_author.has_timeline:
+                df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
+                author_text = ""
+                df_timelines_cleaned = clean_corpus(df_timelines)
+                for text in df_timelines_cleaned:
+                    author_text += text + ". "
+                author_texts.append(author_text)
+        topic_classifications = bertopic_model.transform(author_texts)
+        index = 0
+        for tweet_author in tweet_authors:
+            tweet_author.timeline_bertopic_id = topic_classifications[index][0]
+            index += 1
+            tweet_author.save(update_fields=["timeline_bertopic_id"])
+    else:
+        for tweet_author in tweet_authors:
+            if tweet_author.has_timeline:
+                df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
+                author_text = ""
+                df_timelines_cleaned = clean_corpus(df_timelines)
+                for text in df_timelines_cleaned:
+                    author_text += text + ". "
+                suggested_topic = bertopic_model.transform(author_text)
+                tweet_author.timeline_bertopic_id = suggested_topic[0][0]
+                tweet_author.save(update_fields=["timeline_bertopic_id"])
