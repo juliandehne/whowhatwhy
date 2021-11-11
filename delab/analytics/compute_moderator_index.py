@@ -1,15 +1,14 @@
-from util.sql_switch import get_query_native
-
-from tqdm import tqdm
-import os
-import torch
-import re
-import pandas as pd
-from collections import defaultdict
-from bertopic import BERTopic
 import json
-from scipy import spatial
+from collections import defaultdict
+
 import numpy as np
+import pandas as pd
+from bertopic import BERTopic
+from django_pandas.io import read_frame
+from scipy import spatial
+from tqdm import tqdm
+
+from delab.models import Tweet, TopicDictionary
 
 
 def store_candidates(df_conversations, experiment_index):
@@ -24,9 +23,13 @@ def store_candidates(df_conversations, experiment_index):
 
 def compute_moderator_index(experiment_index):
     # and bertopic_id >= 0"
-    df_conversations = get_query_native(
-        "SELECT tw.id, tw.text, tw.author_id, tw.bertopic_id, tw.bert_visual, tw.conversation_id, tw.sentiment_value, tw.created_at, a.timeline_bertopic_id \
-         FROM delab_tweet tw join delab_tweetauthor a on tw.author_id = a.twitter_id where language = 'en' and a.timeline_bertopic_id > 0 and a.has_timeline is TRUE")
+    # df_conversations = get_query_native(
+    #    "SELECT tw.id, tw.text, tw.author_id, tw.bertopic_id, tw.bert_visual, tw.conversation_id, tw.sentiment_value, tw.created_at, a.timeline_bertopic_id \
+    #     FROM delab_tweet tw join delab_tweetauthor a on tw.author_id = a.twitter_id where language = 'en' and a.timeline_bertopic_id > 0 and a.has_timeline is TRUE")
+    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en')
+    df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
+                                                  "conversation_id",
+                                                  "sentiment_value", "created_at", "tw_author__timeline_bertopic_id"])
 
     df_conversations = df_conversations.sort_values(by=['conversation_id', 'created_at'])
     df_conversations.reset_index(drop=True, inplace=True)
@@ -39,16 +42,18 @@ def compute_moderator_index(experiment_index):
 
     # loading the bertopic model
     BERTOPIC_MODEL_LOCATION = "BERTopic"
-    bertopic_model = BERTopic(calculate_probabilities=False, low_memory=True).load(BERTOPIC_MODEL_LOCATION,
-                                                                                   embedding_model="sentence-transformers/all-mpnet-base-v2")
+    bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION,
+                                   embedding_model="sentence-transformers/all-mpnet-base-v2")
     topic_info = bertopic_model.get_topic_info()
 
     # create topic-word map
     topic2word = compute_topic2word(bertopic_model, topic_info)
 
     # loading the word vectors from the database (maybe this needs filtering at some point)
-    word2vec = get_query_native(
-        "SELECT word, ft_vector from delab_topicdictionary")
+    # word2vec = get_query_native(
+    #    "SELECT word, ft_vector from delab_topicdictionary")
+    qs = TopicDictionary.objects.all()
+    word2vec = read_frame(qs, fieldnames=["word", "ft_vector"])
 
     candidate_author_topic_variance = compute_author_topic_variance(df_conversations, topic2word, word2vec)
     df_conversations = df_conversations.assign(candidate_author_topic_variance=candidate_author_topic_variance)
@@ -193,8 +198,8 @@ def compute_author_topic_variance(df, topic2word, word2vec):
                 ):
                     # authors_before.add(df.at[previous_tweets_index, "author_id"])
                     # authors_after.add(df.at[following_tweets_index, "author_id"])
-                    authors_before.add(df.at[previous_tweets_index, "timeline_bertopic_id"])
-                    authors_after.add(df.at[following_tweets_index, "timeline_bertopic_id"])
+                    authors_before.add(df.at[previous_tweets_index, "tw_author__timeline_bertopic_id"])
+                    authors_after.add(df.at[following_tweets_index, "tw_author__timeline_bertopic_id"])
 
         author_topic_var_before = 0
         author_topic_var_after = 0

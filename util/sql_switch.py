@@ -66,10 +66,10 @@ def get_query_native(query_string, app="delab",
         module = importlib.import_module(module_name)
         class_name = get_class_mapping(table_name)
         class_ = getattr(module, class_name)
-        instance = class_()
         try:
-            qs = class_.objects.raw(query_string).all()
-            df = read_frame(qs, fieldnames=fieldnames)
+            qs = class_.objects.raw(query_string)
+            df = read_frame(qs)
+            return df
         except ProgrammingError:
             logging.error("tried to get query_set but gave error")
             return class_.objects.none()

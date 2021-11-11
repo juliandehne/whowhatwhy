@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 """
 
 
-def train_topic_model_from_db(train=True, lang="en", store_vectors=True, number_of_batchs=-1):
+def train_topic_model_from_db(train=True, lang="en", store_vectors=True, number_of_batchs=30000):
     """
     :param lang:
     :param store_vectors: Stores the embedding vectors from fasttext in a table for quick access for each word in the tweets
@@ -63,24 +63,17 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, number_
 
 
 def train_bert(corpus_for_fitting_sentences):
-    # os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     count = 0
-    for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
-        if os.path.isfile(BERTOPIC_MODEL_LOCATION):
-            bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION,
-                                           embedding_model="sentence-transformers/all-mpnet-base-v2")
-        else:
-            bertopic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
-                                      calculate_probabilities=False)
-        count += 1
-        try:
-            bertopic_model.fit_transform(trainings_batch)
-            bertopic_model.save(BERTOPIC_MODEL_LOCATION)
-        except KeyError:
-            print("could not transform the batch number {}".format(str(count)))
+    # for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
+    trainings_batch = corpus_for_fitting_sentences
 
-        logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
+    bertopic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
+                              calculate_probabilities=False, min_topic_size=30, low_memory=True)
+    bertopic_model.fit_transform(trainings_batch)
+    bertopic_model.save(BERTOPIC_MODEL_LOCATION)
+    logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
 
 
 def filter_bad_topics(bertopic_model, vocab):
@@ -227,10 +220,10 @@ def clean_corpus(corpus_for_fitting_sentences):
     return result
 
 
-def classify_tweets(lang, update_topics):
+def classify_tweets(lang="en", update_topics=True):
     bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2",
                                    )
-    logger.debug("loaded berttopic model")
+    logger.debug("loaded berttopic model for classifying the tweets")
 
     corpus_for_fitting_sentences = get_train_corpus_for_sentences(lang)
     vocab = create_vocabulary(corpus_for_fitting_sentences)
@@ -241,29 +234,30 @@ def classify_tweets(lang, update_topics):
     else:
         conversation_tweets = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True))
 
-    conversation_texts = list(conversation_tweets.values_list("text", flat=True))
-    logger.debug("classifying the tweet topics...")
-    suggested_topics = bertopic_model.transform(conversation_texts)[0]
-    index = 0
-    conversation_tweet_objs = conversation_tweets.all()
-    for conversation_tweet in conversation_tweet_objs:
-        if suggested_topics[index] in topic_info.Topic:
-            conversation_tweet.bertopic_id = suggested_topics[index]
-            topic_model = bertopic_model.get_topic(conversation_tweet.bertopic_id)
-            visual_model = "{}".format(conversation_tweet.bertopic_id)
-            for t_word in topic_model:
-                str_w = t_word[0]
-                visual_model += "_" + str_w
-            conversation_tweet.bert_visual = visual_model
-        else:
-            conversation_tweet.bertopic_id = -2
-        index += 1
+    if len(conversation_tweets) > 0:
+        conversation_texts = list(conversation_tweets.values_list("text", flat=True))
+        logger.debug("classifying the tweet topics...")
+        suggested_topics = bertopic_model.transform(conversation_texts)[0]
+        index = 0
+        conversation_tweet_objs = conversation_tweets.all()
+        for conversation_tweet in conversation_tweet_objs:
+            if suggested_topics[index] in topic_info.Topic:
+                conversation_tweet.bertopic_id = suggested_topics[index]
+                topic_model = bertopic_model.get_topic(conversation_tweet.bertopic_id)
+                visual_model = "{}".format(conversation_tweet.bertopic_id)
+                for t_word in topic_model:
+                    str_w = t_word[0]
+                    visual_model += "_" + str_w
+                conversation_tweet.bert_visual = visual_model
+            else:
+                conversation_tweet.bertopic_id = -2
+            index += 1
 
-    bertopic_model = None  # for garbage collection
-    # number_before = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
-    Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
-    # number_after = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
-    # print("Updated {} tweets with topic_ids".format(number_before - number_after))
+        bertopic_model = None  # for garbage collection
+        # number_before = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
+        Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
+        # number_after = Tweet.objects.filter(Q(language=lang) & Q(bertopic_id__isnull=True)).count()
+        # print("Updated {} tweets with topic_ids".format(number_before - number_after))
 
 
 def load_conversation_tweets(lang, logger):
@@ -304,7 +298,7 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def classify_author_timelines(batch=False, update=False):
+def classify_author_timelines(batch=False, update=True):
     bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
     logger.debug("loaded berttopic model")
     if update:

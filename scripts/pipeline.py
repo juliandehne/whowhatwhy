@@ -33,14 +33,16 @@ def run(*args):
     print("STEP 3: FINISHED updating author timelines")
     # 1. Trains the bertopic model on the timelines and the tweets and stores the trained bertopic model in "BERTopic"
     # 2. loads fasttextvectors for all bertopic models and stores them in topicdictionary
-    train_topic_model_from_db()
+    # train_topic_model_from_db()
     print("STEP 4: FINISHED training the bertopic model")
     # classify the author timelines
-    classify_author_timelines()
+    classify_author_timelines(update=False)
     print("STEP 5: FINISHED classifying the author timelines")
     # classifying the tweets
-    classify_tweets()
+    classify_tweets(update_topics=False)
     print("STEP 6: FINISHED classifying the tweets in the conversation table")
     # compute the moderator index and stor it in twcandidate table
-    compute_moderator_index(analysis_version)
+    candidates = compute_moderator_index(analysis_version)
     print("STEP 7: FINISHED computing the moderator_index")
+
+    print(candidates.head(10))
