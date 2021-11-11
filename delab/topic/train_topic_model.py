@@ -65,24 +65,22 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, number_
 def train_bert(corpus_for_fitting_sentences):
     # os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    if os.path.isfile(BERTOPIC_MODEL_LOCATION):
-        bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION,
-                                       embedding_model="sentence-transformers/all-mpnet-base-v2")
-    else:
-        bertopic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=False,
-                                  calculate_probabilities=False)
-
-    bertopic_model.fit(corpus_for_fitting_sentences)
     count = 0
-    # for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
-    # torch.cuda.empty_cache()
-    #    count += 1
-    #    try:
-    #        bertopic_model.fit(trainings_batch)
-    #    except KeyError:
-    #        print("could not transform the batch number {}".format(str(count)))
-    bertopic_model.save(BERTOPIC_MODEL_LOCATION)
-    logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
+    for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
+        if os.path.isfile(BERTOPIC_MODEL_LOCATION):
+            bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION,
+                                           embedding_model="sentence-transformers/all-mpnet-base-v2")
+        else:
+            bertopic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
+                                      calculate_probabilities=False)
+        count += 1
+        try:
+            bertopic_model.fit_transform(trainings_batch)
+            bertopic_model.save(BERTOPIC_MODEL_LOCATION)
+        except KeyError:
+            print("could not transform the batch number {}".format(str(count)))
+
+        logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
 
 
 def filter_bad_topics(bertopic_model, vocab):
