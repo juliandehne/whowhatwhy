@@ -215,7 +215,7 @@ INTERNAL_IPS = [
     '0.0.0.0'
 ]
 
-DEBUG = True
+DEBUG = False
 
 # LOGGING
 
@@ -251,6 +251,9 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'numba': {
+            'level': 'ERROR'
+        }
     },
 }
 
