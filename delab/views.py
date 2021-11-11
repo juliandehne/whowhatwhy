@@ -1,6 +1,7 @@
 from logging.handlers import RotatingFileHandler
 
 from background_task.models import Task
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Exists, OuterRef
 from django.shortcuts import render, redirect
@@ -20,7 +21,7 @@ from django.views.generic import (
     DeleteView
 )
 
-from delab.models import SimpleRequest, Tweet, TwTopic, Timeline
+from delab.models import SimpleRequest, Tweet, TwTopic, Timeline, TWCandidate
 import logging
 from .tasks import get_tasks_status
 
@@ -124,7 +125,8 @@ class TaskStatusView(ListView):
         context['tweets_downloaded'] = simple_request.tweet_set.count()
         authors_downloaded = simple_request.tweet_set.filter(tw_author__isnull=False).count()
         context["authors_downloaded"] = authors_downloaded
-        timelines_not_downloaded = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
+        timelines_not_downloaded = Tweet.objects.filter(
+            ~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
             simple_request_id=simple_request.id).count()
         context["timelines_downloaded"] = context['tweets_downloaded'] - timelines_not_downloaded
         sentiments_analyzed = simple_request.tweet_set.filter(sentiment_value__isnull=False).count()
@@ -146,3 +148,14 @@ class TaskStatusView(ListView):
             return redirect("delab-conversations-for-request", pk=pk)
         else:
             return super(TaskStatusView, self).dispatch(request, *args, **kwargs)
+
+
+# TODO finish implementing
+class TWCandidateLabelView(LoginRequiredMixin, UpdateView):
+    model = TWCandidate
+    fields = ['tweet__text', 'manual_code']
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+

@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
 from django_pandas.managers import DataFrameManager
+from likert_field.models import LikertField
 from treenode.models import TreeNodeModel
 
 
@@ -204,7 +205,7 @@ class TWCandidate(models.Model):
     tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    manual_code = models.BooleanField(null=True) # replace with likert scale https://pypi.org/project/django-likert-field/
+    manual_code = LikertField()  # replace with likert scale https://pypi.org/project/django-likert-field/
     sentiment_before = models.FloatField(null=True, help_text="the normalized sentiment measure sum of previous tweets")
     sentiment_after = models.FloatField(null=True, help_text="the normalized sentiment measure sum of following tweets")
     n_authors_before = models.IntegerField(null=True,
@@ -219,5 +220,3 @@ class TWCandidate(models.Model):
 
     class Meta:
         unique_together = ('tweet', 'coder',)
-
-

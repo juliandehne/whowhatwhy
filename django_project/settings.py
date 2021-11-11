@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
+    'likert_field',
     'treenode',
     'rest_framework',
     'django_filters',
@@ -256,4 +257,4 @@ LOGGING = {
 # delab_settings
 # max candidates between 10 and 500
 MAX_CANDIDATES = 10
-TRAX_CAPABILITIES = True  # set this to true onl if you running on a linux and have AVX commands available
+TRAX_CAPABILITIES = False  # set this to true onl if you running on a linux and have AVX commands available
