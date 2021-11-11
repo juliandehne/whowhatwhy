@@ -24,11 +24,11 @@ RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pyto
 RUN pip install -r requirements-docker.txt
 RUN pip install trax==1.3.9
 
-#RUN pip install --upgrade "jax[cpu]"
-COPY . /code/
-
 RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords
+
+#RUN pip install --upgrade "jax[cpu]"
+COPY . /code/
 
 # RUN python /code/delab/sentiment/download_nltk.py
 
