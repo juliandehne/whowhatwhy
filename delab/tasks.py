@@ -10,6 +10,7 @@ from background_task.models import Task
 from background_task.models import CompletedTask
 from django.utils import timezone
 
+from delab.sentiment.sentiment_classification import update_tweet_sentiments
 from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
 from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
 from django_project.settings import TRAX_CAPABILITIES
@@ -44,28 +45,7 @@ def update_author(simple_request_id=-1):
 
 @background(schedule=1)
 def update_sentiments(simple_request_id=-1):
-    from delab.sentiment.sentiment_classification import classify_tweet_sentiment
-    from delab.sentiment.sentiment_training import update_dictionary
-    logger.info("updating sentiments")
-    # importing here to improve server startup time
-
-    if simple_request_id < 0:
-        tweets = Tweet.objects.filter(
-            (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(sentiment="failed_analysis")).all()
-    else:
-        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) &
-                                      (Q(sentiment=None) | Q(sentiment_value=None)) &
-                                      ~Q(sentiment="failed_analysis")).all()
-    # tweet_strings = tweets.values_list(["text"], flat=True)
-    # print(tweet_strings[1:3])
-    tweet_strings = list(map(lambda x: x.text, tweets))
-    update_dictionary(tweet_strings)
-    predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
-    for tweet in tweets:
-        tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
-        tweet.sentiment_value = sentiment_values.get(tweet.text, None)
-        tweet.save()
-
+    update_tweet_sentiments(simple_request_id)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
 

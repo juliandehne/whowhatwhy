@@ -3,9 +3,32 @@ import json
 import logging
 
 import numpy as np
+from django.db.models import Q
 
-from delab.models import SADictionary
+from delab.models import SADictionary, Tweet
 from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
+
+
+def update_tweet_sentiments(simple_request_id=-1):
+    from delab.sentiment.sentiment_classification import classify_tweet_sentiment
+    from delab.sentiment.sentiment_training import update_dictionary
+
+    if simple_request_id < 0:
+        tweets = Tweet.objects.filter(
+            (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(sentiment="failed_analysis")).all()
+    else:
+        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) &
+                                      (Q(sentiment=None) | Q(sentiment_value=None)) &
+                                      ~Q(sentiment="failed_analysis")).all()
+    # tweet_strings = tweets.values_list(["text"], flat=True)
+    # print(tweet_strings[1:3])
+    tweet_strings = list(map(lambda x: x.text, tweets))
+    update_dictionary(tweet_strings)
+    predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
+    for tweet in tweets:
+        tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
+        tweet.sentiment_value = sentiment_values.get(tweet.text, None)
+        tweet.save()
 
 
 ## not implemented, just ofr later use trained sentiment classifier using BERT
