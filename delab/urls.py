@@ -6,10 +6,12 @@ from delab.api.view_sets import get_tabbed_conversation_view, \
 from .api.router import get_routes
 from .views import (
     SimpleRequestCreateView,
-    ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView, simple_request_proxy
+    ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
+    simple_request_proxy, TWCandidateLabelView
 )
 
 urlpatterns = [
+    path('label', TWCandidateLabelView.as_view(), name='delab-label'),
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),
     path('topic/new', TopicCreateView.as_view(), name='delab-create-topic'),
     path('requests', SimpleRequestListView.as_view(), name='delab-conversations-requests'),

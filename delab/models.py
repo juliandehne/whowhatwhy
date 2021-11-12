@@ -1,12 +1,11 @@
 # Create your models here.
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
-from django_pandas.managers import DataFrameManager
-from likert_field.models import LikertField
 from treenode.models import TreeNodeModel
 
 
@@ -213,13 +212,20 @@ class TWCandidate(models.Model):
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     moderator_index = models.FloatField(
         help_text="a combined measure of the quality of a tweet in terms of moderating value")
-    u_moderator_rating = LikertField(null=True,
-                                    blank=True)
-    u_sentiment_rating = LikertField(null=True,
-                                    blank=True)
-    u_author_topic_variance_rating = LikertField(null=True,
-                                    blank=True)
 
+    class Likert(models.IntegerChoices):
+        STRONGLY_NOT_AGREE = -2
+        NOT_AGREE = -1
+        NOT_SURE = 0
+        AGREE = 1
+        AGREE_STRONGLY = 2
+
+    u_moderator_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
+    u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
+    u_author_topic_variance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
 
     class Meta:
         unique_together = ('tweet', 'coder',)
+
+    def get_absolute_url(self):
+        return reverse('delab-label')

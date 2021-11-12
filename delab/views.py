@@ -1,4 +1,5 @@
 from logging.handlers import RotatingFileHandler
+from random import choice
 
 from background_task.models import Task
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -151,11 +152,34 @@ class TaskStatusView(ListView):
 
 
 # TODO finish implementing
-class TWCandidateLabelView(LoginRequiredMixin, UpdateView):
+class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     model = TWCandidate
-    fields = ['tweet__text', 'manual_code']
+    fields = ['u_moderator_rating', 'u_author_topic_variance_rating', 'u_sentiment_rating']
 
     def form_valid(self, form):
-        form.instance.author = self.request.user
+        form.instance.coder = self.request.user
         return super().form_valid(form)
 
+    def get_object(self, queryset=None):
+        candidates = TWCandidate.objects.filter(coder__isnull=True).select_related().all()
+        candidate = choice(candidates)
+        self.query_pk_and_slug = candidate.pk
+        return candidate
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(TWCandidateLabelView, self).get_context_data(**kwargs)
+
+        from delab.topic.train_topic_model import clean_corpus
+        candidate_id = self.query_pk_and_slug
+        candidate = TWCandidate.objects.filter(id=candidate_id).get()
+        tweet_text = candidate.tweet.text
+        context["text"] = clean_corpus([tweet_text])[0]
+        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id).order_by(
+            '-created_at')
+
+        full_conversation = list(context_tweets.values_list("text", flat=True))
+        index = full_conversation.index(tweet_text)
+
+        full_conversation = clean_corpus(full_conversation)
+        context["conversation"] = full_conversation[index - 2:index + 3]
+        return context

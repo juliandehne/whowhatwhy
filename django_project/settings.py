@@ -31,7 +31,6 @@ ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
-    'likert_field',
     'treenode',
     'rest_framework',
     'django_filters',
@@ -215,7 +214,7 @@ INTERNAL_IPS = [
     '0.0.0.0'
 ]
 
-DEBUG = False
+DEBUG = True
 
 # LOGGING
 
