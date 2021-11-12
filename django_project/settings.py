@@ -253,6 +253,9 @@ LOGGING = {
         },
         'numba': {
             'level': 'ERROR'
+        },
+        'requests': {
+            'level': 'ERROR'
         }
     },
 }

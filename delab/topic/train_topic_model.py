@@ -56,8 +56,7 @@ def train_topic_model_from_db(train=True, lang="en", store_vectors=True, number_
 
     if store_vectors:
         vocab = create_vocabulary(corpus_for_fitting_sentences)
-        if store_vectors:
-            store_embedding_vectors(vocab, lang)
+        store_embedding_vectors(vocab, lang)
 
     logger.debug("finished training the topic model")
 

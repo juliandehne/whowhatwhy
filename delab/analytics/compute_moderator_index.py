@@ -5,27 +5,50 @@ import numpy as np
 import pandas as pd
 from bertopic import BERTopic
 from django_pandas.io import read_frame
+from numpy import NaN
 from scipy import spatial
 from tqdm import tqdm
 
-from delab.models import Tweet, TopicDictionary
+from delab.models import Tweet, TopicDictionary, TWCandidate
 
 
 def store_candidates(df_conversations, experiment_index):
     """
-    TODO implement storing the candidates
     :param df_conversations:
     :param experiment_index:
     :return:
     """
-    pass
+    TWCandidate.objects.filter(exp_id=experiment_index).delete()
+
+    df_conversations = df_conversations[~df_conversations['moderator_index'].isnull()]
+    df_conversations = df_conversations[df_conversations['moderator_index'].notna()]
+    df_conversations.rename(columns={'id': 'tweet_id'}, inplace=True)
+    df_conversations = df_conversations.assign(exp_id=experiment_index)
+    df_conversations = df_conversations.assign(coder=None)
+    df_conversations = df_conversations.assign(u_moderator_rating=None)
+    df_conversations = df_conversations.assign(u_sentiment_rating=None)
+    df_conversations = df_conversations.assign(u_author_topic_variance_rating=None)
+    df_conversations = df_conversations.replace({np.nan: None})
+    df_conversations = df_conversations[['tweet_id',
+                                         'exp_id',
+                                         'c_sentiment_value_norm',
+                                         'sentiment_value_norm',
+                                         'c_author_number_changed_norm',
+                                         'c_author_topic_variance_norm',
+                                         'coder',
+                                         'moderator_index',
+                                         'u_moderator_rating',
+                                         'u_sentiment_rating',
+                                         'u_author_topic_variance_rating'
+                                         ]]
+
+    df_conversation_records = df_conversations.to_dict('records')
+    tw_candidates = [TWCandidate(**candidate) for candidate in df_conversation_records]
+    TWCandidate.objects.bulk_create(tw_candidates)
+    print("writting {} candidates to the candidates table".format(len(tw_candidates)))
 
 
 def compute_moderator_index(experiment_index):
-    # and bertopic_id >= 0"
-    # df_conversations = get_query_native(
-    #    "SELECT tw.id, tw.text, tw.author_id, tw.bertopic_id, tw.bert_visual, tw.conversation_id, tw.sentiment_value, tw.created_at, a.timeline_bertopic_id \
-    #     FROM delab_tweet tw join delab_tweetauthor a on tw.author_id = a.twitter_id where language = 'en' and a.timeline_bertopic_id > 0 and a.has_timeline is TRUE")
     qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en')
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
@@ -33,6 +56,8 @@ def compute_moderator_index(experiment_index):
 
     df_conversations = df_conversations.sort_values(by=['conversation_id', 'created_at'])
     df_conversations.reset_index(drop=True, inplace=True)
+    # for debugging keep n rows
+    df_conversations = df_conversations.head(100)
 
     candidate_sentiment_values = compute_sentiment_change_candidate(df_conversations)
     df_conversations = df_conversations.assign(candidate_sentiment_value=candidate_sentiment_values)
@@ -56,21 +81,22 @@ def compute_moderator_index(experiment_index):
     word2vec = read_frame(qs, fieldnames=["word", "ft_vector"])
 
     candidate_author_topic_variance = compute_author_topic_variance(df_conversations, topic2word, word2vec)
-    df_conversations = df_conversations.assign(candidate_author_topic_variance=candidate_author_topic_variance)
 
-    sv = df_conversations.sentiment_value
-    df_conversations = df_conversations.assign(sentiment_value_normalized=normalize(df_conversations.sentiment_value))
-    df_conversations = df_conversations.assign(
-        c_author_number_changed_normalized=normalize(df_conversations.candidate_author_number_changed))
+    # normalizing the measures
     df_conversations = df_conversations.assign(
         c_sentiment_value_norm=normalize(df_conversations.candidate_sentiment_value))
     df_conversations = df_conversations.assign(
-        c_author_topic_variance_norm=normalize(df_conversations.candidate_author_topic_variance))
-    df_conversations = df_conversations.assign(moderator_index=df_conversations.c_author_number_changed_normalized
+        c_author_number_changed_norm=normalize(df_conversations.candidate_author_number_changed))
+    df_conversations = df_conversations.assign(c_author_topic_variance_norm=candidate_author_topic_variance)
+    df_conversations = df_conversations.assign(sentiment_value_norm=normalize(df_conversations.sentiment_value))
+
+    # summing up the measures without weights
+    df_conversations = df_conversations.assign(moderator_index=df_conversations.c_author_number_changed_norm
                                                                + df_conversations.c_sentiment_value_norm
                                                                + df_conversations.c_author_topic_variance_norm
-                                                               - abs(df_conversations.sentiment_value_normalized)
+                                                               - abs(df_conversations.sentiment_value_norm)
                                                )
+
     store_candidates(df_conversations, experiment_index)
     candidates = df_conversations.nlargest(10, ["moderator_index"])
     return candidates
@@ -92,7 +118,7 @@ def compute_sentiment_change_candidate(df):
     """
     n = len(df.sentiment_value)
     result = []
-    for index in tqdm(range(n)):
+    for index in range(n):
         candidate_sentiment_value = 0
         conversation_id = df.at[index, "conversation_id"]
         conversation_length = df[df["conversation_id"] == conversation_id].conversation_id.count()
@@ -119,7 +145,7 @@ def compute_number_of_authors_changed(df):
     """
     n = len(df.sentiment_value)
     result = []
-    for index in tqdm(range(n)):
+    for index in range(n):
         candidate_number_authors_before = set()
         candidate_number_authors_after = set()
         conversation_id = df.at[index, "conversation_id"]
@@ -179,9 +205,11 @@ def compute_author_topic_variance(df, topic2word, word2vec):
     :param bert_topic_model:
     :return:
     """
+    print("computing author timeline deltas... this might take a while\n")
     n = len(df.author_id)
     result = []
-    for index in tqdm(range(n)):
+    indices = range(n)
+    for index in tqdm(indices):
         authors_before = set()
         authors_after = set()
         conversation_id = df.at[index, "conversation_id"]

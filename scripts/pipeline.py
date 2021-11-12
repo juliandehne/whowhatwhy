@@ -17,8 +17,11 @@ def run(*args):
     """
 
     analysis_version = "v0.0.1"
+    train_update_topics = False
     if len(args) > 0:
         analysis_version = args[0]
+    if len(args) > 1:
+        train_update_topics = bool(args[1] == "True")
 
     # Stores the trained sentiment model in {base}/model
     # train_sentiment_classification()
@@ -33,13 +36,13 @@ def run(*args):
     print("STEP 3: FINISHED updating author timelines")
     # 1. Trains the bertopic model on the timelines and the tweets and stores the trained bertopic model in "BERTopic"
     # 2. loads fasttextvectors for all bertopic models and stores them in topicdictionary
-    # train_topic_model_from_db()
+    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batchs=50000)
     print("STEP 4: FINISHED training the bertopic model")
     # classify the author timelines
-    classify_author_timelines(update=False)
+    classify_author_timelines(update=train_update_topics)
     print("STEP 5: FINISHED classifying the author timelines")
     # classifying the tweets
-    classify_tweets(update_topics=False)
+    classify_tweets(update_topics=train_update_topics)
     print("STEP 6: FINISHED classifying the tweets in the conversation table")
     # compute the moderator index and stor it in twcandidate table
     candidates = compute_moderator_index(analysis_version)

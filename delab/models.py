@@ -204,19 +204,22 @@ class Timeline(models.Model):
 class TWCandidate(models.Model):
     tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
-    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    manual_code = LikertField()  # replace with likert scale https://pypi.org/project/django-likert-field/
-    sentiment_before = models.FloatField(null=True, help_text="the normalized sentiment measure sum of previous tweets")
-    sentiment_after = models.FloatField(null=True, help_text="the normalized sentiment measure sum of following tweets")
-    n_authors_before = models.IntegerField(null=True,
-                                           help_text="the number of different authors posting before the tweet")
-    n_authors_after = models.IntegerField(null=True,
-                                          help_text="the number of different authors posting after the tweet")
-    author_topic_variance_before = models.FloatField(null=True,
-                                                     help_text="the normalized author diversity measure sum of previous tweets")
-    author_topic_variance_after = models.FloatField(null=True,
-                                                    help_text="the normalized author diversity measure sum of following tweets")
-    moderator_index = models.FloatField()
+    c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
+    sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
+    c_author_number_changed_norm = models.IntegerField(null=True,
+                                                       help_text="the number of different authors posting before and after the tweet")
+    c_author_topic_variance_norm = models.FloatField(null=True,
+                                                     help_text="the normalized author diversity")
+    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    moderator_index = models.FloatField(
+        help_text="a combined measure of the quality of a tweet in terms of moderating value")
+    u_moderator_rating = LikertField(null=True,
+                                    blank=True)
+    u_sentiment_rating = LikertField(null=True,
+                                    blank=True)
+    u_author_topic_variance_rating = LikertField(null=True,
+                                    blank=True)
+
 
     class Meta:
         unique_together = ('tweet', 'coder',)
