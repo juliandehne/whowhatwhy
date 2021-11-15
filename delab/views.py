@@ -161,7 +161,8 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
         return super().form_valid(form)
 
     def get_object(self, queryset=None):
-        candidates = TWCandidate.objects.filter(coder__isnull=True).select_related().all()
+        candidates = TWCandidate.objects.filter(
+            Q(coder__isnull=True) & ~Q(coded_by=self.request.user)).select_related().all()
         candidate = choice(candidates)
         self.query_pk_and_slug = candidate.pk
         return candidate

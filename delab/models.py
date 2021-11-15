@@ -210,6 +210,7 @@ class TWCandidate(models.Model):
     c_author_topic_variance_norm = models.FloatField(null=True,
                                                      help_text="the normalized author diversity")
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    coded_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, related_name="coded_by")
     moderator_index = models.FloatField(
         help_text="a combined measure of the quality of a tweet in terms of moderating value")
 
@@ -232,3 +233,7 @@ class TWCandidate(models.Model):
 
     def get_absolute_url(self):
         return reverse('delab-label')
+
+    #def save(self, force_insert=False, force_update=False, using=None,
+    #         update_fields=None):
+    #    super(TWCandidate, self).save(self)

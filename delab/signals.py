@@ -5,11 +5,27 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 from django.dispatch import receiver
 
-from delab.models import SimpleRequest, Tweet
+from delab.models import SimpleRequest, Tweet, TWCandidate
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 
 logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=TWCandidate)
+def process_candidate(sender, instance, created, **kwargs):
+    logging.debug("received signal from post_save {} for candidate with pk {}".format(timezone.now(), instance.pk))
+
+    candidate_for_second_coder = instance
+    if instance.coded_by is None and instance.coder is not None:
+        candidate_for_second_coder.coded_by = instance.coder
+        candidate_for_second_coder.coder = None
+        candidate_for_second_coder.id = None
+        candidate_for_second_coder.pk = None
+        candidate_for_second_coder.u_moderator_rating = None
+        candidate_for_second_coder.u_sentiment_rating = None
+        candidate_for_second_coder.u_author_topic_variance_rating = None
+        candidate_for_second_coder.save()
 
 
 @receiver(post_save, sender=SimpleRequest)
@@ -53,4 +69,3 @@ def convert_request_to_hashtag_list(title):
         cleaned_hashtags.append(title[1:])
 
     return cleaned_hashtags
-
