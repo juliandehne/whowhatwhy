@@ -5,6 +5,7 @@ from background_task.models import Task
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Exists, OuterRef
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -163,6 +164,8 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     def get_object(self, queryset=None):
         candidates = TWCandidate.objects.filter(
             Q(coder__isnull=True) & ~Q(coded_by=self.request.user)).select_related().all()
+        if len(candidates) == 0:
+            raise Http404("There seems no more data to label!")
         candidate = choice(candidates)
         self.query_pk_and_slug = candidate.pk
         return candidate

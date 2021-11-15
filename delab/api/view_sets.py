@@ -14,7 +14,7 @@ from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations, get_filtered_conversations, \
     get_conversation_tree
-from delab.models import Tweet, TweetAuthor
+from delab.models import Tweet, TweetAuthor, TWCandidate
 from .api_util import get_file_name
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
@@ -26,6 +26,12 @@ tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id',
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = TweetAuthor
+        fields = '__all__'
+
+
+class CandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TWCandidate
         fields = '__all__'
 
 
@@ -78,6 +84,15 @@ class TweetViewSet(viewsets.ModelViewSet):
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     def get_queryset(self):
         return get_migration_query_set()
+
+
+# ViewSets define the view behavior.
+class CandidateExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
+    queryset = TWCandidate.objects.all()
+    serializer_class = CandidateSerializer
+    renderer_classes = (XLSXRenderer,)
+    filename = 'labeled_moderator_statements.xlsx'
+    filter_backends = [DjangoFilterBackend]
 
 
 # ViewSets define the view behavior.

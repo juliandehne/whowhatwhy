@@ -22,7 +22,7 @@ def run(*args):
     """
 
     analysis_version = "v0.0.1"
-    train_update_topics = False
+    train_update_topics = True
     if len(args) > 0:
         analysis_version = args[0]
     if len(args) > 1:
