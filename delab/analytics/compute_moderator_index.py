@@ -57,7 +57,11 @@ def compute_moderator_index(experiment_index):
     df_conversations = df_conversations.sort_values(by=['conversation_id', 'created_at'])
     df_conversations.reset_index(drop=True, inplace=True)
     # for debugging keep n rows
-    df_conversations = df_conversations.head(100)
+    # df_conversations = df_conversations.head(100)
+    drop_indexes = filter_candidates_by_position(df_conversations)
+    df_conversations = df_conversations.assign(no_middle_child=df_conversations.index.isin(drop_indexes))
+    # df_conversations.drop(index=drop_indexes, inplace=True)
+    # df_conversations.reset_index(drop=True, inplace=True)
 
     candidate_sentiment_values = compute_sentiment_change_candidate(df_conversations)
     df_conversations = df_conversations.assign(candidate_sentiment_value=candidate_sentiment_values)
@@ -96,7 +100,8 @@ def compute_moderator_index(experiment_index):
                                                                + df_conversations.c_author_topic_variance_norm
                                                                - abs(df_conversations.sentiment_value_norm)
                                                )
-
+    # dropping the candidates that are no middle child
+    df_conversations.drop(index=drop_indexes, inplace=True)
     store_candidates(df_conversations, experiment_index)
     candidates = df_conversations.nlargest(10, ["moderator_index"])
     return candidates
@@ -109,6 +114,37 @@ def compute_topic2word(bertopic_model, topic_info):
         words = topic2wordvec(topic_model)
         topic2word[topic_id] = topic2word[topic_id] + words
     return topic2word
+
+
+def filter_candidates_by_position(df):
+    result = []
+    for index in df.index:
+        conversation_id = df.at[index, "conversation_id"]
+        conversation_length = df[df["conversation_id"] == conversation_id].conversation_id.count()
+        if conversation_length < 5:
+            result.append(index)
+            continue
+        # print(conversation_length)
+        # the candidate cannot be later in the conversation then the middle by definition
+
+        for index_delta in [1, 2]:
+            previous_tweets_index = index - index_delta
+            following_tweets_index = index + index_delta
+            # we assert that there are as many predecessors as there are followers
+
+            if previous_tweets_index > 0 and following_tweets_index in df.index:
+                if (df.at[previous_tweets_index, "conversation_id"] == conversation_id and
+                        df.at[following_tweets_index, "conversation_id"] == conversation_id
+                ):
+                    pass
+                else:
+                    result.append(index)
+                    break
+            else:
+                result.append(index)
+                break
+
+    return result
 
 
 def compute_sentiment_change_candidate(df):
@@ -134,6 +170,7 @@ def compute_sentiment_change_candidate(df):
                 ):
                     candidate_sentiment_value -= df.at[previous_tweets_index, "sentiment_value"]
                     candidate_sentiment_value += df.at[following_tweets_index, "sentiment_value"]
+
         result.append(candidate_sentiment_value)
     return result
 

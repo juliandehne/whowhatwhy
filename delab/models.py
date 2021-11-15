@@ -220,9 +220,12 @@ class TWCandidate(models.Model):
         AGREE = 1
         AGREE_STRONGLY = 2
 
-    u_moderator_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
-    u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
-    u_author_topic_variance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices)
+    u_moderator_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the tweet is moderating the conversation?")
+    u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the tweet expresses a positive sentiment?")
+    u_author_topic_variance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                                         help_text="Do you agree that the tweet has caused a greater variety of perspectives?")
 
     class Meta:
         unique_together = ('tweet', 'coder',)

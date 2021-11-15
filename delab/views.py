@@ -173,13 +173,16 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
         candidate_id = self.query_pk_and_slug
         candidate = TWCandidate.objects.filter(id=candidate_id).get()
         tweet_text = candidate.tweet.text
-        context["text"] = clean_corpus([tweet_text])[0]
+        tweet_id = candidate.tweet.id
+        # context["text"] = clean_corpus([tweet_text])[0]
+        context["text"] = tweet_text
+        context["tweet_id"] = tweet_id
         context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id).order_by(
             '-created_at')
 
         full_conversation = list(context_tweets.values_list("text", flat=True))
         index = full_conversation.index(tweet_text)
 
-        full_conversation = clean_corpus(full_conversation)
+        # full_conversation = clean_corpus(full_conversation)
         context["conversation"] = full_conversation[index - 2:index + 3]
         return context

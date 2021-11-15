@@ -2,14 +2,11 @@
 {% load crispy_forms_tags %}
 {% block content %}
     <div class="content-section">
-        <h4>The Tweet Text is</h4>
-        {{ text }}
-        </br>
-        <h4>The context is: </h4>
+
         {% for context_text in conversation %}
             {% if context_text == text %}
                 <span class="text-success">
-                    >> {{ context_text }}
+                >> {{ context_text }}
                 </span>
             {% else %}
                 >> {{ context_text }}
