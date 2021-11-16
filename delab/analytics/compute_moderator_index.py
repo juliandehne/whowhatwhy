@@ -14,8 +14,8 @@ from delab.models import Tweet, TopicDictionary, TWCandidate
 
 def store_candidates(df_conversations, experiment_index):
     """
-    :param df_conversations:
-    :param experiment_index:
+    :param df_conversations: the dataframe with the candidate tweets to be stored for labeling
+    :param experiment_index: a label corresponding to the git the of the code that represents a version the formula used
     :return:
     """
     TWCandidate.objects.filter(exp_id=experiment_index).delete()
@@ -49,6 +49,11 @@ def store_candidates(df_conversations, experiment_index):
 
 
 def compute_moderator_index(experiment_index):
+    """
+    The formula that computes a measurement that is supposed to suggest tweets as candidates for a "moderating effort"
+    :param experiment_index: (str) a label corresponding to the git the of the code that represents a version the formula used
+    :return: [str] the top 10 candidates computed this way
+    """
     qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en')
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
@@ -108,6 +113,12 @@ def compute_moderator_index(experiment_index):
 
 
 def compute_topic2word(bertopic_model, topic_info):
+    """
+    A utility function that computes a map of the bertopic id and the representative words
+    :param bertopic_model: the bertopic model
+    :param topic_info: the topic_info object from the bertopic model
+    :return:
+    """
     topic2word = defaultdict(list)
     for topic_id in topic_info.Topic:
         topic_model = bertopic_model.get_topic(topic_id)
@@ -117,6 +128,11 @@ def compute_topic2word(bertopic_model, topic_info):
 
 
 def filter_candidates_by_position(df):
+    """
+    only candidates that have two previous and two following tweets are considered.
+    :param df:
+    :return:
+    """
     result = []
     for index in df.index:
         conversation_id = df.at[index, "conversation_id"]
@@ -149,8 +165,9 @@ def filter_candidates_by_position(df):
 
 def compute_sentiment_change_candidate(df):
     """
-    :param sentiment_values: pandas series
-    :return:
+
+    :param df: (dataframe) the dataframe with the tweets sorted by conversation id and creation time
+    :return: (series) a series of newly computed sentiment changes that can be added to the dataframe
     """
     n = len(df.sentiment_value)
     result = []
@@ -177,9 +194,10 @@ def compute_sentiment_change_candidate(df):
 
 def compute_number_of_authors_changed(df):
     """
-    :param sentiment_values: pandas series
-    :return:
-    """
+
+      :param df: (dataframe) the dataframe with the tweets sorted by conversation id and creation time
+      :return: (series) a series of newly computed author number changes that can be added to the dataframe
+      """
     n = len(df.sentiment_value)
     result = []
     for index in range(n):
@@ -234,12 +252,12 @@ def get_topic_delta(topic_id_1, topic_id_2, topic2word, word2vec):
         return np.NaN
 
 
-# similar to the above shown approaches we create a column that shows the quality of the candidates
-# regarding this "topic variance" measure
 def compute_author_topic_variance(df, topic2word, word2vec):
-    """
+    """ similar to the above shown approaches we create a column that shows the quality of the candidates
+        regarding this "topic variance" measure
     :param df:
-    :param bert_topic_model:
+    :param topic2word:
+    :param word2vec:
     :return:
     """
     print("computing author timeline deltas... this might take a while\n")
@@ -290,4 +308,9 @@ def compute_author_topic_variance(df, topic2word, word2vec):
 
 
 def normalize(sv):
+    """
+    min-max normalization in order to align the different measures
+    :param sv:
+    :return:
+    """
     return (sv - sv.min()) / (sv.max() - sv.min())

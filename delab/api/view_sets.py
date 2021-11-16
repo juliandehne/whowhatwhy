@@ -19,6 +19,11 @@ from .api_util import get_file_name
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
 
+"""
+
+LOOK at the README to see all the different endpoints implemented as a way to get the downloaded tweets
+"""
+
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
                      'sentiment_value', 'language']
 

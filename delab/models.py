@@ -201,6 +201,10 @@ class Timeline(models.Model):
 
 
 class TWCandidate(models.Model):
+    """
+    represents the tweets for which a moderation index could be computed.
+    This table is also the selector for the manual labeling at the web-interface localhost:8000/delab/label
+    """
     tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
     c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")

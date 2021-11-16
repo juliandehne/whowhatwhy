@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=TWCandidate)
 def process_candidate(sender, instance, created, **kwargs):
     logging.debug("received signal from post_save {} for candidate with pk {}".format(timezone.now(), instance.pk))
+    """
+    After manually labeling a candidate, a copy needs to be created in order for the secondary or tertiary 
+    coder to work    
+    """
 
     candidate_for_second_coder = instance
     if instance.coded_by is None and instance.coder is not None:

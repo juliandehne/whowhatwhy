@@ -166,7 +166,7 @@ def get_train_corpus_for_sentences(lang, max_size=-1):
     :return: list[str] a list of tweets
     """
     author_tweets_texts, logger = load_author_tweets(lang)
-    conversation_tweets_texts = load_conversation_tweets(lang, logger)
+    conversation_tweets_texts = load_conversation_tweets(lang)
     corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
     if max_size < 0:
         return corpus_for_fitting_sentences
@@ -259,7 +259,7 @@ def classify_tweets(lang="en", update_topics=True):
         # print("Updated {} tweets with topic_ids".format(number_before - number_after))
 
 
-def load_conversation_tweets(lang, logger):
+def load_conversation_tweets(lang):
     conversation_tweets = Tweet.objects.filter(Q(language=lang)).all()
     df_conversations = read_frame(conversation_tweets, fieldnames=["id",
                                                                    "author_id",

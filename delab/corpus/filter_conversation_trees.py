@@ -5,6 +5,10 @@ from delab.TwConversationTree import TreeNode
 from delab.models import Tweet
 from util.sql_switch import query_sql
 
+"""
+This file was asked by Zlata to reduce the conversations to the ones that fit our requirements
+"""
+
 
 def get_standard_field_names():
     return ["id",

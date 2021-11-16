@@ -4,21 +4,22 @@
 import logging
 import time
 
-import requests
-from TwitterAPI import TwitterRequestError, TwitterConnectionError
-from annoying.functions import get_object_or_None
 from django.db import IntegrityError
 from django.db.models import Q
 
-from delab.magic_http_strings import USER_URL
 from delab.models import Tweet, TweetAuthor
-from delab.tw_connection_util import TwitterConnector, DelabTwarc
+from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
 
 logger = logging.getLogger(__name__)
 
 
 def update_authors(simple_request_id=-1):
+    """
+    downlaod detailed author information for the author's of the tweets
+    :param simple_request_id: (int) for the web-downloader. if it is negative, all authors will be queried
+    :return:
+    """
     if simple_request_id < 0:
         author_ids = Tweet.objects.filter(tw_author__isnull=True).all().values_list(
             'author_id', flat=True)
@@ -55,6 +56,12 @@ def update_authors(simple_request_id=-1):
 
 
 def download_user_batch(author_batch, twarc):
+    """
+    Utility function to download all the author data in a batch using the twitter api existing for that reason
+    :param author_batch:
+    :param twarc:
+    :return:
+    """
     users = twarc.user_lookup(users=author_batch)
 
     for userbatch in users:

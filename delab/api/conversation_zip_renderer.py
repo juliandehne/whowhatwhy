@@ -3,12 +3,9 @@ In this file we bundle the methods used for exporting our current data as a zip 
 
 """
 import io
-import urllib
 import zipfile
-
 import requests
 from django.http import HttpResponse
-
 from django_project.settings import INTERNAL_IPS
 from .api_util import get_file_name
 from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC

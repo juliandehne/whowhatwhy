@@ -10,6 +10,11 @@ from django_project import settings
 
 
 def update_sentiment_flows(simple_request_id=-1):
+    """
+    computes sentiment flow plots for the conversations
+    :param simple_request_id:
+    :return:
+    """
     if simple_request_id < 0:
         tweets = Tweet.objects.filter(
             (Q(sentiment="positive") | Q(sentiment="negative")) & Q(conversation_flow_id__isnull=True)).all()

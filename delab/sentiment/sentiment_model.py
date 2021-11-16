@@ -7,6 +7,15 @@ TASK_DESCRIPTION = "sentiment analysis"
 
 
 def classifier(vocab_size, embedding_dim=256, output_dim=2, mode='train'):
+    """
+    home brew sentiment classfier with trax
+    after renaming a folder from data -> to something else there might be a bug somewhere
+    :param vocab_size:
+    :param embedding_dim:
+    :param output_dim:
+    :param mode:
+    :return:
+    """
     # create embedding layer
     embed_layer = tl.Embedding(
         vocab_size=vocab_size,  # Size of the vocabulary

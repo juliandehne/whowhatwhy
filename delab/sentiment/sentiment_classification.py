@@ -10,6 +10,12 @@ from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_mo
 
 
 def update_tweet_sentiments(simple_request_id=-1):
+    """
+    Home brew sentiment classification using trax might be replaced with a pre-build sentiment classifier
+    :param simple_request_id:
+    :return:
+    """
+
     from delab.sentiment.sentiment_classification import classify_tweet_sentiment
     from delab.sentiment.sentiment_training import update_dictionary
 
