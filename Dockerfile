@@ -27,6 +27,7 @@ RUN pip install trax==1.3.9
 RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords
 
+RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
 #RUN pip install --upgrade "jax[cpu]"
 COPY . /code/
 
