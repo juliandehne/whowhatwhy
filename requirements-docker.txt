@@ -49,3 +49,4 @@ gensim==4.1.0
 django-filter==21.1
 django-annoying==0.10.6
 twarc==2.8.0
+fasttext==0.9.2

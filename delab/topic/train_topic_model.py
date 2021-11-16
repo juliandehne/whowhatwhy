@@ -297,39 +297,39 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def classify_author_timelines(batch=False, update=True):
+def classify_author_timelines(update=True):
     bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    topic_info = bertopic_model.get_topic_info()
     logger.debug("loaded berttopic model")
     if update:
-        tweet_authors = TweetAuthor.objects.all()
+        tweet_authors = TweetAuthor.objects.filter(has_timeline=True).all()
     else:
-        tweet_authors = TweetAuthor.objects.filter(timeline_bertopic_id__isnull=True).all()
+        tweet_authors = TweetAuthor.objects.filter(timeline_bertopic_id__isnull=True, has_timeline=True).all()
     author_texts = []
     # currently there is a bug with the batch processing
     # https://github.com/MaartenGr/BERTopic/issues/322
-    if batch:
-        for tweet_author in tweet_authors:
-            if tweet_author.has_timeline:
-                df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
-                author_text = ""
-                df_timelines_cleaned = clean_corpus(df_timelines)
-                for text in df_timelines_cleaned:
-                    author_text += text + ". "
-                author_texts.append(author_text)
-        topic_classifications = bertopic_model.transform(author_texts)
+    for tweet_author in tweet_authors:
+        df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
+        author_text = ""
+        df_timelines_cleaned = clean_corpus(df_timelines)
+        for text in df_timelines_cleaned:
+            author_text += text + ". "
+        author_texts.append(author_text)
+    if len(author_texts) > 0:
+        topic_classifications = bertopic_model.transform(author_texts)[0]
         index = 0
+        tweet_author_length = len(tweet_authors)
+        classification_length = len(topic_classifications)
+        assert tweet_author_length == classification_length
         for tweet_author in tweet_authors:
-            tweet_author.timeline_bertopic_id = topic_classifications[index][0]
+            if topic_classifications[index] in topic_info.Topic:
+                tweet_author.timeline_bertopic_id = topic_classifications[index]
+            else:
+                tweet_author.timeline_bertopic_id = -2
             index += 1
-            tweet_author.save(update_fields=["timeline_bertopic_id"])
-    else:
-        for tweet_author in tweet_authors:
-            if tweet_author.has_timeline:
-                df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
-                author_text = ""
-                df_timelines_cleaned = clean_corpus(df_timelines)
-                for text in df_timelines_cleaned:
-                    author_text += text + ". "
-                suggested_topic = bertopic_model.transform(author_text)
-                tweet_author.timeline_bertopic_id = suggested_topic[0][0]
-                tweet_author.save(update_fields=["timeline_bertopic_id"])
+        TweetAuthor.objects.bulk_update(tweet_authors, ["timeline_bertopic_id"])
+    # set all tweets that don't have a timeline to -3
+    tweet_authors = TweetAuthor.objects.filter(has_timeline=False).all()
+    for tweet_author in tweet_authors:
+        tweet_author.timeline_bertopic_id = -3
+    TweetAuthor.objects.bulk_update(tweet_authors, ["timeline_bertopic_id"])
