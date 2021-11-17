@@ -9,7 +9,7 @@ from numpy import NaN
 from scipy import spatial
 from tqdm import tqdm
 
-from delab.models import Tweet, TopicDictionary, TWCandidate
+from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM
 
 
 def store_candidates(df_conversations, experiment_index):
@@ -48,13 +48,15 @@ def store_candidates(df_conversations, experiment_index):
     print("writting {} candidates to the candidates table".format(len(tw_candidates)))
 
 
-def compute_moderator_index(experiment_index):
+def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
     """
     The formula that computes a measurement that is supposed to suggest tweets as candidates for a "moderating effort"
+    :param platform:
     :param experiment_index: (str) a label corresponding to the git the of the code that represents a version the formula used
     :return: [str] the top 10 candidates computed this way
     """
-    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en')
+    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en',
+                              platform=platform)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
                                                   "sentiment_value", "created_at", "tw_author__timeline_bertopic_id"])

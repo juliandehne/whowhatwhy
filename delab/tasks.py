@@ -1,41 +1,43 @@
 import logging
 
 from background_task import background
+from background_task.models import CompletedTask
+from background_task.models import Task
+from django.utils import timezone
 
 from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
-from delab.models import Tweet
-from django.db.models import Q
-from background_task.models import Task
-from background_task.models import CompletedTask
-from django.utils import timezone
-
+from delab.corpus.download_conversation_reddit import download_conversations_reddit
+from .models import PLATFORM
 
 logger = logging.getLogger(__name__)
 
 
 @background(schedule=1)
-def download_conversations_scheduler(topic_string, hashtags, simple_request_id, simulate=True,
+def download_conversations_scheduler(topic_string, platform, hashtags, simple_request_id, simulate=True,
                                      max_data=False,
                                      fast_mode=False):
     if simulate:
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
-        download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data, fast_mode=fast_mode)
+        if platform == PLATFORM.TWITTER:
+            download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data, fast_mode=fast_mode)
+        if platform == PLATFORM.REDDIT:
+            download_conversations_reddit(topic_string, simple_request_id)
         if fast_mode:
             update_sentiments(simple_request_id,
                               verbose_name="sentiment_analysis_{}".format(simple_request_id),
                               schedule=timezone.now())
         else:
-            update_author(simple_request_id,
+            update_author(simple_request_id, platform,
                           verbose_name="author_analysis_{}".format(simple_request_id),
                           schedule=timezone.now())
 
 
 @background(schedule=1)
-def update_author(simple_request_id=-1):
-    update_authors(simple_request_id)
-    update_author_timelines(simple_request_id, verbose_name="timeline_download_{}".format(simple_request_id),
+def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER):
+    update_authors(simple_request_id, platform)
+    update_author_timelines(simple_request_id, platform, verbose_name="timeline_download_{}".format(simple_request_id),
                             schedule=timezone.now())
 
 
@@ -55,11 +57,11 @@ def update_flows(simple_request_id=-1):
 
 
 @background(schedule=1)
-def update_author_timelines(simple_request_id=-1):
+def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER):
     from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
     from django_project.settings import TRAX_CAPABILITIES
 
-    update_timelines_from_conversation_users(simple_request_id)
+    update_timelines_from_conversation_users(simple_request_id, platform)
     if TRAX_CAPABILITIES:
         update_sentiments(simple_request_id,
                           verbose_name="sentiment_analysis_{}".format(simple_request_id),

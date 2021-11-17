@@ -2,7 +2,7 @@ import logging
 
 from django.db.models import Exists, OuterRef
 
-from delab.models import Timeline, Tweet, TweetAuthor
+from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM
 from delab.tw_connection_util import DelabTwarc
 
 logger = logging.getLogger(__name__)
@@ -65,19 +65,21 @@ def fix_legacy():
 
 
 def update_timelines_from_conversation_users(simple_request_id=-1,
-                                             fix_legacy_db=True,
-                                             classify_author_topics=False,
-                                             update_author_topics=False):
-    if simple_request_id < 0:
-        author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True).values_list('twitter_id', flat=True)
-        if fix_legacy_db:
-            fix_legacy()
-    else:
-        author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
-            simple_request_id=simple_request_id).values_list('author_id', flat=True).distinct()
-    get_user_timeline_twarc(author_ids)
-    # if classify_author_topics:
-    #    classify_author_timelines(batch=False, update=update_author_topics)
+                                             platform=PLATFORM.TWITTER,
+                                             fix_legacy_db=True):
+    if platform == PLATFORM.REDDIT:
+        print("update timeline NOT IMPLEMENTED FOR REDDIT")
+    if platform == PLATFORM.TWITTER:
+        if simple_request_id < 0:
+            author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True, platform=platform).values_list(
+                'twitter_id',
+                flat=True)
+            if fix_legacy_db:
+                fix_legacy()
+        else:
+            author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
+                simple_request_id=simple_request_id, platform=platform).values_list('author_id', flat=True).distinct()
+        get_user_timeline_twarc(author_ids)
 
 
 def get_user_timeline_twarc(author_ids, max_results=10):

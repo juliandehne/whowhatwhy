@@ -9,6 +9,17 @@ from django.urls import reverse
 from treenode.models import TreeNodeModel
 
 
+class VERSION(models.TextChoices):
+    v001 = "v0.0.1"
+    v002 = "v0.0.2"
+    v003 = "v0.0.3"
+
+
+class PLATFORM(models.TextChoices):
+    REDDIT = "reddit"
+    TWITTER = "twitter"
+
+
 class ConversationFlow(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
@@ -79,6 +90,11 @@ class SimpleRequest(models.Model):
     fast_mode = models.BooleanField(default=False,
                                     help_text="This is for debugging and getting quick results. It will not download the user data!")
 
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
+    version = models.TextField(default=VERSION.v001, choices=VERSION.choices, null=True,
+                               help_text="the version of the experiment run")
+
     def __str__(self):
         return self.title
 
@@ -141,11 +157,16 @@ class TweetAuthor(models.Model):
     followers_count = models.IntegerField(default=0)
     has_timeline = models.BooleanField(null=True, blank=True)
     timeline_bertopic_id = models.IntegerField(null=True, blank=True)
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
+
+    class Meta:
+        unique_together = ('twitter_id', 'platform')
 
 
 class Tweet(models.Model):
     treenode_display_field = 'text'
-    twitter_id = models.BigIntegerField(unique=True)
+    twitter_id = models.BigIntegerField()
     text = models.TextField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
     author_id = models.BigIntegerField(null=True)
@@ -173,10 +194,13 @@ class Tweet(models.Model):
     c_is_moderator_score = models.FloatField(null=True, help_text="moderator-classifier trained model applied")
 
     # objects = DataFrameManager()
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
 
     class Meta:
         verbose_name = 'Tweet'
         verbose_name_plural = 'Tweets'
+        unique_together = ('twitter_id', 'platform')
 
     def __str__(self):
         return "Twitter_ID :{} Conversation_ID:{} Text:{} Autor:{}".format(self.twitter_id,
@@ -191,13 +215,18 @@ class Timeline(models.Model):
     """
     author_id = models.BigIntegerField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True, blank=True)
-    tweet_id = models.BigIntegerField(unique=True)
+    tweet_id = models.BigIntegerField()
     text = models.TextField()
     created_at = models.DateTimeField()
     conversation_id = models.BigIntegerField(null=True)
     in_reply_to_user_id = models.BigIntegerField(null=True, blank=True)
     lang = models.TextField()
     ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
+
+    class Meta:
+        unique_together = ('tweet_id', 'platform')
 
 
 class TWCandidate(models.Model):
@@ -232,12 +261,15 @@ class TWCandidate(models.Model):
     u_author_topic_variance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                                          help_text="Do you agree that the tweet has caused a greater variety of perspectives?")
 
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
+
     class Meta:
         unique_together = ('tweet', 'coder',)
 
     def get_absolute_url(self):
         return reverse('delab-label')
 
-    #def save(self, force_insert=False, force_update=False, using=None,
+    # def save(self, force_insert=False, force_update=False, using=None,
     #         update_fields=None):
     #    super(TWCandidate, self).save(self)
