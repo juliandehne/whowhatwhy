@@ -21,7 +21,7 @@ def run(*args):
     It assumes that tweets have been downloaded using the web-interface or the script download_conversations.py!!
     """
 
-    analysis_version = VERSION.v003
+    analysis_version = VERSION.v001
     platform = PLATFORM.REDDIT
     train_update_topics = True
     if len(args) > 0:
@@ -51,5 +51,5 @@ def run(*args):
     # compute the moderator index and store it in twcandidate table
     candidates = compute_moderator_index(analysis_version, platform=platform)
     print("STEP 7: FINISHED computing the moderator_index")
-
-    print(candidates.head(10))
+    if len(candidates) > 10:
+        print(candidates.head(10))

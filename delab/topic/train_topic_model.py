@@ -162,6 +162,8 @@ def get_train_corpus_for_sentences(lang, platform, max_size=-1):
     corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
     if max_size < 0:
         return corpus_for_fitting_sentences
+    if len(corpus_for_fitting_sentences) < max_size:
+        return []
     corpus = random.sample(corpus_for_fitting_sentences, max_size)
     return corpus
 

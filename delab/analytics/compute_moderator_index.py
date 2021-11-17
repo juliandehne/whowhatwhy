@@ -12,13 +12,13 @@ from tqdm import tqdm
 from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM
 
 
-def store_candidates(df_conversations, experiment_index):
+def store_candidates(df_conversations, experiment_index, platform):
     """
     :param df_conversations: the dataframe with the candidate tweets to be stored for labeling
     :param experiment_index: a label corresponding to the git the of the code that represents a version the formula used
     :return:
     """
-    TWCandidate.objects.filter(exp_id=experiment_index).delete()
+    TWCandidate.objects.filter(exp_id=experiment_index, platform=platform).delete()
 
     df_conversations = df_conversations[~df_conversations['moderator_index'].isnull()]
     df_conversations = df_conversations[df_conversations['moderator_index'].notna()]
@@ -109,8 +109,10 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
                                                )
     # dropping the candidates that are no middle child
     df_conversations.drop(index=drop_indexes, inplace=True)
-    store_candidates(df_conversations, experiment_index)
-    candidates = df_conversations.nlargest(10, ["moderator_index"])
+    store_candidates(df_conversations, experiment_index, platform)
+    candidates = []
+    if len(df_conversations.index):
+        candidates = df_conversations.nlargest(10, ["moderator_index"])
     return candidates
 
 
