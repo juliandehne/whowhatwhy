@@ -4,6 +4,7 @@
     Eventually this should be merged with:
     https://github.com/fabiocaccamo/django-treenode
 """
+from delab.models import PLATFORM
 
 
 class TreeNode:
@@ -25,11 +26,16 @@ class TreeNode:
         """the reply-to user is the parent of the node"""
         return self.data['in_reply_to_user_id']
 
-    def find_parent_of(self, node):
+    def find_parent_of(self, node, plattform=PLATFORM.REDDIT):
         """append a node to the children of it's reply-to user"""
-        if node.data["tn_parent"] == self.tweet_id():
-            self.children.append(node)
-            return True
+        if plattform == PLATFORM.TWITTER:
+            if node.reply_to() == self.reply_to():
+                self.children.append(node)
+                return True
+        else:
+            if node.data["tn_parent"] == self.tweet_id():
+                self.children.append(node)
+                return True
         found_in_children = False
         for child in self.children:
             found_in_children = child.find_parent_of(node)

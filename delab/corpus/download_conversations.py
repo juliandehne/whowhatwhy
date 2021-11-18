@@ -13,7 +13,7 @@ from django.db.backends import sqlite3
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.magic_http_strings import TWEETS_SEARCH_All_URL
-from delab.models import Tweet, TwTopic, SimpleRequest
+from delab.models import Tweet, TwTopic, SimpleRequest, PLATFORM
 from delab.tw_connection_util import TwitterAPIWrapper
 from delab.tw_connection_util import TwitterConnector
 from django_project.settings import MAX_CANDIDATES
@@ -226,10 +226,10 @@ def retrieve_replies(conversation_id, max_replies, language):
         node = TreeNode(item)
         # print(f'{node.id()} => {node.reply_to()}')
         # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
-        orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
+        orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan, PLATFORM.TWITTER)]
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if root is not None:
-            if not root.find_parent_of(node):
+            if not root.find_parent_of(node, PLATFORM.TWITTER):
                 orphans.append(node)
         reply_count += 1
 
