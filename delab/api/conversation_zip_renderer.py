@@ -8,17 +8,17 @@ import requests
 from django.http import HttpResponse
 from django_project.settings import INTERNAL_IPS
 from .api_util import get_file_name
-from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
+from ..corpus.api_settings import MERGE_SUBSEQUENT
 from ..corpus.filter_conversation_trees import filter_conversations
 
 
-def create_zip_response_conversation(request, conversation_id, filename):
+def create_zip_response_conversation(request, topic, conversation_id, filename):
     # Create zip
 
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
-    download_conversations_in_all_formats(conversation_id, request, TOPIC, zip_file, "both")
+    download_conversations_in_all_formats(conversation_id, request, topic, zip_file, "both")
 
     zip_file.close()
 
@@ -66,17 +66,17 @@ def get_file_from_rest(conversation_id, file_type, full, server_address, topic):
         txt_cropped_url += "?format=json"
     # Get file
     cropped_response = requests.get(txt_cropped_url)
-    cropped_response
+    # cropped_response
     return cropped_response
 
 
-def create_full_zip_response_conversation(request, filename, full):
+def create_full_zip_response_conversation(request, topic, filename, full):
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
     trees, ids, conversation_ids = filter_conversations(merge_subsequent=MERGE_SUBSEQUENT)
     for conversation_id in conversation_ids:
-        download_conversations_in_all_formats(conversation_id, request, TOPIC, zip_file, full)
+        download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
     zip_file.close()
 
     # Return zip

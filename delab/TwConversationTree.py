@@ -12,13 +12,14 @@ class TreeNode:
         self.data = data
         self.children = []
         self.max_path_length = 0
+        self.is_root = False
 
-    def id(self):
-        """a node is identified by its author because the tree works with response 2s"""
-        return self.data['author_id']
+    # def id(self):
+    #    """a node is identified by its author because the tree works with response 2s"""
+    #    return self.data['author_id']
 
     def tweet_id(self):
-        return self.data["id"]
+        return self.data["twitter_id"]
 
     def reply_to(self):
         """the reply-to user is the parent of the node"""
@@ -26,12 +27,17 @@ class TreeNode:
 
     def find_parent_of(self, node):
         """append a node to the children of it's reply-to user"""
-        if node.reply_to() == self.id():
+        if node.data["tn_parent"] == self.tweet_id():
             self.children.append(node)
             return True
+        found_in_children = False
         for child in self.children:
-            if child.find_parent_of(node):
-                return True
+            found_in_children = child.find_parent_of(node)
+            if found_in_children:
+                break
+        if not found_in_children and self.is_root:
+            self.children.append(node)
+            return True
         return False
 
     def print_tree(self, level):

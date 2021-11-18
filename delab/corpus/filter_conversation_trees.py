@@ -12,42 +12,36 @@ This file was asked by Zlata to reduce the conversations to the ones that fit ou
 
 def get_standard_field_names():
     return ["id",
+            "twitter_id",
             "conversation_id",
             "author_id",
+            "tn_parent",
             "created_at",
             "in_reply_to_user_id",
-            "text", "tw_author__name", "tw_author__location"]
+            "text", "tw_author__name", "tw_author__location", "topic__title"]
 
 
-def filter_conversations(max_orphan_count=4, min_depth=3, merge_subsequent=True, fieldnames=None):
-    # a utility so I don't have to rewrite the get twitter corpus for both django and jupyter context
-    if fieldnames is None or "tw_author_name" not in fieldnames:
-        fieldnames = get_standard_field_names()
-
-    df = query_sql(
-        fieldnames=fieldnames)
+def filter_conversations(topic, max_orphan_count=4, min_depth=3, merge_subsequent=True):
+    qs = Tweet.objects.filter(topic__title=topic).all()
+    df = read_frame(qs, get_standard_field_names())
 
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
 
-def get_filtered_conversations(conversation_id, topic_string, max_orphan_count=4, min_depth=3, merge_subsequent=True,
-                               fieldnames=None):
-    df = get_conversation_dataframe(conversation_id, fieldnames, topic_string)
+def get_filtered_conversations(topic, conversation_id, max_orphan_count=4, min_depth=3, merge_subsequent=True):
+    df = get_conversation_dataframe(conversation_id, topic)
 
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
 
-def get_conversation_dataframe(conversation_id, fieldnames, topic_string):
-    # rewrite this for the query_sql-utility
-    if fieldnames is None or "tw_author_name" not in fieldnames:
-        fieldnames = get_standard_field_names()
+def get_conversation_dataframe(conversation_id, topic_string):
     qs = Tweet.objects.filter(conversation_id=conversation_id, topic__title=topic_string).all()
-    df = read_frame(qs, fieldnames=fieldnames)
+    df = read_frame(qs, fieldnames=get_standard_field_names())
     return df
 
 
-def get_conversation_tree(conversation_id, topic_string, fieldnames=None):
-    df = get_conversation_dataframe(conversation_id, fieldnames, topic_string)
+def get_conversation_tree(conversation_id, topic_string):
+    df = get_conversation_dataframe(conversation_id, topic_string)
     return convert_to_conversation_trees(df)
 
 
@@ -85,16 +79,19 @@ def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
 
 
 def convert_to_conversation_trees(df):
-    roots = df[df["in_reply_to_user_id"].isnull()]
-    not_roots = df[df["in_reply_to_user_id"].notnull()]
+    df.sort_values(by=["created_at"], inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    roots = df[df["tn_parent"].isnull()]
+    not_roots = df[df["tn_parent"].notnull()]
     # print(not_roots.shape)
     roots_as_rec = roots.to_dict('records')
     not_roots_as_rec = not_roots.to_dict('records')
     # roots_as_rec[0:5]
     trees_roots = {}
     for root_data in roots_as_rec:
-        root_data["in_reply_to_user_id"] = root_data["author_id"]
-        trees_roots[root_data["conversation_id"]] = TreeNode(root_data)  # root is defined as answering to him/herself
+        root_node = TreeNode(root_data)
+        root_node.is_root = True
+        trees_roots[root_data["conversation_id"]] = root_node
     for not_root in not_roots_as_rec:
         if not_root["conversation_id"] in trees_roots:
             trees_roots.get(not_root["conversation_id"]).find_parent_of(TreeNode(not_root))

@@ -17,14 +17,15 @@ from delab.corpus.filter_conversation_trees import crop_trees, filter_conversati
 from delab.models import Tweet, TweetAuthor, TWCandidate
 from .api_util import get_file_name
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
-from ..corpus.api_settings import MERGE_SUBSEQUENT, TOPIC
+from ..corpus.api_settings import MERGE_SUBSEQUENT
 
 """
 
 LOOK at the README to see all the different endpoints implemented as a way to get the downloaded tweets
 """
 
-tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at', 'in_reply_to_user_id',
+tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
+                     'in_reply_to_user_id',
                      'sentiment_value', 'language']
 
 
@@ -63,11 +64,9 @@ class TabbedTextRenderer(renderers.BaseRenderer):
         return smart_text(data, encoding=self.charset)
 
 
-def get_migration_query_set():
-    # queryset = Tweet.objects.filter(simple_request__topic__title="migration")
-    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title="migration")
+def get_migration_query_set(topic):
+    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
     return queryset
-    # return get_cropped_tweet_set(queryset)
 
 
 def get_cropped_tweet_set(queryset):
@@ -88,7 +87,8 @@ class TweetViewSet(viewsets.ModelViewSet):
 
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     def get_queryset(self):
-        return get_migration_query_set()
+        topic = self.kwargs["topic"]
+        return get_migration_query_set(topic)
 
 
 # ViewSets define the view behavior.
@@ -111,7 +111,8 @@ class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
 
     # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
     def get_queryset(self):
-        return get_migration_query_set()
+        topic = self.kwargs["topic"]
+        return get_migration_query_set(topic)
 
 
 class TweetSingleViewSet(TweetViewSet):
@@ -136,7 +137,8 @@ class TweetExcelSingleViewSet(TweetExcelViewSet):
 
 def get_cropped_conversation_qs_modelview(model_view):
     conversation_id = model_view.kwargs["conversation_id"]
-    queryset = Tweet.objects.filter(topic__title=TOPIC, conversation_id=conversation_id)
+    topic = model_view.kwargs["topic"]
+    queryset = Tweet.objects.filter(topic__title=topic, conversation_id=conversation_id)
     if model_view.kwargs["full"] == "cropped":
         queryset = get_cropped_tweet_set(queryset)
     return queryset
@@ -144,16 +146,16 @@ def get_cropped_conversation_qs_modelview(model_view):
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
-def get_cropped_conversation_ids(request):
-    trees, ids, conversation_ids = filter_conversations(merge_subsequent=MERGE_SUBSEQUENT)
+def get_cropped_conversation_ids(request, topic):
+    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
     result = {"suitable_conversation_ids": conversation_ids}
     return Response(result)
 
 
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
-def get_all_cropped_conversation_ids(request):
-    trees, ids, conversation_ids = filter_conversations(merge_subsequent=MERGE_SUBSEQUENT)
+def get_all_cropped_conversation_ids(request, topic):
+    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
     result = ""
     for tree in trees:
         result += tree.to_string() + "\n\n"
@@ -164,14 +166,13 @@ def get_all_cropped_conversation_ids(request):
 
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
-def get_tabbed_conversation_view(request, conversation_id, full):
+def get_tabbed_conversation_view(request, topic, conversation_id, full):
     if full == "cropped":
         # get_conversation_tree
-        conversation_trees, ids, conversation_ids = get_filtered_conversations(conversation_id, "migration",
+        conversation_trees, ids, conversation_ids = get_filtered_conversations(conversation_id, topic,
                                                                                merge_subsequent=MERGE_SUBSEQUENT)
     else:
-        conversation_trees = get_conversation_tree(conversation_id, "migration",
-                                                   tweet_fields_used).values()
+        conversation_trees = get_conversation_tree(conversation_id, topic).values()
     result = ""
     for tree in conversation_trees:
         result += tree.to_string() + "\n\n"
@@ -193,12 +194,12 @@ class PassthroughRenderer(renderers.BaseRenderer):
 
 @api_view(['GET'])
 @renderer_classes([PassthroughRenderer])
-def get_zip_view(request, conversation_id):
-    return create_zip_response_conversation(request, conversation_id, get_file_name(conversation_id, "both", ".zip"))
+def get_zip_view(request, topic, conversation_id):
+    return create_zip_response_conversation(request, topic, conversation_id, get_file_name(conversation_id, "both", ".zip"))
 
 
 @api_view(['GET'])
 @renderer_classes([PassthroughRenderer])
-def get_full_zip_view(request, full):
-    return create_full_zip_response_conversation(request,
+def get_full_zip_view(request, topic, full):
+    return create_full_zip_response_conversation(request, topic,
                                                  get_file_name("all_conversations", full, ".zip"), full)

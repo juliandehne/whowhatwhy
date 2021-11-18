@@ -41,12 +41,14 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
     # save the request to the db in order to link the results in the view to the hashtags entered
     if request_id > 0:
         simple_request, created = SimpleRequest.objects.get_or_create(
-            pk=request_id
+            pk=request_id,
+            topic=topic
         )
     else:
         request_string = "#" + ' #'.join(hashtags)
         simple_request, created = SimpleRequest.objects.get_or_create(
-            title=request_string
+            title=request_string,
+            topic=topic
         )
 
     # create only one connector for quote reasons
@@ -85,21 +87,6 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
 
     """
     try:
-        """
-        tweet, created = Tweet.objects.get_or_create(
-            topic=topic,
-            text=root_node.data["text"],
-            simple_request=simple_request,
-            twitter_id=root_node.data["id"],
-            author_id=root_node.data["author_id"],
-            conversation_id=conversation_id,
-            created_at=root_node.data["created_at"],
-            in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
-            in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-            tn_parent=parent,
-            tn_priority=priority,
-            language=root_node.data["lang"]
-        )"""
         tn_parent = None
         if parent is not None:
             tn_parent = parent.data.get("id", None)

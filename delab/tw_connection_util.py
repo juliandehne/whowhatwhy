@@ -1,5 +1,6 @@
 from typing import Callable
 
+import praw
 from TwitterAPI import TwitterAPI, TwitterRequestError
 import os
 import json
@@ -49,6 +50,24 @@ class TwitterUtil:
             access_token_secret = my_dict.get("access_token_secret")
             bearer_token = my_dict.get("bearer_token")
         return access_token, access_token_secret, bearer_token, consumer_key, consumer_secret
+
+    @staticmethod
+    def get_reddit_secret():
+        settings_dir = os.path.dirname(__file__)
+        project_root = Path(os.path.dirname(settings_dir)).absolute()
+        keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
+        # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
+        filename = keys_path
+        reddit_secret = os.environ.get("reddit_secret")
+        reddit_script_id = os.environ.get("reddit_script_id")
+
+        with open(filename) as f:
+            my_dict = yaml.safe_load(f)
+            if reddit_secret != "":
+                reddit_secret = my_dict.get("reddit_secret")
+            if reddit_script_id != "":
+                reddit_script_id = my_dict.get("reddit_script_id")
+        return reddit_secret, reddit_script_id
 
 
 class TwitterConnector:
@@ -199,3 +218,12 @@ class DelabTwarc(Twarc2):
     def __init__(self):
         access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
         super().__init__(consumer_key, consumer_secret, access_token, access_token_secret, bearer_token)
+
+
+def get_praw():
+    user_agent = "django_script:de.uni-goettingen.delab:v0.0.1 (by u/CalmAsTheSea)"
+    reddit_secret, reddit_script_id = TwitterUtil.get_reddit_secret()
+    reddit = praw.Reddit(client_id=reddit_script_id, client_secret=reddit_secret, user_agent=user_agent)
+    return reddit
+
+

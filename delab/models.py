@@ -159,6 +159,7 @@ class TweetAuthor(models.Model):
     timeline_bertopic_id = models.IntegerField(null=True, blank=True)
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
+    is_moderator = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('twitter_id', 'platform')
