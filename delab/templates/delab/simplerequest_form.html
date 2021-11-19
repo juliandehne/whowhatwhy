@@ -5,7 +5,7 @@
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
-                <legend class="border-bottom mb-4">Twitter Hashtags space seperated</legend>
+                <legend class="border-bottom mb-4">Corpus Downloader</legend>
                 {{ form|crispy }}
                 <a class="highlight-link" href="{%  url 'delab-create-topic' %}">Create Topic First</a>
             </fieldset>

@@ -4,6 +4,7 @@ from django.db.models import Exists, OuterRef
 
 from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM
 from delab.tw_connection_util import DelabTwarc
+from delab.corpus.download_timelines_reddit import download_timelines
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def update_timelines_from_conversation_users(simple_request_id=-1,
                                              platform=PLATFORM.TWITTER,
                                              fix_legacy_db=True):
     if platform == PLATFORM.REDDIT:
-        print("update timeline NOT IMPLEMENTED FOR REDDIT")
+        download_timelines(simple_request_id)
     if platform == PLATFORM.TWITTER:
         if simple_request_id < 0:
             author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True, platform=platform).values_list(

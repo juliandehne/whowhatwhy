@@ -1,5 +1,7 @@
 import datetime
 
+from django.db import IntegrityError
+
 from delab.tw_connection_util import get_praw
 from delab.models import TweetAuthor, Tweet, PLATFORM, SimpleRequest, TwTopic
 from util.abusing_strings import convert_to_hash
@@ -29,22 +31,28 @@ def download_conversations_reddit(topic_string, simple_request_id):
     author_counter = 0
     tweet_counter = 0
 
-    for submission in reddit.subreddit(topic_string).hot(limit=2):
-        submission.comments.replace_more(limit=None)
-        save_reddit_entry(author_counter, submission, simple_request, submission, topic, tweet_counter,
-                          is_comment=False)
-        # moderators = get_moderators(topic_string, reddit)
-        for comment in submission.comments.list():
-            try:
-                save_reddit_entry(author_counter, comment, simple_request, submission, topic, tweet_counter)
-            except AttributeError:
-                print("could not save comment {} to database".format(comment))
+    for submission in reddit.subreddit(topic_string).hot(limit=100):
+        try:
+            submission.comments.replace_more(limit=None)
+            comments = submission.comments.list()
+            if len(comments) >= 10:
+                save_reddit_entry(author_counter, submission, simple_request, submission, topic, tweet_counter,
+                                  is_comment=False)
+                # moderators = get_moderators(topic_string, reddit)
+                for comment in comments:
+                    try:
+                        save_reddit_entry(author_counter, comment, simple_request, submission, topic, tweet_counter)
+                    except AttributeError:
+                        print("could not save comment {} to database".format(comment))
+        except IntegrityError:
+            print("this sub may have been downloaded already")
     print("created {} authors and {} tweets ".format(author_counter, tweet_counter))
 
 
 def save_reddit_entry(author_counter, comment, simple_request, submission, topic, tweet_counter, is_comment=True):
     author_id = convert_to_hash(comment.author.id)
     created_time = datetime.datetime.fromtimestamp(comment.created)
+    banned_at = None
     # create the author
     author, created = TweetAuthor.objects.get_or_create(
         twitter_id=author_id,
@@ -56,6 +64,7 @@ def save_reddit_entry(author_counter, comment, simple_request, submission, topic
         author_counter += 1
     if is_comment:
         tweet_id = convert_to_hash(comment.id)
+        banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
     else:
         tweet_id = convert_to_hash(comment.selftext)
     tn_parent = None
@@ -87,7 +96,8 @@ def save_reddit_entry(author_counter, comment, simple_request, submission, topic
         conversation_id=conversation_id,
         simple_request=simple_request,
         topic=topic,
-        tw_author=author
+        tw_author=author,
+        banned_at=banned_at
     )
     if tweet_created:
         tweet_counter += 1

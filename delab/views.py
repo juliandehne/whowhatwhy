@@ -96,7 +96,7 @@ class ConversationView(ListView):
 @method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['title', 'max_data', 'fast_mode', 'topic', 'platform']
+    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode' ]
     initial = {"title": "#covid #vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \

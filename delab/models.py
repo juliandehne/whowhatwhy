@@ -91,9 +91,9 @@ class SimpleRequest(models.Model):
                                     help_text="This is for debugging and getting quick results. It will not download the user data!")
 
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
-                                help_text="the plattform used (twitter or reddit)")
+                                help_text="the plattform used (twitter or reddit).  If reddit is selected only the topic will be used to search the related subreddit!")
     version = models.TextField(default=VERSION.v001, choices=VERSION.choices, null=True,
-                               help_text="the version of the experiment run")
+                               help_text="The version of the experiment run.")
 
     def __str__(self):
         return self.title
@@ -197,6 +197,7 @@ class Tweet(models.Model):
     # objects = DataFrameManager()
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
+    banned_at = models.DateTimeField(null=True)
 
     class Meta:
         verbose_name = 'Tweet'

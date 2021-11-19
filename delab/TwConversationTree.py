@@ -29,7 +29,7 @@ class TreeNode:
     def find_parent_of(self, node, plattform=PLATFORM.REDDIT):
         """append a node to the children of it's reply-to user"""
         if plattform == PLATFORM.TWITTER:
-            if node.reply_to() == self.reply_to():
+            if node.reply_to() == self.data["author_id"]:
                 self.children.append(node)
                 return True
         else:
@@ -38,7 +38,7 @@ class TreeNode:
                 return True
         found_in_children = False
         for child in self.children:
-            found_in_children = child.find_parent_of(node)
+            found_in_children = child.find_parent_of(node, plattform)
             if found_in_children:
                 break
         if not found_in_children and self.is_root:
