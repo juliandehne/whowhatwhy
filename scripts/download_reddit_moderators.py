@@ -6,6 +6,5 @@ def run():
     #    download_timelines()
     reddit = get_praw()
 
-    subreddit = reddit.subreddit("COVID19")
-    for moderator in subreddit.moderator():
-        print(moderator)
+    for moderator in reddit.subreddit("redditdev").moderator():
+        print(f"{moderator}: {moderator.mod_permissions}")

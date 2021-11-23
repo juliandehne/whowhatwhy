@@ -39,7 +39,8 @@ def store_candidates(df_conversations, experiment_index, platform):
                                          'moderator_index',
                                          'u_moderator_rating',
                                          'u_sentiment_rating',
-                                         'u_author_topic_variance_rating'
+                                         'u_author_topic_variance_rating',
+                                         'platform'
                                          ]]
 
     df_conversation_records = df_conversations.to_dict('records')
@@ -59,7 +60,8 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
                               platform=platform)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
-                                                  "sentiment_value", "created_at", "tw_author__timeline_bertopic_id"])
+                                                  "sentiment_value", "created_at", "tw_author__timeline_bertopic_id",
+                                                  'platform'])
 
     df_conversations = df_conversations.sort_values(by=['conversation_id', 'created_at'])
     df_conversations.reset_index(drop=True, inplace=True)
@@ -75,6 +77,8 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
 
     candidate_author_numbers = compute_number_of_authors_changed(df_conversations)
     df_conversations = df_conversations.assign(candidate_author_number_changed=candidate_author_numbers)
+
+    df_conversations = df_conversations.assign(platform=df_conversations.platform.str.lower())
 
     # loading the bertopic model
     BERTOPIC_MODEL_LOCATION = "BERTopic"

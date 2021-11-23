@@ -22,12 +22,16 @@ def run(*args):
     """
 
     analysis_version = VERSION.v001
-    platform = PLATFORM.REDDIT
+    platform = PLATFORM.TWITTER
     train_update_topics = True
     if len(args) > 0:
         analysis_version = args[0]
     if len(args) > 1:
         train_update_topics = bool(args[1] == "True")
+    if len(args) > 1:
+        if args[2] == PLATFORM.TWITTER or args[2] == PLATFORM.REDDIT:
+            platform = args[2]
+    print("using platform {}".format(platform))
 
     update_tweet_sentiments()
     print("STEP 1.1: updated tweet sentiments")

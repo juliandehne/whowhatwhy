@@ -18,6 +18,7 @@ class VERSION(models.TextChoices):
 class PLATFORM(models.TextChoices):
     REDDIT = "reddit"
     TWITTER = "twitter"
+    DELAB = "delab"
 
 
 class ConversationFlow(models.Model):
@@ -172,7 +173,8 @@ class Tweet(models.Model):
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
     author_id = models.BigIntegerField(null=True)
     in_reply_to_status_id = models.BigIntegerField(null=True)
-    in_reply_to_user_id = models.BigIntegerField(null=True)
+    in_reply_to_user_id = models.BigIntegerField(null=True,
+                                                 help_text="The platform internal id of the user of the parent tweet, i.e. author_id")
     created_at = models.DateTimeField()
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
     sentiment_value = models.FloatField(null=True)  # should be mapped between 0 and 1 with 1.0 being very positive
@@ -198,6 +200,7 @@ class Tweet(models.Model):
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
     banned_at = models.DateTimeField(null=True)
+    d_comment = models.TextField(null=True)
 
     class Meta:
         verbose_name = 'Tweet'

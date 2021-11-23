@@ -15,10 +15,6 @@ class TreeNode:
         self.max_path_length = 0
         self.is_root = False
 
-    # def id(self):
-    #    """a node is identified by its author because the tree works with response 2s"""
-    #    return self.data['author_id']
-
     def tweet_id(self):
         return self.data["twitter_id"]
 
@@ -63,7 +59,6 @@ class TreeNode:
         return result
 
     def data_to_string(self, level):
-
         text = self.data["text"].split(".")
         tabbed_text = []
         for sentence in text:
@@ -110,7 +105,6 @@ class TreeNode:
         return level
 
     def get_max_path_length(self):
-        # print("hello julian")
         if self.max_path_length == 0:
             self.max_path_length = self.compute_max_path_length()
         return self.max_path_length

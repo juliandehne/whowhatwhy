@@ -14,6 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import pathlib
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -255,6 +256,9 @@ LOGGING = {
         },
         'requests': {
             'level': 'ERROR'
+        },
+        'praw': {
+            'level': 'ERROR'
         }
     },
 }
@@ -263,3 +267,5 @@ LOGGING = {
 # max candidates between 10 and 500
 MAX_CANDIDATES = 10
 TRAX_CAPABILITIES = False  # set this to true onl if you running on a linux and have AVX commands available
+
+sys.setrecursionlimit(2000)

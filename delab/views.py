@@ -1,3 +1,5 @@
+import datetime
+from datetime import time
 from logging.handlers import RotatingFileHandler
 from random import choice
 
@@ -23,12 +25,14 @@ from django.views.generic import (
     DeleteView
 )
 
-from delab.models import SimpleRequest, Tweet, TwTopic, Timeline, TWCandidate
+from delab.models import SimpleRequest, Tweet, TwTopic, Timeline, TWCandidate, PLATFORM
 import logging
+
+from util.abusing_strings import convert_to_hash
 from .tasks import get_tasks_status
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+# @method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestListView(ListView):
     model = SimpleRequest
     template_name = 'delab/simple_request_list.html'
@@ -71,7 +75,7 @@ class ConversationListView(ListView):
         return context
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+# @method_decorator(csrf_exempt, name='dispatch')
 class ConversationView(ListView):
     model = Tweet
     template_name = 'delab/conversation.html'  # <app>/<model>_<viewtype>.html
@@ -81,7 +85,7 @@ class ConversationView(ListView):
 
     def get_queryset(self):
         return Tweet.objects.filter(conversation_id=self.request.resolver_match.kwargs['conversation_id']) \
-            .order_by("-created_at")
+            .order_by("created_at")
 
     """
     def get_context_data(self, **kwargs):
@@ -93,10 +97,10 @@ class ConversationView(ListView):
 
 
 # Create your views here.
-@method_decorator(csrf_exempt, name='dispatch')
+##@method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode' ]
+    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode']
     initial = {"title": "#covid #vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
@@ -104,7 +108,7 @@ class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
 
 
 # Create your views here.
-@method_decorator(csrf_exempt, name='dispatch')
+# #@method_decorator(csrf_exempt, name='dispatch')
 class TopicCreateView(SuccessMessageMixin, CreateView):
     model = TwTopic
     fields = ['title']
@@ -113,7 +117,42 @@ class TopicCreateView(SuccessMessageMixin, CreateView):
     success_message = "The Topic has been created!"
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+class ModerationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
+    model = Tweet
+    fields = ['text', 'd_comment']
+    # initial = {"title": "migration"}
+    success_message = "The Moderation Suggestion has been created!"
+
+    def form_valid(self, form):
+        form.instance.author_id = self.request.user.id
+        form.instance.platform = PLATFORM.DELAB
+        parent_id = self.request.resolver_match.kwargs['reply_to_id']
+        form.instance.tn_parent = parent_id
+        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        form.instance.in_reply_to_user_id = parent_tweet.author_id
+        form.instance.conversation_id = parent_tweet.conversation_id
+        form.instance.simple_request_id = parent_tweet.simple_request_id
+        form.instance.topic_id = parent_tweet.topic_id
+        form.instance.created_at = parent_tweet.created_at + datetime.timedelta(milliseconds=1)
+        form.instance.language = parent_tweet.language
+        form.instance.twitter_id = convert_to_hash(form.instance.text)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        parent_id = self.request.resolver_match.kwargs['reply_to_id']
+        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        return reverse('delab-conversation', kwargs={'conversation_id': parent_tweet.conversation_id})
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ModerationCreateView, self).get_context_data(**kwargs)
+        parent_id = self.request.resolver_match.kwargs['reply_to_id']
+        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        context["parent"] = parent_tweet.text
+
+        return context
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
 class TaskStatusView(ListView):
     model = Task
     template_name = 'delab/task_status.html'

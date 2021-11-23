@@ -18,7 +18,7 @@
                 {% elif True %}
                     <p class="article-content failed_analysis">{{ tweet.text }}</p>
                 {% endif %}
-
+                <a href="{% url 'delab-moderation-create' tweet.id %}">Add Moderation</a>
             </div>
         </article>
     {% endfor %}

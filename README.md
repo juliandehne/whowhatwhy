@@ -21,6 +21,8 @@ Prerequisites:
   bearer_token:
   access_token:
   access_token_secret: 
+  reddit_secret:
+  reddit_script_id:
 ```
 
 You can start the project with python3:
