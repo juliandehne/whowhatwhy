@@ -201,6 +201,8 @@ class Tweet(models.Model):
                                 help_text="the plattform used (twitter or reddit)")
     banned_at = models.DateTimeField(null=True)
     d_comment = models.TextField(null=True)
+    publish = models.BooleanField(null=True, default=False,
+                                  help_text="If this is checked, then the moderation suggestion would actually be send to twitter!")
 
     class Meta:
         verbose_name = 'Tweet'

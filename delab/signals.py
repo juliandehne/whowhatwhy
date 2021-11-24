@@ -5,11 +5,18 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 from django.dispatch import receiver
 
-from delab.models import SimpleRequest, Tweet, TWCandidate
+from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
+from delab.bot.sender import publish_moderation
 
 logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=Tweet)
+def process_moderation(sender, instance, created, **kwargs):
+    if instance.platform == PLATFORM.DELAB and instance.publish:
+        publish_moderation(instance)
 
 
 @receiver(post_save, sender=TWCandidate)

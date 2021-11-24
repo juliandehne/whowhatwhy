@@ -119,7 +119,7 @@ class TopicCreateView(SuccessMessageMixin, CreateView):
 
 class ModerationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
     model = Tweet
-    fields = ['text', 'd_comment']
+    fields = ['text', 'd_comment', 'publish']
     # initial = {"title": "migration"}
     success_message = "The Moderation Suggestion has been created!"
 

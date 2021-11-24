@@ -1,6 +1,7 @@
 from typing import Callable
 
 import praw
+import tweepy
 from TwitterAPI import TwitterAPI, TwitterRequestError
 import os
 import json
@@ -20,9 +21,9 @@ logger = logging.getLogger(__name__)
 class TwitterAPIWrapper:
 
     @staticmethod
-    def get_twitter_API():
+    def get_twitter_API(api_version='2'):
         access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
-        api = TwitterAPI(consumer_key, consumer_secret, access_token, access_token_secret, api_version='2')
+        api = TwitterAPI(consumer_key, consumer_secret, access_token, access_token_secret, api_version=api_version)
         return api
 
 
@@ -227,3 +228,11 @@ def get_praw():
     return reddit
 
 
+def send_tweet(text, tweet_id):
+    access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    # Creation of the actual interface, using authentication
+    api = tweepy.API(auth)
+    response = api.update_status(text, in_reply_to_status_id=tweet_id, auto_populate_reply_metadata=True)
+    return response
