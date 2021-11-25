@@ -86,7 +86,8 @@ def get_sentinel_topic():
 class SimpleRequest(models.Model):
     title = models.CharField(max_length=2000, validators=[SIMPLE_REQUEST_VALIDATOR, validate_exists])
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic)
+    topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic,
+                              help_text="In case of reddit only the topic will be used as a query and the hot conversations from the subreddit are returned")
     max_data = models.BooleanField(default=False, help_text="This will take the powerset of all the hashtags entered!")
     fast_mode = models.BooleanField(default=False,
                                     help_text="This is for debugging and getting quick results. It will not download the user data!")
@@ -168,7 +169,7 @@ class TweetAuthor(models.Model):
 
 class Tweet(models.Model):
     treenode_display_field = 'text'
-    twitter_id = models.BigIntegerField()
+    twitter_id = models.BigIntegerField(unique=True)
     text = models.TextField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
     author_id = models.BigIntegerField(null=True)
@@ -185,7 +186,8 @@ class Tweet(models.Model):
     language = models.TextField(default="unk")
     bertopic_id = models.IntegerField(null=True)
     bert_visual = models.TextField(null=True, blank=True)
-    tn_parent = models.BigIntegerField(null=True)
+    tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,
+                                  help_text="This holds the twitter_id (!) of the tweet that was responded to")
     c_is_local_moderator = models.BooleanField(null=True,
                                                help_text="True if it is the most moderating tweet in the conversation, based on m_index")
     c_is_local_moderator_score = models.FloatField(null=True, help_text="m_index without weights")

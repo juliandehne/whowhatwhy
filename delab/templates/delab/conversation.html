@@ -10,6 +10,7 @@
                     <a class="mr-2"> author_id: {{ tweet.author_id }}</a>
                     <a class="mr-2"> conversation_id: {{ tweet.conversation_id }}</a>
                     <small class="text-muted">{{ tweet.created_at|date:"F d, Y" }}</small>
+                    <small class="text-muted">Twitter_id: {{ tweet.twitter_id }}</small>
                 </div>
                 {% if tweet.sentiment == "positive" %}
                     <p class="article-content positive">{{ tweet.text }}</p>
@@ -18,7 +19,7 @@
                 {% elif True %}
                     <p class="article-content failed_analysis">{{ tweet.text }}</p>
                 {% endif %}
-                <a href="{% url 'delab-moderation-create' tweet.id %}">Add Moderation</a>
+                <a href="{% url 'delab-moderation-create' tweet.twitter_id %}">Add Moderation</a>
             </div>
         </article>
     {% endfor %}

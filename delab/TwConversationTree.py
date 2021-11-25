@@ -4,42 +4,36 @@
     Eventually this should be merged with:
     https://github.com/fabiocaccamo/django-treenode
 """
+import logging
+
 from delab.models import PLATFORM
+
+logger = logging.getLogger(__name__)
 
 
 class TreeNode:
-    def __init__(self, data):
+    def __init__(self, data, tree_id, parent_id=None):
         """data is a tweet's json object"""
+        self.tree_id = tree_id
         self.data = data
         self.children = []
         self.max_path_length = 0
-        self.is_root = False
+        self.parent_id = parent_id
 
-    def tweet_id(self):
-        return self.data["twitter_id"]
-
-    def reply_to(self):
-        """the reply-to user is the parent of the node"""
-        return self.data['in_reply_to_user_id']
-
-    def find_parent_of(self, node, plattform=PLATFORM.REDDIT):
+    def find_parent_of(self, node, recurson_counter=0):
         """append a node to the children of it's reply-to user"""
-        if plattform == PLATFORM.TWITTER:
-            if node.reply_to() == self.data["author_id"]:
-                self.children.append(node)
-                return True
+        if recurson_counter > 1000:
+            logger.error("got into a recursion with more then 1000 steps for conversation {}".format(self.data))
+            return False
         else:
-            if node.data["tn_parent"] == self.tweet_id():
+            if node.parent_id == self.tree_id:
                 self.children.append(node)
                 return True
-        found_in_children = False
-        for child in self.children:
-            found_in_children = child.find_parent_of(node, plattform)
-            if found_in_children:
-                break
-        if not found_in_children and self.is_root:
-            self.children.append(node)
-            return True
+            else:
+                for child in self.children:
+                    result = child.find_parent_of(node, recurson_counter=recurson_counter + 1)
+                    if result:
+                        return result
         return False
 
     def print_tree(self, level):
@@ -121,7 +115,10 @@ class TreeNode:
         self.children = favourite_children
 
     def all_tweet_ids(self):
-        result = [self.tweet_id()]
+        result = [self.data["twitter_id"]]
         for child in self.children:
             result.append(child.tweet_id())
         return result
+
+    def set_twitter_id(self, twitter_id):
+        self.data["twitter_id"] = twitter_id

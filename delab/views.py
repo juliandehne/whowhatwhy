@@ -127,26 +127,26 @@ class ModerationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
         form.instance.author_id = self.request.user.id
         form.instance.platform = PLATFORM.DELAB
         parent_id = self.request.resolver_match.kwargs['reply_to_id']
-        form.instance.tn_parent = parent_id
-        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        form.instance.tn_parent_id = parent_id
+        parent_tweet = Tweet.objects.filter(twitter_id=parent_id).get()
         form.instance.in_reply_to_user_id = parent_tweet.author_id
         form.instance.conversation_id = parent_tweet.conversation_id
         form.instance.simple_request_id = parent_tweet.simple_request_id
         form.instance.topic_id = parent_tweet.topic_id
         form.instance.created_at = parent_tweet.created_at + datetime.timedelta(milliseconds=1)
         form.instance.language = parent_tweet.language
-        form.instance.twitter_id = convert_to_hash(form.instance.text)
+        form.instance.twitter_id = convert_to_hash(form.instance.text + str(parent_id))
         return super().form_valid(form)
 
     def get_success_url(self):
         parent_id = self.request.resolver_match.kwargs['reply_to_id']
-        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        parent_tweet = Tweet.objects.filter(twitter_id=parent_id).get()
         return reverse('delab-conversation', kwargs={'conversation_id': parent_tweet.conversation_id})
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(ModerationCreateView, self).get_context_data(**kwargs)
         parent_id = self.request.resolver_match.kwargs['reply_to_id']
-        parent_tweet = Tweet.objects.filter(id=parent_id).get()
+        parent_tweet = Tweet.objects.filter(twitter_id=parent_id).get()
         context["parent"] = parent_tweet.text
 
         return context

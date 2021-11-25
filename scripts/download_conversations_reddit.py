@@ -2,4 +2,4 @@ from delab.corpus.download_conversation_reddit import download_conversations_red
 
 
 def run():
-    download_conversations_reddit("immigration", -1)
+    download_conversations_reddit("europe", -1)

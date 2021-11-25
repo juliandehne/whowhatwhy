@@ -101,7 +101,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
                       created_at=root_node.data["created_at"],
                       in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                       in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-                      tn_parent=tn_parent,
+                      tn_parent_id=tn_parent,
                       # tn_priority=priority,
                       language=root_node.data["lang"])
         tweet.save()
@@ -118,7 +118,7 @@ def get_matching_conversation(connector,
                               hashtags,
                               topic,
                               simple_request,
-                              max_conversation_length=10000,
+                              max_conversation_length=1000,
                               min_conversation_length=10,
                               language="lang:en",
                               max_number_of_candidates=MAX_CANDIDATES, fast_mode=False):
@@ -141,15 +141,13 @@ def get_matching_conversation(connector,
     if fast_mode:
         max_number_of_candidates = 10
         min_conversation_length = 3
-        max_conversation_length = 1000
+        max_conversation_length = 100
 
     tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     downloaded_tweets = 0
     for candidate in candidates:
-        if downloaded_tweets > 2000:
-            break
         try:
             logger.debug("selected candidate tweet {}".format(candidate))
             candidate_id = candidate.conversation_id
@@ -205,7 +203,7 @@ def retrieve_replies(conversation_id, max_replies, language):
                       })
 
     for item in r:
-        root = TreeNode(item)
+        root = TreeNode(item, item["author_id"])
         # print(f'ROOT {root.id()}')
 
     # GET ALL REPLIES IN CONVERSATION
@@ -223,13 +221,16 @@ def retrieve_replies(conversation_id, max_replies, language):
             logger.debug("downloading bigger conversation ...")
         if reply_count >= max_replies:
             raise ConversationNotInRangeException(reply_count)
-        node = TreeNode(item)
+        node_id = item["author_id"]
+        parent_id = item["in_reply_to_user_id"]
+        node = TreeNode(item, node_id, parent_id)
+
         # print(f'{node.id()} => {node.reply_to()}')
         # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
-        orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan, PLATFORM.TWITTER)]
+        orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if root is not None:
-            if not root.find_parent_of(node, PLATFORM.TWITTER):
+            if not root.find_parent_of(node):
                 orphans.append(node)
         reply_count += 1
 

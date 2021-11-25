@@ -89,12 +89,12 @@ def convert_to_conversation_trees(df):
     # roots_as_rec[0:5]
     trees_roots = {}
     for root_data in roots_as_rec:
-        root_node = TreeNode(root_data)
-        root_node.is_root = True
+        root_node = TreeNode(root_data, root_data["twitter_id"], root_data["tn_parent"])
         trees_roots[root_data["conversation_id"]] = root_node
     for not_root in not_roots_as_rec:
         if not_root["conversation_id"] in trees_roots:
-            trees_roots.get(not_root["conversation_id"]).find_parent_of(TreeNode(not_root))
+            trees_roots.get(not_root["conversation_id"]).find_parent_of(
+                TreeNode(not_root, not_root["twitter_id"], not_root["tn_parent"]))
     return trees_roots
 
 
