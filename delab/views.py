@@ -1,33 +1,21 @@
 import datetime
-from datetime import time
-from logging.handlers import RotatingFileHandler
 from random import choice
 
 from background_task.models import Task
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ValidationError
-from django.db.models import Q, Exists, OuterRef
-from django.http import Http404
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import CreateView
-from django_countries.base import _
-from django.shortcuts import render, get_object_or_404
 from django.contrib.messages.views import SuccessMessageMixin
-
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.generic import (
     ListView,
-    DetailView,
     CreateView,
-    UpdateView,
-    DeleteView
+    UpdateView
 )
 
-from delab.models import SimpleRequest, Tweet, TwTopic, Timeline, TWCandidate, PLATFORM
-import logging
-
+from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, PLATFORM, TweetAuthor
 from util.abusing_strings import convert_to_hash
 from .tasks import get_tasks_status
 
@@ -166,14 +154,18 @@ class TaskStatusView(ListView):
         context['tweets_downloaded'] = simple_request.tweet_set.count()
         authors_downloaded = simple_request.tweet_set.filter(tw_author__isnull=False).count()
         context["authors_downloaded"] = authors_downloaded
-        timelines_not_downloaded = Tweet.objects.filter(
-            ~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
-            simple_request_id=simple_request.id).count()
-        context["timelines_downloaded"] = context['tweets_downloaded'] - timelines_not_downloaded
+        # timelines_not_downloaded = Tweet.objects.filter(
+        #    ~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
+        #    simple_request_id=simple_request.id).count()
+        # context["timelines_downloaded"] = context['tweets_downloaded'] - timelines_not_downloaded
         sentiments_analyzed = simple_request.tweet_set.filter(sentiment_value__isnull=False).count()
         context["sentiments_analyzed"] = sentiments_analyzed
         flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
         context["flows_analyzed"] = flows_analyzed
+
+        # tweet_ids = simple_request.tweet_set.values_list("id", flat=True)
+        timelines_downloaded = TweetAuthor.objects.filter(has_timeline=True).count()
+        context["timelines_downloaded"] = timelines_downloaded
         return context
 
     def get_queryset(self):
@@ -212,7 +204,6 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(TWCandidateLabelView, self).get_context_data(**kwargs)
 
-        from delab.topic.train_topic_model import clean_corpus
         candidate_id = self.query_pk_and_slug
         candidate = TWCandidate.objects.filter(id=candidate_id).get()
         tweet_text = candidate.tweet.text

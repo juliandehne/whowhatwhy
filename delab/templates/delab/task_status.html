@@ -13,12 +13,12 @@
                 <li> Downloading author details ..., {{ authors_downloaded }} / {{ tweets_downloaded }} authors
                     downloaded
                 </li>
-            {% elif "timeline" in task.task_name %}
+            {% elif "timelines" in task.task_name %}
                 <li> {{ tweets_downloaded }} tweets downloaded.</li>
                 <li>Downloaded author details, {{ authors_downloaded }} / {{ tweets_downloaded }} authors
                     downloaded
                 </li>
-                <li> Downloading timelines ..., {{ timelines_downloaded }} / {{ tweets_downloaded }} timelines
+                <li> Downloading timelines ..., {{ timelines_downloaded }} / {{ authors_downloaded }} timelines
                     downloaded
                 </li>
             {% elif "sentiment" in task.task_name %}

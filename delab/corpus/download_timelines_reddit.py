@@ -1,13 +1,12 @@
 import datetime
+import logging
 from time import sleep
-
 from pytz.exceptions import AmbiguousTimeError
-from tqdm import tqdm
-
 from delab.models import TweetAuthor, PLATFORM, Timeline
 from delab.tw_connection_util import get_praw
-
 from util.abusing_strings import convert_to_hash
+
+logger = logging.getLogger(__name__)
 
 
 def download_timelines(simple_request_id=-1):
@@ -43,7 +42,7 @@ def download_timelines(simple_request_id=-1):
                 except AmbiguousTimeError:
                     print("could not store time to db {}".format(created_time))
                     author.has_timeline = False
-            print("downloaded timeline {}/{} authors".format(a_counter, n_authors))
+                logger.debug("downloaded timeline {}/{} authors".format(a_counter, n_authors))
         except Exception:
             sleep(15)
             author.has_timeline = False
