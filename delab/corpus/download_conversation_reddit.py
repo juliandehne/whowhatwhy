@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+import prawcore
 from django.db import IntegrityError
 
 from delab.tw_connection_util import get_praw
@@ -77,62 +78,65 @@ def compute_author_id(comment):
 
 
 def save_reddit_entry(comment, simple_request, topic):
-    if comment.author:
+    try:
+        if comment.author:
 
-        if hasattr(comment.author, 'id'):
-            author_id = convert_to_hash(comment.author.id)
-        else:
-            author_id = convert_to_hash(comment.author.name)
+            if hasattr(comment.author, 'id'):
+                author_id = convert_to_hash(comment.author.id)
+            else:
+                author_id = convert_to_hash(comment.author.name)
 
-        created_time = datetime.datetime.fromtimestamp(comment.created)
-        # create the author
-        fullname = ""
-        if hasattr(comment.author, "fullname"):
-            fullname = comment.author.fullname
-        author, created = TweetAuthor.objects.get_or_create(
-            twitter_id=author_id,
-            name=comment.author.name,
-            screen_name=fullname,
-            platform=PLATFORM.REDDIT
-        )
-
-        tweet_id = convert_to_hash(comment.id)
-        banned_at = None
-        if comment.banned_at_utc:
-            banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
-
-        conversation_id = convert_to_hash(comment.submission.id)
-
-        parent_id = comment.parent_id.split("_")[1]
-        tn_parent = convert_to_hash(parent_id)
-        if tn_parent == conversation_id:
-            # if the comments are in the second hierarchy level the id should be the generated root id for that conversation
-            try:
-                tn_parent = Tweet.objects.filter(conversation_id=conversation_id,
-                                                 tn_parent__isnull=True).get().twitter_id
-            except Exception:
-                logger.error("could not find parent in second hierarchy TODO DEBUG")
-        # create the tweet
-        text = comment.body
-        language = comment.submission.subreddit.lang
-        try:
-            tweet, tweet_created = Tweet.objects.get_or_create(
-                twitter_id=tweet_id,
-                text=text,
-                author_id=author_id,
-                tn_parent_id=tn_parent,
-                language=language,
-                platform=PLATFORM.REDDIT,
-                created_at=created_time,
-                conversation_id=conversation_id,
-                simple_request=simple_request,
-                topic=topic,
-                tw_author=author,
-                banned_at=banned_at
+            created_time = datetime.datetime.fromtimestamp(comment.created)
+            # create the author
+            fullname = ""
+            if hasattr(comment.author, "fullname"):
+                fullname = comment.author.fullname
+            author, created = TweetAuthor.objects.get_or_create(
+                twitter_id=author_id,
+                name=comment.author.name,
+                screen_name=fullname,
+                platform=PLATFORM.REDDIT
             )
-        except IntegrityError:
-            return True
-        return tweet_created
+
+            tweet_id = convert_to_hash(comment.id)
+            banned_at = None
+            if comment.banned_at_utc:
+                banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
+
+            conversation_id = convert_to_hash(comment.submission.id)
+
+            parent_id = comment.parent_id.split("_")[1]
+            tn_parent = convert_to_hash(parent_id)
+            if tn_parent == conversation_id:
+                # if the comments are in the second hierarchy level the id should be the generated root id for that conversation
+                try:
+                    tn_parent = Tweet.objects.filter(conversation_id=conversation_id,
+                                                     tn_parent__isnull=True).get().twitter_id
+                except Exception:
+                    logger.error("could not find parent in second hierarchy TODO DEBUG")
+            # create the tweet
+            text = comment.body
+            language = comment.submission.subreddit.lang
+            try:
+                tweet, tweet_created = Tweet.objects.get_or_create(
+                    twitter_id=tweet_id,
+                    text=text,
+                    author_id=author_id,
+                    tn_parent_id=tn_parent,
+                    language=language,
+                    platform=PLATFORM.REDDIT,
+                    created_at=created_time,
+                    conversation_id=conversation_id,
+                    simple_request=simple_request,
+                    topic=topic,
+                    tw_author=author,
+                    banned_at=banned_at
+                )
+            except IntegrityError:
+                return True
+            return tweet_created
+    except prawcore.exceptions.NotFound:
+        logger.error("could not find something on reddit anymore")
 
 
 def get_simple_request(simple_request_id, topic_string):
