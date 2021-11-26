@@ -28,14 +28,17 @@ def download_conversations_reddit(topic_string, simple_request_id):
     simple_request, topic = get_simple_request(simple_request_id, topic_string)
     reddit = get_praw()
 
-    for submission in reddit.subreddit(topic_string).hot(limit=10):
-        submission.comments.replace_more(limit=None)
-        comments = submission.comments.list()
-        if len(comments) >= 10:
-            created = save_reddit_submission(submission, simple_request, topic)
-            if created:
-                for comment in comments:
-                    save_reddit_entry(comment, simple_request, topic)
+    try:
+        for submission in reddit.subreddit(topic_string).hot(limit=10):
+            submission.comments.replace_more(limit=None)
+            comments = submission.comments.list()
+            if len(comments) >= 10:
+                created = save_reddit_submission(submission, simple_request, topic)
+                if created:
+                    for comment in comments:
+                        save_reddit_entry(comment, simple_request, topic)
+    except prawcore.exceptions.Redirect:
+        logger.error("reddit with this name does not exist")
 
 
 def save_reddit_submission(comment, simple_request, topic):
