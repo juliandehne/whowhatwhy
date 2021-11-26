@@ -2,6 +2,7 @@ import datetime
 import logging
 
 import prawcore
+import pytz
 from django.db import IntegrityError
 
 from delab.tw_connection_util import get_praw
@@ -39,7 +40,7 @@ def download_conversations_reddit(topic_string, simple_request_id):
 
 def save_reddit_submission(comment, simple_request, topic):
     author_id = compute_author_id(comment)
-    created_time = datetime.datetime.fromtimestamp(comment.created)
+    created_time = datetime.datetime.fromtimestamp(comment.created_utc)
     banned_at = None
     # create the author
     author, created = TweetAuthor.objects.get_or_create(
@@ -70,6 +71,9 @@ def save_reddit_submission(comment, simple_request, topic):
         return tweet_created
     except IntegrityError:
         return True
+    except pytz.exceptions.AmbiguousTimeError:
+        "something was weird with the time field"
+        return False
 
 
 def compute_author_id(comment):
@@ -86,7 +90,7 @@ def save_reddit_entry(comment, simple_request, topic):
             else:
                 author_id = convert_to_hash(comment.author.name)
 
-            created_time = datetime.datetime.fromtimestamp(comment.created)
+            created_time = datetime.datetime.fromtimestamp(comment.created_utc)
             # create the author
             fullname = ""
             if hasattr(comment.author, "fullname"):
@@ -134,6 +138,9 @@ def save_reddit_entry(comment, simple_request, topic):
                 )
             except IntegrityError:
                 return True
+            except pytz.exceptions.AmbiguousTimeError:
+                "something was weird with the time field"
+                return False
             return tweet_created
     except prawcore.exceptions.NotFound:
         logger.error("could not find something on reddit anymore")
