@@ -57,7 +57,8 @@ def process_simple_request(sender, instance, created, **kwargs):
                                          simple_request_id=instance.pk,
                                          verbose_name="simple_request_{}".format(instance.pk),
                                          schedule=timezone.now(),
-                                         simulate=False, max_data=instance.max_data, fast_mode=instance.fast_mode)
+                                         simulate=False,  max_data=instance.max_data,
+                                         fast_mode=instance.fast_mode, language=instance.language)
 
 
 def convert_request_to_hashtag_list(title):

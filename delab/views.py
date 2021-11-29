@@ -25,7 +25,7 @@ class SimpleRequestListView(ListView):
     model = SimpleRequest
     template_name = 'delab/simple_request_list.html'
     context_object_name = 'requests'
-    fields = ['created_at', 'title']
+    fields = ['created_at', 'title', 'language']
     paginate_by = 5
 
 
@@ -88,7 +88,7 @@ class ConversationView(ListView):
 ##@method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode']
+    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode', 'language']
     initial = {"title": "#covid #vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \

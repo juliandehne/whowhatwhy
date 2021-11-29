@@ -8,7 +8,7 @@ from django.utils import timezone
 from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
 from delab.corpus.download_conversation_reddit import download_conversations_reddit
-from .models import PLATFORM
+from .models import PLATFORM, LANGUAGE
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +16,13 @@ logger = logging.getLogger(__name__)
 @background(schedule=1)
 def download_conversations_scheduler(topic_string, platform, hashtags, simple_request_id, simulate=True,
                                      max_data=False,
-                                     fast_mode=False):
+                                     fast_mode=False, language=LANGUAGE.ENGLISH):
     if simulate:
         logger.error("pretending to downloading conversations{}".format(hashtags))
     else:
         if platform == PLATFORM.TWITTER:
-            download_conversations(topic_string, hashtags, simple_request_id, max_data=max_data, fast_mode=fast_mode)
+            download_conversations(topic_string, hashtags, simple_request_id, language=language, max_data=max_data,
+                                   fast_mode=fast_mode)
         if platform == PLATFORM.REDDIT:
             download_conversations_reddit(topic_string, simple_request_id)
 

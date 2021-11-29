@@ -21,6 +21,13 @@ class PLATFORM(models.TextChoices):
     DELAB = "delab"
 
 
+class LANGUAGE(models.TextChoices):
+    ENGLISH = "en"
+    GERMAN = "de"
+    POLISH = "pl"
+    UNKNOWN = "unk"
+
+
 class ConversationFlow(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
@@ -96,6 +103,8 @@ class SimpleRequest(models.Model):
                                 help_text="the plattform used (twitter or reddit).  If reddit is selected only the topic will be used to search the related subreddit!")
     version = models.TextField(default=VERSION.v001, choices=VERSION.choices, null=True,
                                help_text="The version of the experiment run.")
+    language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
+                                help_text="the language we are querying")
 
     def __str__(self):
         return self.title
@@ -183,7 +192,8 @@ class Tweet(models.Model):
     conversation_id = models.BigIntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
-    language = models.TextField(default="unk")
+    language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
+                                help_text="the language we are querying")
     bertopic_id = models.IntegerField(null=True)
     bert_visual = models.TextField(null=True, blank=True)
     tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,

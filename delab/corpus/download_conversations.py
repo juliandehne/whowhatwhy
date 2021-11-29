@@ -13,7 +13,7 @@ from django.db.backends import sqlite3
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.magic_http_strings import TWEETS_SEARCH_All_URL
-from delab.models import Tweet, TwTopic, SimpleRequest, PLATFORM
+from delab.models import Tweet, TwTopic, SimpleRequest, PLATFORM, LANGUAGE
 from delab.tw_connection_util import TwitterAPIWrapper
 from delab.tw_connection_util import TwitterConnector
 from django_project.settings import MAX_CANDIDATES
@@ -120,7 +120,7 @@ def get_matching_conversation(connector,
                               simple_request,
                               max_conversation_length=1000,
                               min_conversation_length=10,
-                              language="lang:en",
+                              language=LANGUAGE.ENGLISH,
                               max_number_of_candidates=MAX_CANDIDATES, fast_mode=False):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
@@ -138,6 +138,8 @@ def get_matching_conversation(connector,
                                     times the max_number of candidates given here!
 
     """
+    language = "lang:{}".format(language)
+
     if fast_mode:
         max_number_of_candidates = 10
         min_conversation_length = 3
