@@ -9,7 +9,8 @@ from delab.tw_connection_util import TwitterStreamConnector
 
 
 def run():
-    download_conversations("migration", ["chain", "wall", "immigration", "visa", "europe", "policy", "border"], max_data=True)
+    download_conversations("migration", "chain wall", max_data=False)
+    #  download_conversations("migration", "chain OR wall", max_data=True)
 
     # download_conversations("Vaccination", ["covid_19", "vaccine", "getvaccienated", "vaccination"])
     # download_conversations("Migration", ["migration", "UNHCR"])

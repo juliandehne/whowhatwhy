@@ -91,7 +91,7 @@ def get_sentinel_topic():
 
 
 class SimpleRequest(models.Model):
-    title = models.CharField(max_length=2000, validators=[SIMPLE_REQUEST_VALIDATOR, validate_exists])
+    title = models.CharField(max_length=2000, validators=[validate_exists])
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic,
                               help_text="In case of reddit only the topic will be used as a query and the hot conversations from the subreddit are returned")

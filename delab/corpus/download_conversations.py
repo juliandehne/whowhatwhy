@@ -1,3 +1,4 @@
+import re
 import time
 from datetime import datetime as dt
 import logging
@@ -22,7 +23,8 @@ from util.abusing_lists import powerset
 logger = logging.getLogger(__name__)
 
 
-def download_conversations(topic_string, hashtags, request_id=-1, language="lang:en", max_data=False, fast_mode=False):
+def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
+                           fast_mode=False):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -45,9 +47,9 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
             topic=topic
         )
     else:
-        request_string = "#" + ' #'.join(hashtags)
+        # request_string = "#" + ' #'.join(hashtags)
         simple_request, created = SimpleRequest.objects.get_or_create(
-            title=request_string,
+            title=query_string,
             topic=topic
         )
 
@@ -56,18 +58,22 @@ def download_conversations(topic_string, hashtags, request_id=-1, language="lang
 
     # download the conversations
     if max_data:
-        combinations = list(powerset(hashtags))
+        pattern = r'[\(\)\[\]]'
+        bag_of_words = re.sub(pattern, '', query_string).split(" ")
+        combinations = list(powerset(bag_of_words))
         combinations_l = len(combinations) - 1
         combination_counter = 0
         for hashtag_set in combinations:
             if len(hashtag_set) > 0:
                 combination_counter += 1
-                get_matching_conversation(connector, hashtag_set, topic, simple_request, language=language,
+                new_query = " ".join(hashtag_set)
+                get_matching_conversation(connector, new_query, topic, simple_request, language=language,
                                           fast_mode=fast_mode)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
-        get_matching_conversation(connector, hashtags, topic, simple_request, language=language, fast_mode=fast_mode)
+        get_matching_conversation(connector, query_string, topic, simple_request, language=language,
+                                  fast_mode=fast_mode)
 
     connector = None  # precaution to terminate the thread and the http socket
 
@@ -115,7 +121,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
 
 
 def get_matching_conversation(connector,
-                              hashtags,
+                              query,
                               topic,
                               simple_request,
                               max_conversation_length=1000,
@@ -125,7 +131,7 @@ def get_matching_conversation(connector,
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
-        hashtags -- the hashtags that constitute the query
+
         topic : the topic of the query
         simple_request: the query string in order to link the view
         max_conversation_length -- the max number of results
@@ -138,14 +144,12 @@ def get_matching_conversation(connector,
                                     times the max_number of candidates given here!
 
     """
-    language = "lang:{}".format(language)
-
     if fast_mode:
         max_number_of_candidates = 10
         min_conversation_length = 3
         max_conversation_length = 100
 
-    tweets_result = get_tweets_for_hashtags(connector, hashtags, logger, max_number_of_candidates, language)
+    tweets_result = get_tweets_for_hashtags(connector, query, logger, max_number_of_candidates, language)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     downloaded_tweets = 0
@@ -268,23 +272,23 @@ def reply_thread_maker(conv_ids):
     return replies
 
 
-def get_tweets_for_hashtags(connector, hashtags, logger, max_results, language="lang:en"):
+def get_tweets_for_hashtags(connector, query, logger, max_results, language=LANGUAGE.ENGLISH):
     """ downloads the tweets matching the hashtag list.
         using https://api.twitter.com/2/tweets/search/all
 
         Keyword arguments:
         connector -- TwitterConnector
-        hashtags -- list of hashtags
+        query -- twitter query query
         logger -- Logger
         max_results -- the number of max length the conversation should have
     """
     # twitter_accounts_query_1 = map(lambda x: "{} OR".format(x), hashtags)
-    twitter_accounts_query_1 = map(lambda x: "{} ".format(x), hashtags)
-    twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
-    twitter_accounts_query_3 = "(" + twitter_accounts_query_2 + ")"
-    twitter_accounts_query_3 += " " + language
-    logger.debug(twitter_accounts_query_3)
-    params = {'query': '{}'.format(twitter_accounts_query_3), 'max_results': max_results,
+    # twitter_accounts_query_1 = map(lambda x: "{} ".format(x), hashtags)
+    # twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
+    # twitter_accounts_query_3 = "(" + twitter_accounts_query_2 + ")"
+    twitter_accounts_query = query + " lang:" + language
+    logger.debug(twitter_accounts_query)
+    params = {'query': twitter_accounts_query, 'max_results': max_results,
               "tweet.fields": "conversation_id,author_id"}
 
     json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)

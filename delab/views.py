@@ -89,7 +89,7 @@ class ConversationView(ListView):
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
     fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode', 'language']
-    initial = {"title": "#covid #vaccination"}
+    initial = {"title": "covid vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
                       "You might have to refresh the page until we have build a loading screen!"

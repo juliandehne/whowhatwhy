@@ -50,10 +50,10 @@ def process_simple_request(sender, instance, created, **kwargs):
     logging.info("received signal from post_save {} for pk {}".format(timezone.now(), instance.pk))
 
     if created:
-        cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
+        # cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
         download_conversations_scheduler(instance.topic.title,
                                          instance.platform,
-                                         cleaned_hashtags,
+                                         instance.title,
                                          simple_request_id=instance.pk,
                                          verbose_name="simple_request_{}".format(instance.pk),
                                          schedule=timezone.now(),
