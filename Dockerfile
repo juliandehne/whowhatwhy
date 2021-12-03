@@ -26,7 +26,6 @@ RUN pip install psycopg2-binary
 RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install -r requirements-docker.txt
 RUN pip install -r requirements_current.txt
-RUN pip install trax==1.3.9
 
 RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords

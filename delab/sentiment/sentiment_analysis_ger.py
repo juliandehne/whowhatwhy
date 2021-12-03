@@ -1,7 +1,7 @@
 from germansentiment import SentimentModel
 
 
-def classify_german_sentiments(texts, simple_request_id=-1):
+def classify_german_sentiments(texts):
     model = SentimentModel()
 
     result = model.predict_sentiment(texts)
@@ -10,7 +10,7 @@ def classify_german_sentiments(texts, simple_request_id=-1):
     sentiment_dictionary = {}
     sentiment_value_dictionary = {}
 
-    predictions = -2
+    predictions = -1
     sentiment_value = 0
 
     index = 0

@@ -11,7 +11,7 @@ from django.db import IntegrityError
 from django.db.models import Q
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM
+from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE
 from delab.models import TopicDictionary
 from util import TVocabulary
 
@@ -30,41 +30,45 @@ logger = logging.getLogger(__name__)
 """
 
 
-def train_topic_model_from_db(train=True, platform=PLATFORM.TWITTER, lang="en", store_vectors=True,
+def train_topic_model_from_db(train=True, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH, store_vectors=True,
                               number_of_batches=30000):
     """
     :param train: 
     :param platform: 
-    :param lang:
+    :param language:
     :param store_vectors: Stores the embedding vectors from fasttext in a table for quick access for each word in the tweets
     :param number_of_batches: The number of tweets used for training the model (should be the all of them if there is time)
     :return:
     """
     logger.debug("starting to train the topic model")
-    corpus_for_fitting_sentences = get_train_corpus_for_sentences(lang, platform, max_size=number_of_batches)
+    corpus_for_fitting_sentences = get_train_corpus_for_sentences(language, platform, max_size=number_of_batches)
 
     if train:
-        train_bert(corpus_for_fitting_sentences)
+        train_bert(corpus_for_fitting_sentences, language)
 
     if store_vectors:
         vocab = create_vocabulary(corpus_for_fitting_sentences)
-        store_embedding_vectors(vocab, lang)
+        store_embedding_vectors(vocab, language)
 
     logger.debug("finished training the topic model")
 
 
-def train_bert(corpus_for_fitting_sentences):
+def train_bert(corpus_for_fitting_sentences, language):
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     count = 0
     # for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
     trainings_batch = corpus_for_fitting_sentences
 
-    bertopic_model = BERTopic(embedding_model="sentence-transformers/all-mpnet-base-v2", verbose=True,
+    embedding_model = get_embedding_model(language)
+
+    bertopic_model = BERTopic(embedding_model=embedding_model, verbose=True,
                               calculate_probabilities=False, min_topic_size=30, low_memory=True)
+
     bertopic_model.fit_transform(trainings_batch)
-    bertopic_model.save(BERTOPIC_MODEL_LOCATION)
-    logger.debug("saved trained model to location{}".format(BERTOPIC_MODEL_LOCATION))
+    location = get_bertopic_location(language)
+    bertopic_model.save(location)
+    logger.debug("saved trained model to location {}".format(location))
 
 
 def filter_bad_topics(bertopic_model, vocab):
@@ -87,10 +91,18 @@ def store_embedding_vectors(vocab, lang):
     """
 
     # fasttext.util.download_model('en', if_exists='ignore')  # English
-    ft = fasttext.load_model('cc.en.100.bin')
+    fasttext.util.download_model('en', if_exists='ignore')
+    fasttext.util.download_model('de', if_exists='ignore')
+
+    if lang == LANGUAGE.ENGLISH:
+        ft = fasttext.load_model('cc.en.300.bin')
+    if lang == LANGUAGE.GERMAN:
+        ft = fasttext.load_model('cc.de.300.bin')
     logger.debug("loaded fasttext model into memory")
     # dim = ft.get_dimension()
-    bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+    location = get_bertopic_location(lang)
+    embedding_model = get_embedding_model(lang)
+    bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model")
 
     # filter topics
@@ -163,7 +175,8 @@ def get_train_corpus_for_sentences(lang, platform, max_size=-1):
     if max_size < 0:
         return corpus_for_fitting_sentences
     if len(corpus_for_fitting_sentences) < max_size:
-        return []
+        logger.error("there are not enough tweets available in the db to analyse the topics")
+        return corpus_for_fitting_sentences
     corpus = random.sample(corpus_for_fitting_sentences, max_size)
     return corpus
 
@@ -213,20 +226,32 @@ def clean_corpus(corpus_for_fitting_sentences):
     return result
 
 
-def classify_tweets(lang="en", platform=PLATFORM.TWITTER, update_topics=True):
-    bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2",
-                                   )
+def get_bertopic_location(language):
+    return BERTOPIC_MODEL_LOCATION + "_" + language
+
+
+def get_embedding_model(language):
+    if language == LANGUAGE.GERMAN:
+        # return "T-Systems-onsite/cross-en-de-roberta-sentence-transformer"
+        return 'distiluse-base-multilingual-cased-v1'
+    return "sentence-transformers/all-mpnet-base-v2"
+
+
+def classify_tweet_topics(language, platform=PLATFORM.TWITTER, update_topics=True):
+    location = get_bertopic_location(language)
+    embedding_model = get_embedding_model(language)
+    bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model for classifying the tweets")
 
-    corpus_for_fitting_sentences = get_train_corpus_for_sentences(lang, platform)
+    corpus_for_fitting_sentences = get_train_corpus_for_sentences(language, platform)
     vocab = create_vocabulary(corpus_for_fitting_sentences)
     # load tweets
     topic_info = filter_bad_topics(bertopic_model, vocab)
     if update_topics:
-        conversation_tweets = Tweet.objects.filter(Q(language=lang) & Q(platform=platform))
+        conversation_tweets = Tweet.objects.filter(Q(language=language) & Q(platform=platform))
     else:
         conversation_tweets = Tweet.objects.filter(
-            Q(language=lang) & Q(bertopic_id__isnull=True) & Q(platform=platform))
+            Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform))
 
     if len(conversation_tweets) > 0:
         conversation_texts = list(conversation_tweets.values_list("text", flat=True))
@@ -288,8 +313,10 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def classify_author_timelines(update=True, platform=PLATFORM.TWITTER):
-    bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION, embedding_model="sentence-transformers/all-mpnet-base-v2")
+def classify_author_timelines(language, update=True, platform=PLATFORM.TWITTER):
+    location = get_bertopic_location(language)
+    embedding_model = get_embedding_model(language)
+    bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     topic_info = bertopic_model.get_topic_info()
     logger.debug("loaded berttopic model")
     if update:

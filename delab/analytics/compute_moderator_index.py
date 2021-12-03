@@ -9,16 +9,17 @@ from numpy import NaN
 from scipy import spatial
 from tqdm import tqdm
 
-from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM
+from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM, LANGUAGE
+from delab.topic.train_topic_model import get_bertopic_location, get_embedding_model
 
 
-def store_candidates(df_conversations, experiment_index, platform):
+def store_candidates(df_conversations, experiment_index, platform, language):
     """
     :param df_conversations: the dataframe with the candidate tweets to be stored for labeling
     :param experiment_index: a label corresponding to the git the of the code that represents a version the formula used
     :return:
     """
-    TWCandidate.objects.filter(exp_id=experiment_index, platform=platform).delete()
+    TWCandidate.objects.filter(exp_id=experiment_index, platform=platform, tweet__language=language).delete()
 
     df_conversations = df_conversations[~df_conversations['moderator_index'].isnull()]
     df_conversations = df_conversations[df_conversations['moderator_index'].notna()]
@@ -49,15 +50,15 @@ def store_candidates(df_conversations, experiment_index, platform):
     print("writting {} candidates to the candidates table".format(len(tw_candidates)))
 
 
-def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
+def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
     """
     The formula that computes a measurement that is supposed to suggest tweets as candidates for a "moderating effort"
     :param platform:
     :param experiment_index: (str) a label corresponding to the git the of the code that represents a version the formula used
     :return: [str] the top 10 candidates computed this way
     """
-    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, language='en',
-                              platform=platform)
+    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
+                              language=language)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
                                                   "sentiment_value", "created_at", "tw_author__timeline_bertopic_id",
@@ -81,9 +82,10 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
     df_conversations = df_conversations.assign(platform=df_conversations.platform.str.lower())
 
     # loading the bertopic model
-    BERTOPIC_MODEL_LOCATION = "BERTopic"
-    bertopic_model = BERTopic.load(BERTOPIC_MODEL_LOCATION,
-                                   embedding_model="sentence-transformers/all-mpnet-base-v2")
+    location = get_bertopic_location(language)
+    embedding_model = get_embedding_model(language)
+    bertopic_model = BERTopic.load(location,
+                                   embedding_model=embedding_model)
     topic_info = bertopic_model.get_topic_info()
 
     # create topic-word map
@@ -113,7 +115,7 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER):
                                                )
     # dropping the candidates that are no middle child
     df_conversations.drop(index=drop_indexes, inplace=True)
-    store_candidates(df_conversations, experiment_index, platform)
+    store_candidates(df_conversations, experiment_index, platform, language)
     candidates = []
     if len(df_conversations.index):
         candidates = df_conversations.nlargest(10, ["moderator_index"])
