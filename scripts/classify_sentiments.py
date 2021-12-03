@@ -1,3 +1,4 @@
+from delab.models import LANGUAGE
 from delab.sentiment.sentiment_classification import classify_tweet_sentiment
 
 """ This is a django runscript, it can be started in the django home directory with
@@ -5,7 +6,7 @@ from delab.sentiment.sentiment_classification import classify_tweet_sentiment
 """
 
 
-def run():
+def run(*args):
     tweet_negative = "I really hate this crap"
     tweet_negative_2 = "I really don't hate this"
     tweet_negative_3 = "I really don't love this"
@@ -14,8 +15,16 @@ def run():
                      "This movie was good and a lot happened it between things like that almost",
                      "This movie was almost good and very little happened it between things like that",
                      tweet_negative, tweet_positive, tweet_negative_2, tweet_negative_3]
-    classify_tweet_sentiment(tweet_strings, verbose=True)
-
+    if len(args) == 1:
+        language = args[0]
+        if language == LANGUAGE.GERMAN:
+            tweet_strings = [
+                "Mit keinem guten Ergebniss", "Das ist gar nicht mal so gut",
+                "Total awesome!", "nicht so schlecht wie erwartet",
+                "Der Test verlief positiv.", "Sie fährt ein grünes Auto."]
+        classify_tweet_sentiment(tweet_strings, verbose=True, language=language)
+    else:
+        classify_tweet_sentiment(tweet_strings, verbose=True, language=LANGUAGE.ENGLISH)
     # update_sentiments()
     # figure_out_weights()
 

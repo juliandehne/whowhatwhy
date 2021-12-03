@@ -5,63 +5,47 @@ import logging
 import numpy as np
 from django.db.models import Q
 
-from delab.models import SADictionary, Tweet
+from delab.models import SADictionary, Tweet, LANGUAGE
+from delab.sentiment.sentiment_analysis_ger import classify_german_sentiments
 from delab.sentiment.sentiment_model import TASK_DESCRIPTION, classifier, get_model_path, tweet_to_tensor
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 
-def update_tweet_sentiments(simple_request_id=-1):
+def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
     """
     Home brew sentiment classification using trax might be replaced with a pre-build sentiment classifier
     :param simple_request_id:
     :return:
     """
 
-    from delab.sentiment.sentiment_classification import classify_tweet_sentiment
     from delab.sentiment.sentiment_training import update_dictionary
 
     if simple_request_id < 0:
-        tweets = Tweet.objects.filter(
-            (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(sentiment="failed_analysis")).all()
+        tweets = Tweet.objects.filter(Q(language=language) &
+                                      (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(
+            sentiment="failed_analysis")).all()
     else:
-        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) &
+        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) & Q(language=language) &
                                       (Q(sentiment=None) | Q(sentiment_value=None)) &
                                       ~Q(sentiment="failed_analysis")).all()
     # tweet_strings = tweets.values_list(["text"], flat=True)
     # print(tweet_strings[1:3])
     tweet_strings = list(map(lambda x: x.text, tweets))
-    update_dictionary(tweet_strings)
+
     predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
     for tweet in tweets:
         tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
         tweet.sentiment_value = sentiment_values.get(tweet.text, None)
-        tweet.save()
+    Tweet.objects.bulk_update(tweets, ["sentiment", "sentiment_value"])
 
 
-## not implemented, just ofr later use trained sentiment classifier using BERT
-def classify_german_sentiment(tweet_string):
-    '''
-    from germansentiment import SentimentModel
-
-    model = SentimentModel()
-
-    texts = [
-        "Mit keinem guten Ergebniss", "Das ist gar nicht mal so gut",
-        "Total awesome!", "nicht so schlecht wie erwartet",
-        "Der Test verlief positiv.", "Sie fährt ein grünes Auto."]
-
-    result = model.predict_sentiment(texts)
-    print(result)
-    '''
-
-
-def classify_tweet_sentiment(tweet_strings, verbose=False):
-    logger = logging.getLogger(__name__)
+def classify_tweet_sentiment(tweet_strings, verbose=False, language=LANGUAGE.ENGLISH, use_nltk=True):
     """ classifies the sentiment of a tweet based on classic NLP example with trax
 
         Parameters
         ----------
         tweet_strings :  [str]
-            List of tweets as string that are to be classified        
+            List of tweets as string that are to be classified
 
         Returns
         -------
@@ -71,21 +55,39 @@ def classify_tweet_sentiment(tweet_strings, verbose=False):
             keys are the tweets as string and values are the sentiment
     """
 
+    from delab.sentiment.sentiment_training import update_dictionary
+
+    if language == LANGUAGE.GERMAN:
+        return classify_german_sentiments(tweet_strings)
+
+    logger = logging.getLogger(__name__)
+
     # Initialize using pre-trained weights.
-
-    django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
-    vocab_dict = json.loads(django_dictionary.dictionary_string)
-
-    model = classifier(len(vocab_dict))
-    model.init_from_file(get_model_path() + "model.pkl.gz")
-
     prediction_dictionary = {}
     sentiment_dictionary = {}
     sentiment_value_dictionary = {}
 
+    sia = SentimentIntensityAnalyzer()
+    if language == LANGUAGE.ENGLISH and not use_nltk:
+        update_dictionary(tweet_strings)
+
     for tweet_string in tweet_strings:
         try:
-            predictions, sentiment, sentiment_value = predict(tweet_string, model, vocab_dict)
+            if use_nltk:
+                polarity_scores = sia.polarity_scores(tweet_string)
+                sentiment_value = polarity_scores.get("compound", 0)
+                if sentiment_value > 0:
+                    predictions = 1
+                    sentiment = "positive"
+                else:
+                    predictions = 0
+                    sentiment = "negative"
+                if sentiment_value == 0:
+                    predictions = -1
+                    sentiment = "neutral"
+            else:
+                # self written sentiment classifier....
+                predictions, sentiment, sentiment_value = predict(tweet_string)
             if verbose:
                 logger.debug(
                     "the tweet \"{}\" was predicted as \"{}\" with the values {}".format(tweet_string, sentiment,
@@ -100,8 +102,18 @@ def classify_tweet_sentiment(tweet_strings, verbose=False):
     return prediction_dictionary, sentiment_dictionary, sentiment_value_dictionary
 
 
-# this is used to predict on your own sentence
-def predict(sentence, model, vocab_dict):
+def predict(sentence):
+    """
+    a self written classifier for sentiment analysis in English (to be phased out)
+    :param sentence:
+    :return:
+    """
+    django_dictionary = SADictionary.objects.all().filter(title=TASK_DESCRIPTION).get()
+    vocab_dict = json.loads(django_dictionary.dictionary_string)
+
+    model = classifier(len(vocab_dict))
+    model.init_from_file(get_model_path() + "model.pkl.gz")
+
     inputs = np.array(tweet_to_tensor(sentence, vocab_dict=vocab_dict))
 
     # Batch size 1, add dimension for batch, to work with the model

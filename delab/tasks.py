@@ -26,25 +26,25 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
         if platform == PLATFORM.REDDIT:
             download_conversations_reddit(topic_string, simple_request_id)
 
-        update_author(simple_request_id, platform, fast_mode,
+        update_author(simple_request_id, platform, fast_mode, language,
                       verbose_name="author_analysis_{}".format(simple_request_id),
                       schedule=timezone.now())
 
 
 @background(schedule=1)
-def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=False):
+def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=False, language=LANGUAGE.ENGLISH):
     update_authors(simple_request_id, platform)
     if not fast_mode:
-        update_author_timelines(simple_request_id, platform,
+        update_author_timelines(simple_request_id, platform, language,
                                 verbose_name="timeline_download_{}".format(simple_request_id),
                                 schedule=timezone.now())
 
 
 @background(schedule=1)
-def update_sentiments(simple_request_id=-1):
+def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
     from delab.sentiment.sentiment_classification import update_tweet_sentiments
 
-    update_tweet_sentiments(simple_request_id)
+    update_tweet_sentiments(simple_request_id, language)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
 
@@ -56,13 +56,13 @@ def update_flows(simple_request_id=-1):
 
 
 @background(schedule=1)
-def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER):
+def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
     from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
     from django_project.settings import TRAX_CAPABILITIES
 
     update_timelines_from_conversation_users(simple_request_id, platform)
     if TRAX_CAPABILITIES:
-        update_sentiments(simple_request_id,
+        update_sentiments(simple_request_id, language,
                           verbose_name="sentiment_analysis_{}".format(simple_request_id),
                           schedule=timezone.now())
 

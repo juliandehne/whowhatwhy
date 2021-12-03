@@ -1,7 +1,7 @@
 from delab.analytics.compute_moderator_index import compute_moderator_index
 
 from delab.corpus.download_author_information import update_authors
-from delab.models import PLATFORM, VERSION
+from delab.models import PLATFORM, VERSION, LANGUAGE
 from delab.sentiment.sentiment_classification import update_tweet_sentiments
 from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
 from delab.topic.train_topic_model import classify_author_timelines, train_topic_model_from_db, classify_tweets
@@ -33,7 +33,8 @@ def run(*args):
             platform = args[2]
     print("using platform {}".format(platform))
 
-    update_tweet_sentiments()
+    update_tweet_sentiments(language=LANGUAGE.ENGLISH)
+    update_tweet_sentiments(language=LANGUAGE.GERMAN)
     print("STEP 1.1: updated tweet sentiments")
     # download the extended author data for those who are missing
     update_authors(platform=platform)
