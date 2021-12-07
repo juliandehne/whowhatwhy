@@ -21,9 +21,10 @@ def run(*args):
     It assumes that tweets have been downloaded using the web-interface or the script download_conversations.py!!
     """
 
-    analysis_version = VERSION.v001
+    analysis_version = VERSION.v002 # TODO the version should select data
     platform = PLATFORM.TWITTER
     train_update_topics = True
+    language = LANGUAGE.ENGLISH
 
     if len(args) > 0:
         analysis_version = args[0]
@@ -33,9 +34,7 @@ def run(*args):
         if args[2] == PLATFORM.TWITTER or args[2] == PLATFORM.REDDIT:
             platform = args[2]
     print("using platform {}".format(platform))
-
-    update_tweet_sentiments(language=LANGUAGE.ENGLISH)
-    update_tweet_sentiments(language=LANGUAGE.GERMAN)
+    update_tweet_sentiments(language=language)
     print("STEP 1.1: updated tweet sentiments")
     # download the extended author data for those who are missing
     update_authors(platform=platform)
@@ -43,26 +42,17 @@ def run(*args):
     # download the twitter timelines for those who are missing
     update_timelines_from_conversation_users(platform=platform)
     print("STEP 3: FINISHED updating author timelines")
-    # 1. Trains the bertopic model on the timelines and the tweets and stores the trained bertopic model in "BERTopic"
-    # 2. loads fasttextvectors for all bertopic models and stores them in topicdictionary
-    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batches=5000,
-                              platform=platform, language=LANGUAGE.ENGLISH)
-    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batches=5000,
-                              platform=platform, language=LANGUAGE.GERMAN)
+    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batches=2000,
+                              platform=platform, language=language)
     print("STEP 4: FINISHED training the bertopic model")
     # classify the author timelines
-    classify_author_timelines(LANGUAGE.ENGLISH, update=train_update_topics, platform=platform)
-    classify_author_timelines(LANGUAGE.GERMAN, update=train_update_topics, platform=platform)
+    classify_author_timelines(language, update=train_update_topics, platform=platform)
     print("STEP 5: FINISHED classifying the author timelines")
     # classifying the tweets
-    classify_tweet_topics(LANGUAGE.ENGLISH, update_topics=train_update_topics, platform=platform)
-    classify_tweet_topics(LANGUAGE.GERMAN, update_topics=train_update_topics, platform=platform)
+    classify_tweet_topics(language, update_topics=train_update_topics, platform=platform)
     print("STEP 6: FINISHED classifying the tweets in the conversation table")
     # compute the moderator index and store it in twcandidate table
-    candidates = compute_moderator_index(analysis_version, platform=platform, language=LANGUAGE.ENGLISH)
-    candidates_de = compute_moderator_index(analysis_version, platform=platform, language=LANGUAGE.GERMAN)
+    candidates_de = compute_moderator_index(analysis_version, platform=platform, language=language)
     print("STEP 7: FINISHED computing the moderator_index")
-    n_candidates = len(candidates) + len(candidates_de)
-    print("computed {} candidates".format(n_candidates))
-    if n_candidates > 10:
-        print(candidates.head(10))
+    if len(candidates_de) > 10:
+        print(candidates_de.head(10))

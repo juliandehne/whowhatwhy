@@ -232,9 +232,9 @@ def get_bertopic_location(language):
 
 def get_embedding_model(language):
     if language == LANGUAGE.GERMAN:
-        # return "T-Systems-onsite/cross-en-de-roberta-sentence-transformer"
-        return 'distiluse-base-multilingual-cased-v1'
-    return "sentence-transformers/all-mpnet-base-v2"
+        return "distiluse-base-multilingual-cased-v2"
+    return "all-mpnet-base-v2"
+    # return "sentence-transformers/all-mpnet-base-v2"
 
 
 def classify_tweet_topics(language, platform=PLATFORM.TWITTER, update_topics=True):
@@ -328,7 +328,7 @@ def classify_author_timelines(language, update=True, platform=PLATFORM.TWITTER):
     # currently there is a bug with the batch processing
     # https://github.com/MaartenGr/BERTopic/issues/322
     for tweet_author in tweet_authors:
-        df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id).values_list("text", flat=True)
+        df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id, lang=language).values_list("text", flat=True)
         author_text = ""
         df_timelines_cleaned = clean_corpus(df_timelines)
         for text in df_timelines_cleaned:

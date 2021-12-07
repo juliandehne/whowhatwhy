@@ -265,7 +265,7 @@ LOGGING = {
 
 # delab_settings
 # max candidates between 10 and 500
-MAX_CANDIDATES = 10
+MAX_CANDIDATES = 200
 TRAX_CAPABILITIES = False  # set this to true onl if you running on a linux and have AVX commands available
 
 sys.setrecursionlimit(2000)

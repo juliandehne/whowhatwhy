@@ -58,11 +58,14 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, languag
     :return: [str] the top 10 candidates computed this way
     """
     qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
-                              language=language)
+                              language=language, simple_request__version=experiment_index)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
                                                   "sentiment_value", "created_at", "tw_author__timeline_bertopic_id",
                                                   'platform'])
+    if len(df_conversations.index) == 0:
+        print("no tweets to select candidates for")
+        return []
 
     df_conversations = df_conversations.sort_values(by=['conversation_id', 'created_at'])
     df_conversations.reset_index(drop=True, inplace=True)

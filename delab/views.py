@@ -88,7 +88,7 @@ class ConversationView(ListView):
 ##@method_decorator(csrf_exempt, name='dispatch')
 class SimpleRequestCreateView(SuccessMessageMixin, CreateView):
     model = SimpleRequest
-    fields = ['platform', 'version', 'topic', 'title', 'max_data', 'fast_mode', 'language']
+    fields = ['platform', 'version', 'topic', 'title', 'fast_mode', 'language']
     initial = {"title": "covid vaccination"}
 
     success_message = "Conversations with the request %(title)s are being downloaded now! \n" \
@@ -183,7 +183,6 @@ class TaskStatusView(ListView):
             return super(TaskStatusView, self).dispatch(request, *args, **kwargs)
 
 
-# TODO finish implementing
 class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     model = TWCandidate
     fields = ['u_moderator_rating', 'u_author_topic_variance_rating', 'u_sentiment_rating']
