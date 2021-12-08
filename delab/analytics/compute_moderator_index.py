@@ -86,7 +86,7 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, languag
     df_conversations = df_conversations.assign(platform=df_conversations.platform.str.lower())
 
     # loading the bertopic model
-    location = get_bertopic_location(language)
+    location = get_bertopic_location(language, experiment_index)
     embedding_model = get_embedding_model(language)
     bertopic_model = BERTopic.load(location,
                                    embedding_model=embedding_model)

@@ -9,9 +9,10 @@ import numpy as np
 from bertopic import BERTopic
 from django.db import IntegrityError
 from django.db.models import Q
+from django.db.models.functions import Concat
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE
+from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE, VERSION
 from delab.models import TopicDictionary
 from util import TVocabulary
 
@@ -30,7 +31,8 @@ logger = logging.getLogger(__name__)
 """
 
 
-def train_topic_model_from_db(train=True, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH, store_vectors=True,
+def train_topic_model_from_db(version, train=True, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH,
+                              store_vectors=True,
                               number_of_batches=30000):
     """
     :param train: 
@@ -41,19 +43,20 @@ def train_topic_model_from_db(train=True, platform=PLATFORM.TWITTER, language=LA
     :return:
     """
     logger.debug("starting to train the topic model")
-    corpus_for_fitting_sentences = get_train_corpus_for_sentences(language, platform, max_size=number_of_batches)
+    corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform,
+                                                                  max_size=number_of_batches)
 
     if train:
-        train_bert(corpus_for_fitting_sentences, language)
+        train_bert(corpus_for_fitting_sentences, language, version)
 
     if store_vectors:
         vocab = create_vocabulary(corpus_for_fitting_sentences)
-        store_embedding_vectors(vocab, language)
+        store_embedding_vectors(vocab, language, version)
 
     logger.debug("finished training the topic model")
 
 
-def train_bert(corpus_for_fitting_sentences, language):
+def train_bert(corpus_for_fitting_sentences, language, version):
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     count = 0
@@ -66,7 +69,7 @@ def train_bert(corpus_for_fitting_sentences, language):
                               calculate_probabilities=False, min_topic_size=30, low_memory=True)
 
     bertopic_model.fit_transform(trainings_batch)
-    location = get_bertopic_location(language)
+    location = get_bertopic_location(language, version)
     bertopic_model.save(location)
     logger.debug("saved trained model to location {}".format(location))
 
@@ -81,7 +84,7 @@ def filter_bad_topics(bertopic_model, vocab):
     return topic_info
 
 
-def store_embedding_vectors(vocab, lang):
+def store_embedding_vectors(vocab, lang, version):
     """
     This calculates the words that are in the topics, finds fasttext vectors for these words
     and stores them in the database for the distance measuring later on.
@@ -100,7 +103,7 @@ def store_embedding_vectors(vocab, lang):
         ft = fasttext.load_model('cc.de.300.bin')
     logger.debug("loaded fasttext model into memory")
     # dim = ft.get_dimension()
-    location = get_bertopic_location(lang)
+    location = get_bertopic_location(lang, version)
     embedding_model = get_embedding_model(lang)
     bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model")
@@ -161,7 +164,7 @@ def get_bad_topics(vocab, topic_model_2):
     return bad_topics
 
 
-def get_train_corpus_for_sentences(lang, platform, max_size=-1):
+def get_train_corpus_for_sentences(version, lang, platform, max_size=-1):
     """
     This constructs the training corpus for the topic analysis.
     :param platform:
@@ -169,13 +172,16 @@ def get_train_corpus_for_sentences(lang, platform, max_size=-1):
     :param max_size: in order to improve testing, it is possible to set max_size > 0 to just train on a subset of the data
     :return: list[str] a list of tweets
     """
-    author_tweets_texts, logger = load_author_tweets(lang, platform)
-    conversation_tweets_texts = load_conversation_tweets(lang, platform)
-    corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
+    # author_tweets_texts, logger = load_author_tweets(version, lang, platform)
+    conversation_tweets_texts = load_conversation_tweets(version, lang, platform)
+    # corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
+    corpus_for_fitting_sentences = conversation_tweets_texts
     if max_size < 0:
         return corpus_for_fitting_sentences
     if len(corpus_for_fitting_sentences) < max_size:
-        logger.error("there are not enough tweets available in the db to analyse the topics")
+        logger.error(
+            "there are only {} sentences available in the db to analyse the topics".format(
+                len(corpus_for_fitting_sentences)))
         return corpus_for_fitting_sentences
     corpus = random.sample(corpus_for_fitting_sentences, max_size)
     return corpus
@@ -226,8 +232,8 @@ def clean_corpus(corpus_for_fitting_sentences):
     return result
 
 
-def get_bertopic_location(language):
-    return BERTOPIC_MODEL_LOCATION + "_" + language
+def get_bertopic_location(language, version):
+    return BERTOPIC_MODEL_LOCATION + "_" + language + "_" + version
 
 
 def get_embedding_model(language):
@@ -275,8 +281,9 @@ def classify_tweet_topics(language, platform=PLATFORM.TWITTER, update_topics=Tru
         Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
 
 
-def load_conversation_tweets(lang, platform):
-    conversation_tweets = Tweet.objects.filter(Q(language=lang) & Q(platform=platform)).all()
+def load_conversation_tweets(version, lang, platform):
+    conversation_tweets = Tweet.objects.filter(
+        Q(language=lang) & Q(simple_request__version=version) & Q(platform=platform)).all()
     df_conversations = read_frame(conversation_tweets, fieldnames=["id",
                                                                    "author_id",
                                                                    "text",
@@ -286,7 +293,7 @@ def load_conversation_tweets(lang, platform):
     return conversation_tweets_texts
 
 
-def load_author_tweets(lang, platform):
+def load_author_tweets(version, lang, platform):
     tweets = Timeline.objects.filter(Q(lang=lang) & Q(platform=platform)).all()
     df = read_frame(tweets, fieldnames=["id",
                                         "author_id",
@@ -313,27 +320,35 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def classify_author_timelines(language, update=True, platform=PLATFORM.TWITTER):
-    location = get_bertopic_location(language)
+def classify_author_timelines(version, language, update=True, platform=PLATFORM.TWITTER):
+    location = get_bertopic_location(language, version)
     embedding_model = get_embedding_model(language)
     bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     topic_info = bertopic_model.get_topic_info()
     logger.debug("loaded berttopic model")
     if update:
-        tweet_authors = TweetAuthor.objects.filter(has_timeline=True, platform=platform).all()
+        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(has_timeline=True,
+                                                                                    platform=platform).annotate(
+            author_texts=Concat('timelines'))
     else:
-        tweet_authors = TweetAuthor.objects.filter(timeline_bertopic_id__isnull=True, has_timeline=True,
-                                                   platform=platform).all()
-    author_texts = []
+        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(timeline_bertopic_id__isnull=True,
+                                                                                    has_timeline=True,
+                                                                                    platform=platform).annotate(
+            author_texts=Concat('timelines'))
+
+    author_texts = tweet_authors.values_list("author_texts", flat=True)
+    # author_texts = []
     # currently there is a bug with the batch processing
     # https://github.com/MaartenGr/BERTopic/issues/322
-    for tweet_author in tweet_authors:
-        df_timelines = Timeline.objects.filter(author_id=tweet_author.twitter_id, lang=language).values_list("text", flat=True)
-        author_text = ""
-        df_timelines_cleaned = clean_corpus(df_timelines)
-        for text in df_timelines_cleaned:
-            author_text += text + ". "
-        author_texts.append(author_text)
+    # for tweet_author in tweet_authors:
+    #    df_timelines = tweet_author.timeline_set.filter(lang=language).values_list("text", flat=True)
+    #    author_text = ""
+    #    df_timelines_cleaned = clean_corpus(df_timelines)
+    #    for text in df_timelines_cleaned:
+    #        author_text += text + ". "
+    #    author_texts.append(author_text)
+
+    assert len(author_texts) == tweet_authors.count()
     if len(author_texts) > 0:
         topic_classifications = bertopic_model.transform(author_texts)[0]
         index = 0

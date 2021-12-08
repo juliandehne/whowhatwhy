@@ -45,18 +45,26 @@ def run(*args):
     print("STEP 3: FINISHED updating author timelines")
     # 1. Trains the bertopic model on the timelines and the tweets and stores the trained bertopic model in "BERTopic"
     # 2. loads fasttextvectors for all bertopic models and stores them in topicdictionary
-    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batches=5000,
-                              platform=platform, language=LANGUAGE.ENGLISH)
-    train_topic_model_from_db(train=train_update_topics, store_vectors=train_update_topics, number_of_batches=5000,
-                              platform=platform, language=LANGUAGE.GERMAN)
+    train_topic_model_from_db(version=analysis_version,
+                              train=train_update_topics,
+                              store_vectors=train_update_topics,
+                              number_of_batches=5000,
+                              platform=platform,
+                              language=LANGUAGE.ENGLISH)
+    train_topic_model_from_db(version=analysis_version,
+                              train=train_update_topics,
+                              store_vectors=train_update_topics,
+                              number_of_batches=5000,
+                              platform=platform,
+                              language=LANGUAGE.GERMAN)
     print("STEP 4: FINISHED training the bertopic model")
     # classify the author timelines
-    classify_author_timelines(LANGUAGE.ENGLISH, update=train_update_topics, platform=platform)
-    classify_author_timelines(LANGUAGE.GERMAN, update=train_update_topics, platform=platform)
+    classify_author_timelines(version=analysis_version, language=LANGUAGE.ENGLISH, update=True, platform=platform)
+    classify_author_timelines(version=analysis_version, language=LANGUAGE.GERMAN, update=True, platform=platform)
     print("STEP 5: FINISHED classifying the author timelines")
     # classifying the tweets
-    classify_tweet_topics(LANGUAGE.ENGLISH, update_topics=train_update_topics, platform=platform)
-    classify_tweet_topics(LANGUAGE.GERMAN, update_topics=train_update_topics, platform=platform)
+    classify_tweet_topics(LANGUAGE.ENGLISH, update_topics=True, platform=platform)
+    classify_tweet_topics(LANGUAGE.GERMAN, update_topics=True, platform=platform)
     print("STEP 6: FINISHED classifying the tweets in the conversation table")
     # compute the moderator index and store it in twcandidate table
     candidates = compute_moderator_index(analysis_version, platform=platform, language=LANGUAGE.ENGLISH)
