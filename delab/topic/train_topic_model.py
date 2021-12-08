@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -7,12 +8,12 @@ import re
 import fasttext.util
 import numpy as np
 from bertopic import BERTopic
+from django.contrib.postgres.aggregates import StringAgg
 from django.db import IntegrityError
 from django.db.models import Q
-from django.db.models.functions import Concat
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE, VERSION
+from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE
 from delab.models import TopicDictionary
 from util import TVocabulary
 
@@ -212,6 +213,7 @@ def clean_corpus(corpus_for_fitting_sentences):
     """
     result = []
     for temp in corpus_for_fitting_sentences:
+        temp_copy = str(copy.deepcopy(temp))
         # removing hashtags
         temp = re.sub("@[A-Za-z0-9_]+", "", temp)
         temp = re.sub("#[A-Za-z0-9_]+", "", temp)
@@ -219,8 +221,8 @@ def clean_corpus(corpus_for_fitting_sentences):
         temp = re.sub(r"http\S+", "", temp)
         temp = re.sub(r"www.\S+", "", temp)
         # removing punctuation
-        temp = re.sub('[()!?]', ' ', temp)
-        temp = re.sub("\[.*?\]", ' ', temp)
+        # temp = re.sub('[()!?]', ' ', temp)
+        # temp = re.sub("\[.*?\]", ' ', temp)
         # alphanumeric
         temp = re.sub("[^a-z0-9A-Z]", " ", temp)
         temp = re.sub("RT", "", temp)
@@ -229,6 +231,8 @@ def clean_corpus(corpus_for_fitting_sentences):
         number_of_words = len(temp.split(" ")) > 3
         if len(temp) > 1 and number_of_words:
             result.append(temp)
+        else:
+            result.append(temp_copy)
     return result
 
 
@@ -243,21 +247,23 @@ def get_embedding_model(language):
     # return "sentence-transformers/all-mpnet-base-v2"
 
 
-def classify_tweet_topics(language, platform=PLATFORM.TWITTER, update_topics=True):
-    location = get_bertopic_location(language)
+def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_topics=True):
+    location = get_bertopic_location(language, version)
     embedding_model = get_embedding_model(language)
     bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model for classifying the tweets")
 
-    corpus_for_fitting_sentences = get_train_corpus_for_sentences(language, platform)
+    corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform)
     vocab = create_vocabulary(corpus_for_fitting_sentences)
     # load tweets
     topic_info = filter_bad_topics(bertopic_model, vocab)
     if update_topics:
-        conversation_tweets = Tweet.objects.filter(Q(language=language) & Q(platform=platform))
+        conversation_tweets = Tweet.objects.filter(
+            Q(language=language) & Q(platform=platform) & Q(simple_request__version=version))
     else:
         conversation_tweets = Tweet.objects.filter(
-            Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform))
+            Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform) & Q(
+                simple_request__version=version))
 
     if len(conversation_tweets) > 0:
         conversation_texts = list(conversation_tweets.values_list("text", flat=True))
@@ -327,17 +333,18 @@ def classify_author_timelines(version, language, update=True, platform=PLATFORM.
     topic_info = bertopic_model.get_topic_info()
     logger.debug("loaded berttopic model")
     if update:
-        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(has_timeline=True,
-                                                                                    platform=platform).annotate(
-            author_texts=Concat('timelines'))
+        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(
+            has_timeline=True, platform=platform).filter(
+            timeline__lang=language).annotate(
+            timeline_text=StringAgg('timeline__text', delimiter='.'))
     else:
-        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(timeline_bertopic_id__isnull=True,
-                                                                                    has_timeline=True,
-                                                                                    platform=platform).annotate(
-            author_texts=Concat('timelines'))
+        tweet_authors = TweetAuthor.objects.prefetch_related('timeline_set').filter(
+            timeline_bertopic_id__isnull=True, has_timeline=True, platform=platform).filter(
+            timeline__lang=language).annotate(
+            timeline_text=StringAgg('timeline__text', delimiter='.'))
+    author_texts = tweet_authors.values_list("timeline_text", flat=True)
+    author_texts_cleaned = clean_corpus(author_texts)
 
-    author_texts = tweet_authors.values_list("author_texts", flat=True)
-    # author_texts = []
     # currently there is a bug with the batch processing
     # https://github.com/MaartenGr/BERTopic/issues/322
     # for tweet_author in tweet_authors:
@@ -348,9 +355,12 @@ def classify_author_timelines(version, language, update=True, platform=PLATFORM.
     #        author_text += text + ". "
     #    author_texts.append(author_text)
 
-    assert len(author_texts) == tweet_authors.count()
-    if len(author_texts) > 0:
-        topic_classifications = bertopic_model.transform(author_texts)[0]
+    n_texts = len(author_texts_cleaned)
+    n_authors = tweet_authors.count()
+    assert n_texts == n_authors
+    if len(author_texts_cleaned) > 0:
+        classifications = bertopic_model.transform(author_texts_cleaned)
+        topic_classifications = classifications[0]
         index = 0
         tweet_author_length = len(tweet_authors)
         classification_length = len(topic_classifications)
