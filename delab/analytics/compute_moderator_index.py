@@ -57,8 +57,9 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, languag
     :param experiment_index: (str) a label corresponding to the git the of the code that represents a version the formula used
     :return: [str] the top 10 candidates computed this way
     """
-    qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
-                              language=language, simple_request__version=experiment_index)
+    #qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
+    #                          language=language, simple_request__version=experiment_index)
+    qs = Tweet.objects.filter(platform=platform, language=language, simple_request__version=experiment_index)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
                                                   "conversation_id",
                                                   "sentiment_value", "created_at", "tw_author__timeline_bertopic_id",
@@ -118,11 +119,12 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, languag
                                                )
     # dropping the candidates that are no middle child
     df_conversations.drop(index=drop_indexes, inplace=True)
+    if len(df_conversations.index) > 100:
+        df_conversations = df_conversations.nlargest(100, ["moderator_index"])
+        df_conversations.reset_index(drop=True, inplace=True)
     store_candidates(df_conversations, experiment_index, platform, language)
-    candidates = []
-    if len(df_conversations.index):
-        candidates = df_conversations.nlargest(10, ["moderator_index"])
-    return candidates
+
+    return df_conversations.values.tolist()
 
 
 def compute_topic2word(bertopic_model, topic_info):

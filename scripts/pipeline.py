@@ -64,5 +64,3 @@ def run(*args):
     print("STEP 7: FINISHED computing the moderator_index")
     n_candidates = len(candidates) + len(candidates_de)
     print("computed {} candidates".format(n_candidates))
-    if n_candidates > 10:
-        print(candidates.head(10))

@@ -21,7 +21,7 @@ def run(*args):
     It assumes that tweets have been downloaded using the web-interface or the script download_conversations.py!!
     """
 
-    analysis_version = VERSION.v002 # TODO the version should select data
+    analysis_version = VERSION.v002  # TODO the version should select data
     platform = PLATFORM.TWITTER
     train_update_topics = True
     language = LANGUAGE.ENGLISH
@@ -33,6 +33,9 @@ def run(*args):
     if len(args) > 2:
         if args[2] == PLATFORM.TWITTER or args[2] == PLATFORM.REDDIT:
             platform = args[2]
+    if len(args) > 3:
+        if args[3] == LANGUAGE.ENGLISH or args[3] == LANGUAGE.GERMAN:
+            language = args[3]
     print("using platform {}".format(platform))
     update_tweet_sentiments(language=language)
     print("STEP 1.1: updated tweet sentiments")
@@ -54,5 +57,3 @@ def run(*args):
     # compute the moderator index and store it in twcandidate table
     candidates_de = compute_moderator_index(analysis_version, platform=platform, language=language)
     print("STEP 7: FINISHED computing the moderator_index")
-    if len(candidates_de) > 10:
-        print(candidates_de.head(10))
