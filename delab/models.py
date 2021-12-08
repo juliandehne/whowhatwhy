@@ -257,7 +257,7 @@ class TWCandidate(models.Model):
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
     c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
     sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
-    c_author_number_changed_norm = models.IntegerField(null=True,
+    c_author_number_changed_norm = models.FloatField(null=True,
                                                        help_text="the number of different authors posting before and after the tweet")
     c_author_topic_variance_norm = models.FloatField(null=True,
                                                      help_text="the normalized author diversity")
