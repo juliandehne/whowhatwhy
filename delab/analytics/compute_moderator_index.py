@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM, LANGUAGE
 from delab.topic.train_topic_model import get_bertopic_location, get_embedding_model
+from util.abusing_lists import powerset
 
 
 def store_candidates(df_conversations, experiment_index, platform, language):
@@ -57,7 +58,7 @@ def compute_moderator_index(experiment_index, platform=PLATFORM.TWITTER, languag
     :param experiment_index: (str) a label corresponding to the git the of the code that represents a version the formula used
     :return: [str] the top 10 candidates computed this way
     """
-    #qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
+    # qs = Tweet.objects.filter(tw_author__has_timeline=True, tw_author__timeline_bertopic_id__gt=0, platform=platform,
     #                          language=language, simple_request__version=experiment_index)
     qs = Tweet.objects.filter(platform=platform, language=language, simple_request__version=experiment_index)
     df_conversations = read_frame(qs, fieldnames=["id", "text", "author_id", "bertopic_id", "bert_visual",
@@ -258,13 +259,13 @@ def get_topic_delta(topic_id_1, topic_id_2, topic2word, word2vec):
         len2 = len(ft_vectors_2)
         if len1 == 0 or len2 == 0:
             # print("vector was not loaded properly for words {}{}".format(words1[0], words2[0]))
-            return np.NaN
+            return 0
         sum_v1 = (ft_vectors_1.sum(axis=0) / len1)  # we assume the vectors are embedded in a linear space
         sum_v2 = (ft_vectors_2.sum(axis=0) / len2)
         similarity = spatial.distance.cosine(sum_v1, sum_v2)
         return similarity
     else:
-        return np.NaN
+        return 0
 
 
 def compute_author_topic_variance(df, topic2word, word2vec):
@@ -298,28 +299,48 @@ def compute_author_topic_variance(df, topic2word, word2vec):
                     # authors_after.add(df.at[following_tweets_index, "author_id"])
                     authors_before.add(df.at[previous_tweets_index, "tw_author__timeline_bertopic_id"])
                     authors_after.add(df.at[following_tweets_index, "tw_author__timeline_bertopic_id"])
-
-        author_topic_var_before = 0
-        author_topic_var_after = 0
-        n_author_before = len(authors_before)
-        n_author_after = len(authors_after)
-        if n_author_after > 0:
-            author_before_pivot = authors_before.pop()
-            for author in authors_before:
-                delta = get_topic_delta(author_before_pivot, author, topic2word, word2vec)
-                author_topic_var_before += delta
-                author_before_pivot = author
-            author_topic_var_before = author_topic_var_before / n_author_before
-
-            author_after_pivot = authors_after.pop()
-            for author in authors_after:
-                delta = get_topic_delta(author_after_pivot, author, topic2word, word2vec)
-                author_topic_var_after += delta
-                author_after_pivot = author
-            author_topic_var_after = author_topic_var_after / n_author_after
-
-        result.append(author_topic_var_after - author_topic_var_before)
+        # compute the variance auf the author timelines
+        candidate_result = compute_candidate_author_variance(authors_after, authors_before, topic2word, word2vec)
+        result.append(candidate_result)
     return result
+
+
+def compute_candidate_author_variance(authors_after, authors_before, topic2word, word2vec):
+    """
+
+    :param authors_after: bertopic_ids of the authors before
+    :param authors_before:  bertopic_ids of the authors after
+    :param topic2word: mapping of topic id to words
+    :param word2vec:  mapping of words to wordvectors
+    :return:
+    """
+
+    # filter not-defined topics
+    authors_before = set([x for x in authors_before if x > 0])
+    authors_after = set([x for x in authors_after if x > 0])
+
+    candidate_result = NaN
+    author_topic_var_before = 0
+    author_topic_var_after = 0
+    n_author_before = len(authors_before)
+    n_author_after = len(authors_after)
+
+    if len(authors_before) > 1 and len(authors_after) > 1:
+        author_before_pivot = authors_before.pop()
+        for author in authors_before:
+            delta = get_topic_delta(author_before_pivot, author, topic2word, word2vec)
+            author_topic_var_before += delta
+            author_before_pivot = author
+        author_topic_var_before = author_topic_var_before / n_author_before
+
+        author_after_pivot = authors_after.pop()
+        for author in authors_after:
+            delta = get_topic_delta(author_after_pivot, author, topic2word, word2vec)
+            author_topic_var_after += delta
+            author_after_pivot = author
+        author_topic_var_after = author_topic_var_after / n_author_after
+    candidate_result = author_topic_var_after - author_topic_var_before
+    return candidate_result
 
 
 def normalize(sv):

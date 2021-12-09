@@ -66,8 +66,11 @@ def train_bert(corpus_for_fitting_sentences, language, version):
 
     embedding_model = get_embedding_model(language)
 
+    # bertopic_model = BERTopic(embedding_model=embedding_model, verbose=True,
+    #                          calculate_probabilities=False, min_topic_size=30, low_memory=True)
+
     bertopic_model = BERTopic(embedding_model=embedding_model, verbose=True,
-                              calculate_probabilities=False, min_topic_size=30, low_memory=True)
+                              calculate_probabilities=False)
 
     bertopic_model.fit_transform(trainings_batch)
     location = get_bertopic_location(language, version)
@@ -110,7 +113,8 @@ def store_embedding_vectors(vocab, lang, version):
     logger.debug("loaded berttopic model")
 
     # filter topics
-    topic_info = filter_bad_topics(bertopic_model, vocab)
+    # topic_info = filter_bad_topics(bertopic_model, vocab)
+    topic_info = bertopic_model.get_topic_info()
 
     n_words_nin_voc = 0
     n_words_in_voc = 0
@@ -253,10 +257,11 @@ def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_t
     bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model for classifying the tweets")
 
-    corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform)
-    vocab = create_vocabulary(corpus_for_fitting_sentences)
+    # corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform)
+    # vocab = create_vocabulary(corpus_for_fitting_sentences)
     # load tweets
-    topic_info = filter_bad_topics(bertopic_model, vocab)
+    # topic_info = filter_bad_topics(bertopic_model, vocab)
+    topic_info = bertopic_model.get_topic_info()
     if update_topics:
         conversation_tweets = Tweet.objects.filter(
             Q(language=language) & Q(platform=platform) & Q(simple_request__version=version))
@@ -344,16 +349,6 @@ def classify_author_timelines(version, language, update=True, platform=PLATFORM.
             timeline_text=StringAgg('timeline__text', delimiter='.'))
     author_texts = tweet_authors.values_list("timeline_text", flat=True)
     author_texts_cleaned = clean_corpus(author_texts)
-
-    # currently there is a bug with the batch processing
-    # https://github.com/MaartenGr/BERTopic/issues/322
-    # for tweet_author in tweet_authors:
-    #    df_timelines = tweet_author.timeline_set.filter(lang=language).values_list("text", flat=True)
-    #    author_text = ""
-    #    df_timelines_cleaned = clean_corpus(df_timelines)
-    #    for text in df_timelines_cleaned:
-    #        author_text += text + ". "
-    #    author_texts.append(author_text)
 
     n_texts = len(author_texts_cleaned)
     n_authors = tweet_authors.count()
