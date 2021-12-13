@@ -7,11 +7,12 @@ from .api.router import get_routes
 from .views import (
     SimpleRequestCreateView,
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
-    simple_request_proxy, TWCandidateLabelView, ModerationCreateView
+    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy
 )
 
 urlpatterns = [
-    path('label', TWCandidateLabelView.as_view(), name='delab-label'),
+    path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),
+    path('labelproxy', candidate_label_proxy, name='delab-label-proxy'),
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),
     path('moderation/new/<int:reply_to_id>', ModerationCreateView.as_view(), name='delab-moderation-create'),
     path('topic/new', TopicCreateView.as_view(), name='delab-create-topic'),

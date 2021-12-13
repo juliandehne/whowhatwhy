@@ -191,19 +191,24 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
         form.instance.coder = self.request.user
         return super().form_valid(form)
 
+    # def get_queryset(self):
+    #     id = self.request.resolver_match.kwargs['pk']
+    #     candidate = TWCandidate.objects.filter(id=id)
+    #     return candidate
+
+    """
+    
     def get_object(self, queryset=None):
-        candidates = TWCandidate.objects.filter(
-            Q(coder__isnull=True) & ~Q(coded_by=self.request.user)).select_related().all()
-        if len(candidates) == 0:
-            raise Http404("There seems no more data to label!")
-        candidate = choice(candidates)
-        self.query_pk_and_slug = candidate.pk
+        id = self.request.resolver_match.kwargs['pk']
+        candidate = TWCandidate.objects.filter(id=id).get()
         return candidate
+    """
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(TWCandidateLabelView, self).get_context_data(**kwargs)
 
-        candidate_id = self.query_pk_and_slug
+        candidate_id = self.request.resolver_match.kwargs['pk']
+        # candidate_id = self.query_pk_and_slug
         candidate = TWCandidate.objects.filter(id=candidate_id).get()
         tweet_text = candidate.tweet.text
         tweet_id = candidate.tweet.id
@@ -219,3 +224,13 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
         # full_conversation = clean_corpus(full_conversation)
         context["conversation"] = full_conversation[index - 2:index + 3]
         return context
+
+
+def candidate_label_proxy(request):
+    candidates = TWCandidate.objects.filter(
+        Q(coder__isnull=True) & ~Q(coded_by=request.user)).all()
+    if len(candidates) == 0:
+        raise Http404("There seems no more data to label!")
+    candidate = choice(candidates)
+    pk = candidate.pk
+    return redirect('delab-label', pk=pk)

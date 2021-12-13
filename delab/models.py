@@ -289,7 +289,7 @@ class TWCandidate(models.Model):
         unique_together = ('tweet', 'coder',)
 
     def get_absolute_url(self):
-        return reverse('delab-label')
+        return reverse('delab-label-proxy')
 
     # def save(self, force_insert=False, force_update=False, using=None,
     #         update_fields=None):
