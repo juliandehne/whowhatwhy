@@ -66,3 +66,24 @@ def calculate_sentiment_flows(simulate=True):
         logger.info("pretending to calculatue sentiment flows")
     else:
         pass
+
+
+# @receiver(post_save, sender=TWCandidate)
+def process_candidate_x(sender, instance, created, **kwargs):
+    logging.debug("received signal from post_save {} for candidate with pk {}".format(timezone.now(), instance.pk))
+    """
+    After manually labeling a candidate, a copy needs to be created in order for the secondary or tertiary 
+    coder to work    
+    """
+
+    candidate_for_second_coder = copy.deepcopy(instance)
+    if instance.coded_by is None and instance.coder is not None:
+        candidate_for_second_coder.coded_by = instance.coder
+        candidate_for_second_coder.coder = None
+        candidate_for_second_coder.id = None
+        candidate_for_second_coder.pk = None
+        candidate_for_second_coder.u_moderator_rating = None
+        candidate_for_second_coder.u_sentiment_rating = None
+        candidate_for_second_coder.u_author_topic_variance_rating = None
+        # candidate_for_second_coder.tweet_id = instance.tweet_id
+        candidate_for_second_coder.save()
