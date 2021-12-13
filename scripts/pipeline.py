@@ -21,7 +21,7 @@ def run(*args):
     It assumes that tweets have been downloaded using the web-interface or the script download_conversations.py!!
     """
 
-    analysis_version = VERSION.v001
+    analysis_version = VERSION.v002
     platform = PLATFORM.TWITTER
     train_update_topics = True
 

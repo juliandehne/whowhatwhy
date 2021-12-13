@@ -1,3 +1,4 @@
+import copy
 import logging
 
 from django.db.models.signals import post_save
@@ -19,7 +20,7 @@ def process_moderation(sender, instance, created, **kwargs):
         publish_moderation(instance)
 
 
-@receiver(post_save, sender=TWCandidate)
+# @receiver(post_save, sender=TWCandidate)
 def process_candidate(sender, instance, created, **kwargs):
     logging.debug("received signal from post_save {} for candidate with pk {}".format(timezone.now(), instance.pk))
     """
@@ -27,7 +28,7 @@ def process_candidate(sender, instance, created, **kwargs):
     coder to work    
     """
 
-    candidate_for_second_coder = instance
+    candidate_for_second_coder = copy.deepcopy(instance)
     if instance.coded_by is None and instance.coder is not None:
         candidate_for_second_coder.coded_by = instance.coder
         candidate_for_second_coder.coder = None
@@ -36,6 +37,7 @@ def process_candidate(sender, instance, created, **kwargs):
         candidate_for_second_coder.u_moderator_rating = None
         candidate_for_second_coder.u_sentiment_rating = None
         candidate_for_second_coder.u_author_topic_variance_rating = None
+        # candidate_for_second_coder.tweet_id = instance.tweet_id
         candidate_for_second_coder.save()
 
 
@@ -57,7 +59,7 @@ def process_simple_request(sender, instance, created, **kwargs):
                                          simple_request_id=instance.pk,
                                          verbose_name="simple_request_{}".format(instance.pk),
                                          schedule=timezone.now(),
-                                         simulate=False,  max_data=instance.max_data,
+                                         simulate=False, max_data=instance.max_data,
                                          fast_mode=instance.fast_mode, language=instance.language)
 
 
