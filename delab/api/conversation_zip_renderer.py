@@ -74,7 +74,7 @@ def create_full_zip_response_conversation(request, topic, filename, full):
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
-    trees, ids, conversation_ids = filter_conversations(merge_subsequent=MERGE_SUBSEQUENT)
+    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
     for conversation_id in conversation_ids:
         download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
     zip_file.close()
