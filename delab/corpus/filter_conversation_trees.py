@@ -11,15 +11,22 @@ This file was asked by Zlata to reduce the conversations to the ones that fit ou
 
 
 def get_standard_field_names():
-    return ["id",
-            "twitter_id",
+    return ["twitter_id",
+            "conversation_id",
+            "author_id",
+            "tn_parent",
+            "created_at",
+            "in_reply_to_user_id",
+            "text"]
+
+    """    return ["twitter_id",
             "conversation_id",
             "author_id",
             "tn_parent",
             "created_at",
             "in_reply_to_user_id",
             "text", "tw_author__name", "tw_author__location", "topic__title"]
-
+    """
 
 def filter_conversations(topic, max_orphan_count=4, min_depth=3, merge_subsequent=True):
     qs = Tweet.objects.filter(topic__title=topic).all()
