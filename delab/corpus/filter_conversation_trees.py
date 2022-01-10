@@ -14,24 +14,17 @@ def get_standard_field_names():
     return ["twitter_id",
             "conversation_id",
             "author_id",
-            "tn_parent",
-            "created_at",
-            "in_reply_to_user_id",
-            "text"]
-
-    """    return ["twitter_id",
-            "conversation_id",
-            "author_id",
-            "tn_parent",
+            "tn_parent_id",
             "created_at",
             "in_reply_to_user_id",
             "text", "tw_author__name", "tw_author__location", "topic__title"]
-    """
+
 
 def filter_conversations(topic, max_orphan_count=4, min_depth=3, merge_subsequent=True):
-    qs = Tweet.objects.filter(topic__title=topic).all()
-    df = read_frame(qs, get_standard_field_names())
-
+    qs = Tweet.objects.filter(topic__title=topic).select_related()
+    tn_parent_ids = qs.values_list("tn_parent_id", flat=True).all()
+    df = read_frame(qs.all(), fieldnames=get_standard_field_names(), verbose=True)
+    df['tn_parent_id']=tn_parent_ids
     return crop_trees(df, max_orphan_count, min_depth, merge_subsequent)
 
 
@@ -88,20 +81,20 @@ def crop_trees(df, max_orphan_count=4, min_depth=3, merge_subsequent=True):
 def convert_to_conversation_trees(df):
     df.sort_values(by=["created_at"], inplace=True)
     df.reset_index(drop=True, inplace=True)
-    roots = df[df["tn_parent"].isnull()]
-    not_roots = df[df["tn_parent"].notnull()]
+    roots = df[df["tn_parent_id"].isnull()]
+    not_roots = df[df["tn_parent_id"].notnull()]
     # print(not_roots.shape)
     roots_as_rec = roots.to_dict('records')
     not_roots_as_rec = not_roots.to_dict('records')
     # roots_as_rec[0:5]
     trees_roots = {}
     for root_data in roots_as_rec:
-        root_node = TreeNode(root_data, root_data["twitter_id"], root_data["tn_parent"])
+        root_node = TreeNode(root_data, root_data["twitter_id"], root_data["tn_parent_id"])
         trees_roots[root_data["conversation_id"]] = root_node
     for not_root in not_roots_as_rec:
         if not_root["conversation_id"] in trees_roots:
             trees_roots.get(not_root["conversation_id"]).find_parent_of(
-                TreeNode(not_root, not_root["twitter_id"], not_root["tn_parent"]))
+                TreeNode(not_root, not_root["twitter_id"], not_root["tn_parent_id"]))
     return trees_roots
 
 

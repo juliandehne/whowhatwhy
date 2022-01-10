@@ -154,7 +154,7 @@ def get_cropped_conversation_ids(request, topic):
 
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
-def get_all_cropped_conversation_ids(request, topic):
+def get_all_cropped_conversations(request, topic):
     trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
     result = ""
     for tree in trees:

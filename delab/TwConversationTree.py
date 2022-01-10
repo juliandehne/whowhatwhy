@@ -117,7 +117,7 @@ class TreeNode:
     def all_tweet_ids(self):
         result = [self.data["twitter_id"]]
         for child in self.children:
-            result.append(child.tweet_id())
+            result.append(child.data["twitter_id"])
         return result
 
     def set_twitter_id(self, twitter_id):

@@ -2,12 +2,12 @@ from django.urls import path, include
 
 from delab.api.view_sets import get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
-    get_all_cropped_conversation_ids, get_zip_view, get_full_zip_view
+    get_all_cropped_conversations, get_zip_view, get_full_zip_view
 from .api.router import get_routes
 from .views import (
     SimpleRequestCreateView,
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
-    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy
+    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view
 )
 
 urlpatterns = [
@@ -26,9 +26,10 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('rest/<str:topic>/tweets_text/conversation/<int:conversation_id>/<str:full>', get_tabbed_conversation_view),
     path('rest/<str:topic>/tweets_text/conversation_ids', get_cropped_conversation_ids),
-    path('rest/<str:topic>/tweets_text/all', get_all_cropped_conversation_ids),
+    path('rest/<str:topic>/tweets_text/all', get_all_cropped_conversations),
     path('rest/<str:topic>/tweets_zip/conversation/<int:conversation_id>', get_zip_view),
     path('rest/<str:topic>/tweets_zip/all/<str:full>', get_full_zip_view),
+    path('downloads', downloads_view, name='delab-downloads'),
     path('', include(get_routes().urls)),
     # path('rest/migration/tweets_excel/conversation/<int:conversation_id>/', TweetExcelSingleViewSet.as_view),
 ]
