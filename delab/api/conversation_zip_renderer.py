@@ -77,7 +77,7 @@ def create_full_zip_response_conversation(request, topic, filename, full):
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
-    conversation_ids = get_all_conversation_ids(topic)[:5]
+    conversation_ids = get_all_conversation_ids(topic)
     for conversation_id in conversation_ids:
         download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
     zip_file.close()
