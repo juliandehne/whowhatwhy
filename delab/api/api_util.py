@@ -18,9 +18,10 @@ def get_file_name(conversation_id, full, suffix):
 
 def get_all_conversation_ids(topic=None):
     if topic is not None:
-        return Tweet.objects.filter(topic__title=topic).order_by("created_at").values_list("conversation_id", flat=True).distinct()
+        return Tweet.objects.filter(topic__title=topic).order_by("created_at").values_list("conversation_id",
+                                                                                           flat=True).distinct()
     else:
-        return Tweet.objects.values_list("conversation_id", flat=True).distinct()
+        return Tweet.objects.order_by("created_at").values_list("conversation_id", flat=True).distinct()
 
 
 def get_conversation_dataframe(topic_string: str, conversation_id: int = None):
