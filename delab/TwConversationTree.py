@@ -1,19 +1,14 @@
-""" This data structure was copied from: https://towardsdatascience.com/mining-replies-to-tweets-a-walkthrough-9a936602c4d6.
-    It encapsulates the replies to a tweet
-
-    Eventually this should be merged with:
-    https://github.com/fabiocaccamo/django-treenode
-"""
 import logging
-
-from delab.models import PLATFORM
 
 logger = logging.getLogger(__name__)
 
 
 class TreeNode:
     def __init__(self, data, tree_id, parent_id=None):
-        """data is a tweet's json object"""
+        """data is a tweet's json object
+           tree_id is the logical id of the treenode (either author id when downloading, or twitter id in db)
+           parent references the tree_id of the parent
+        """
         self.tree_id = tree_id
         self.data = data
         self.children = []
@@ -115,10 +110,7 @@ class TreeNode:
         self.children = favourite_children
 
     def all_tweet_ids(self):
-        result = [self.data["twitter_id"]]
+        result = [self.tree_id]
         for child in self.children:
-            result.append(child.data["twitter_id"])
+            result.append(child.tree_id)
         return result
-
-    def set_twitter_id(self, twitter_id):
-        self.data["twitter_id"] = twitter_id

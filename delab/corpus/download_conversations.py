@@ -227,8 +227,12 @@ def retrieve_replies(conversation_id, max_replies, language):
             logger.debug("downloading bigger conversation ...")
         if reply_count >= max_replies:
             raise ConversationNotInRangeException(reply_count)
-        node_id = item["author_id"]
+        node_id = item["id"]
         parent_id = item["in_reply_to_user_id"]
+        # referenced_items = item["referenced_tweets"] TODO update to make it more precise, add , referenced_tweets in query
+        # for referenced_item in referenced_items:
+        #    if referenced_item["type"] == "replied_to":
+        #       parent_id = referenced_item["id"]
         node = TreeNode(item, node_id, parent_id)
 
         # print(f'{node.id()} => {node.reply_to()}')

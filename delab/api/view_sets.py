@@ -1,6 +1,3 @@
-import logging
-
-from django.db.utils import ProgrammingError
 from django.utils.encoding import smart_text
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_renderer_xlsx.mixins import XLSXFileMixin
@@ -12,12 +9,10 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from delab.corpus.filter_conversation_trees import crop_trees, filter_conversations, get_filtered_conversations, \
-    get_conversation_tree
+from delab.corpus.filter_conversation_trees import get_conversation_trees
 from delab.models import Tweet, TweetAuthor, TWCandidate
-from .api_util import get_file_name
+from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
-from ..corpus.api_settings import MERGE_SUBSEQUENT
 
 """
 
@@ -66,14 +61,6 @@ class TabbedTextRenderer(renderers.BaseRenderer):
 
 def get_migration_query_set(topic):
     queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
-    return queryset
-
-
-def get_cropped_tweet_set(queryset):
-    df = queryset.all().to_dataframe(tweet_fields_used)
-    trees, ids, conversation_ids = crop_trees(df)
-    # print(ids)
-    queryset = queryset.filter(id__in=ids)
     return queryset
 
 
@@ -140,44 +127,49 @@ def get_cropped_conversation_qs_modelview(model_view):
     topic = model_view.kwargs["topic"]
     queryset = Tweet.objects.filter(topic__title=topic, conversation_id=conversation_id)
     if model_view.kwargs["full"] == "cropped":
-        queryset = get_cropped_tweet_set(queryset)
+        # queryset = get_cropped_tweet_set(queryset)
+        pass
     return queryset
 
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
 def get_cropped_conversation_ids(request, topic):
-    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
+    conversation_ids = get_all_conversation_ids(topic)
     result = {"suitable_conversation_ids": conversation_ids}
     return Response(result)
 
 
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
-def get_all_cropped_conversations(request, topic):
-    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
+def get_all_conversations_tabbed(request, topic):
+    trees = get_conversation_trees(topic).values()
     result = ""
     for tree in trees:
         result += tree.to_string() + "\n\n"
     response = Response(result)
-    response['Content-Disposition'] = ('attachment; filename={0}'.format(get_file_name("all", "cropped", ".txt")))
+    response['Content-Disposition'] = ('attachment; filename={0}'.format(get_file_name("all", "full", ".txt")))
     return response
 
 
 @api_view(['GET'])
 @renderer_classes([TabbedTextRenderer])
 def get_tabbed_conversation_view(request, topic, conversation_id, full):
-    if full == "cropped":
-        # get_conversation_tree
-        conversation_trees, ids, conversation_ids = get_filtered_conversations(conversation_id, topic,
-                                                                               merge_subsequent=MERGE_SUBSEQUENT)
-    else:
-        conversation_trees = get_conversation_tree(conversation_id, topic).values()
+    # if full == "cropped":
+    # get_conversation_tree
+    # conversation_trees = get_conversation_trees(topic, conversation_id=conversation_id,
+    #  conversation_filter=ConversationFilter())
+
+    conversation_trees = get_conversation_trees(topic, conversation_id=conversation_id).values()
     result = ""
     for tree in conversation_trees:
-        result += tree.to_string() + "\n\n"
+        if type(tree) is int:
+            print("something went wrong converting the treees")
+        else:
+            result += tree.to_string() + "\n\n"
     response = Response(result)
-    response['Content-Disposition'] = ('attachment; filename={0}'.format(get_file_name(conversation_id, full, ".txt")))
+    response['Content-Disposition'] = (
+        'attachment; filename={0}'.format(get_file_name(conversation_id, full, ".txt")))
     return response
 
 
@@ -195,7 +187,8 @@ class PassthroughRenderer(renderers.BaseRenderer):
 @api_view(['GET'])
 @renderer_classes([PassthroughRenderer])
 def get_zip_view(request, topic, conversation_id):
-    return create_zip_response_conversation(request, topic, conversation_id, get_file_name(conversation_id, "both", ".zip"))
+    return create_zip_response_conversation(request, topic, conversation_id,
+                                            get_file_name(conversation_id, "both", ".zip"))
 
 
 @api_view(['GET'])

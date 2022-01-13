@@ -15,4 +15,8 @@ where dt.tn_parent_id not in
 
 delete
 from delab_simplerequest sr
-where sr.id not in (select distinct simple_request_id from delab_tweet)
+where sr.id not in (select distinct simple_request_id from delab_tweet);
+
+delete from delab_tweet b where b.conversation_id in
+(select distinct (a.conversation_id), count(a.text) as c from delab_tweet a
+group by a.conversation_id having count(a.text) < 10)
