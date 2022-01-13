@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.forms.models import model_to_dict
 
 from delab.TwConversationTree import TreeNode
@@ -17,34 +18,45 @@ def get_conversation_trees(topic, conversation_id=None, conversation_filter: Con
 
 
 def convert_to_conversation_trees(conversation_id=None, topic=None):
+    objects = Tweet.objects.select_related("tw_author")
+
     if conversation_id is not None:
         if topic is not None:
-            roots_as_record = [model_to_dict(tweet) for tweet in
-                               Tweet.objects.filter(tn_parent_id__isnull=True, conversation_id=conversation_id,
-                                                    topic__title=topic).all()]
-            not_roots_as_record = [model_to_dict(tweet) for tweet in
-                                   Tweet.objects.filter(tn_parent_id__isnull=False, topic__title=topic,
-                                                        conversation_id=conversation_id).order_by('-created_at').all()]
+            roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                               objects.filter(tn_parent_id__isnull=True,
+                                              conversation_id=conversation_id,
+                                              topic__title=topic).all()]
+            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                                   objects.filter(tn_parent_id__isnull=False,
+                                                  topic__title=topic,
+                                                  conversation_id=conversation_id).order_by('-created_at').all()]
         else:
-            roots_as_record = [model_to_dict(tweet) for tweet in
-                               Tweet.objects.filter(tn_parent_id__isnull=True, conversation_id=conversation_id).all()]
-            not_roots_as_record = [model_to_dict(tweet) for tweet in
-                                   Tweet.objects.filter(tn_parent_id__isnull=False,
-                                                        conversation_id=conversation_id).order_by('-created_at').all()]
+            roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                               objects.filter(tn_parent_id__isnull=True,
+                                              conversation_id=conversation_id).all()]
+            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                                   objects.filter(tn_parent_id__isnull=False,
+                                                  conversation_id=conversation_id).order_by('-created_at').all()]
     else:
         if topic is not None:
-            roots_as_record = [model_to_dict(tweet) for tweet in
-                               Tweet.objects.filter(tn_parent_id__isnull=True,
-                                                    topic__title=topic).all()]
-            not_roots_as_record = [model_to_dict(tweet) for tweet in
-                                   Tweet.objects.filter(tn_parent_id__isnull=False, topic__title=topic).order_by(
-                                       '-created_at').all()]
+            roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                               objects.filter(tn_parent_id__isnull=True,
+                                              topic__title=topic).all()]
+            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                                   objects.filter(tn_parent_id__isnull=False,
+                                                  topic__title=topic).order_by('-created_at').all()]
         else:
-            roots_as_record = [model_to_dict(tweet) for tweet in
-                               Tweet.objects.filter(tn_parent_id__isnull=True).all()]
-            not_roots_as_record = [model_to_dict(tweet) for tweet in
-                                   Tweet.objects.filter(tn_parent_id__isnull=False).order_by('-created_at').all()]
+            roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                               objects.filter(tn_parent_id__isnull=True).all()]
+            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                                   objects.filter(tn_parent_id__isnull=False).order_by('-created_at').all()]
     return reconstruct_trees_from_records(not_roots_as_record, roots_as_record)
+
+
+def author_tweet_to_records(tweet):
+    result = model_to_dict(tweet)
+    result.update({"author_name": tweet.tw_author.name})
+    return result
 
 
 def reconstruct_trees_from_records(not_roots_as_rec, roots_as_rec):

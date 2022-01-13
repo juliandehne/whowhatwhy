@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<norms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="norm.xsd">
+    <norm>
+        <name>Basic Human Equality</name>
+        <!-- the text should contain the word "should" to make it a norm -->
+        <text>All human beings are born free and equal in dignity and rights. They are endowed with reason and
+            conscience and should act towards one another in a spirit of brotherhood.
+        </text>
+        <source>
+            <type>legal</type>
+            <description>This is part of the human rights declaration</description>
+            <reference>
+                Universal Declaration of Human Rights, Article 1
+            </reference>
+        </source>
+        <detection>
+            <human-observable>yes</human-observable>
+            <human-quantifiable>no</human-quantifiable>
+            <computer-dectable>no</computer-dectable>
+        </detection>
+        <violation-examples>
+            <violation-example>
+                <discourse>
+                    <platform>twitter</platform>
+                    <speech-acts>
+                        <speech-act>
+                            <speech-act-id>1</speech-act-id>
+                            <author>
+                                <author-id>33342342</author-id>
+                                <author-name>Julian Dehne</author-name>
+                            </author>
+                            <text>
+                                I think that this winter has been hard for foreigners coming to Germany.
+                            </text>
+                            <!-- This tag is optional if it is the root node of the conversation -->
+                            <in-reply-to>
+
+                            </in-reply-to>
+                            <!-- This tag is be optional if it is no violation -->
+                            <violation>
+                                <is-violation>no</is-violation>
+                                <violation-argument></violation-argument>
+                            </violation>
+                            <speech-act>
+                                <speech-act-id>2</speech-act-id>
+                                <author>
+                                    <author-id>333423433</author-id>
+                                    <author-name>Julius Behne</author-name>
+                                </author>
+                                <text>
+                                    I hate all these Turkish coming to Germany. They should burn in their home instead
+                                    of
+                                    making our life hard.
+                                </text>
+                                <!-- It is important to make this explicit as the linear structure of xml cannot express trees otherwise -->
+                                <in-reply-to>1</in-reply-to>
+                                <violation>
+                                    <is-violation>yes</is-violation>
+                                    <violation-argument>The statement clearly violates the part of the norm that states
+                                        that
+                                        one should act in a spirit of brotherhood.
+                                        One can also assume that in the opinion of the author not all human beings are
+                                        born
+                                        equal.
+                                    </violation-argument>
+                                </violation>
+                                <speech-act>
+                                    <speech-act-id>4</speech-act-id>
+                                    <author>
+                                        <author-id>333423433</author-id>
+                                        <author-name>Julius Behne</author-name>
+                                    </author>
+                                    <text>
+                                        I hate all these Turkish coming to Germany. They should burn in their home
+                                        instead
+                                        of
+                                        making our life hard.
+                                    </text>
+                                    <!-- It is important to make this explicit as the linear structure of xml cannot express trees otherwise -->
+                                    <in-reply-to>2</in-reply-to>
+                                    <violation>
+                                        <is-violation>yes</is-violation>
+                                        <violation-argument>The statement clearly violates the part of the norm that
+                                            states
+                                            that
+                                            one should act in a spirit of brotherhood.
+                                            One can also assume that in the opinion of the author not all human beings
+                                            are
+                                            born
+                                            equal.
+                                        </violation-argument>
+                                    </violation>
+                                </speech-act>
+                            </speech-act>
+                            <speech-act>
+                                <speech-act-id>3</speech-act-id>
+                                <author>
+                                    <author-id>333423433</author-id>
+                                    <author-name>Julius Behne</author-name>
+                                </author>
+                                <text>
+                                    I hate all these Turkish coming to Germany. They should burn in their home instead
+                                    of
+                                    making our life hard.
+                                </text>
+                                <!-- It is important to make this explicit as the linear structure of xml cannot express trees otherwise -->
+                                <in-reply-to>1</in-reply-to>
+                                <violation>
+                                    <is-violation>yes</is-violation>
+                                    <violation-argument>The statement clearly violates the part of the norm that states
+                                        that
+                                        one should act in a spirit of brotherhood.
+                                        One can also assume that in the opinion of the author not all human beings are
+                                        born
+                                        equal.
+                                    </violation-argument>
+                                </violation>
+                            </speech-act>
+                        </speech-act>
+                    </speech-acts>
+                </discourse>
+                <moderation-examples>
+                    <moderation-example>
+                        <moderation-text>It seems like you have great fear from the Turkish and think that they impact
+                            your life negatively. Did you experience something bad?
+                        </moderation-text>
+                        <moderation-argument>One approach is to assume rationality of the author and further assume that
+                            he expresses his/her experiences. The therapeutic critical approach would assume dive into
+                            the performance aspect of the statement in order to validate if indeed negative experiences
+                            were had or if this sentiment
+                            results from other causes.
+                        </moderation-argument>
+                        <moderation-type>psychological</moderation-type>
+                    </moderation-example>
+                    <moderation-example>
+                        <moderation-text>According to the declaration of human rights every human is created equal, and
+                            you are violating that idea by saying that there is something wrong with the Turkish
+                        </moderation-text>
+                        <moderation-argument>This is a formalistic approach. Instead of delving too much into the
+                            author's motivation the norm is restated as a reference to others in the discussion
+                        </moderation-argument>
+                        <moderation-type>rule-enforcing</moderation-type>
+                    </moderation-example>
+                </moderation-examples>
+            </violation-example>
+        </violation-examples>
+    </norm>
+
+    <norm>
+        <name>Equal Participation in Power Free Discourse</name>
+        <text>All participants that have stake in a problem should be involved in the discussion without any regard to
+            their personal status or power.
+        </text>
+        <source>
+            <type>deliberative</type>
+            <description>
+                In Habermaß Theory he developes this formula ... [specific academic argumentation]
+            </description>
+            <reference>
+                J. Habermaß (1980), Theorie des kommunikativen Handelns
+            </reference>
+        </source>
+        <detection>
+            <human-observable>yes</human-observable>
+            <human-quantifiable>no</human-quantifiable>
+            <computer-dectable>yes</computer-dectable>
+            <computer-quantifiable>no</computer-quantifiable>
+            <computer-inferrable>yes</computer-inferrable>
+            <operationalization-strategy>
+                <approaches>
+                    <approach>
+                        Detect patterns of author qualities (gender, location, professions) and detect if a discourse
+                        has a strong bias (some sort of threshhold)
+                    </approach>
+                </approaches>
+                <evaluation>
+                    Create samples of acceptable conversations and not-acceptable conversations and make a t-test if
+                    that
+                    the patterns of author properties correlate with one of the two groups. (Also use this to train the
+                    threshold)
+                </evaluation>
+            </operationalization-strategy>
+        </detection>
+        <violation-examples>
+            <violation-example>
+                <discourse>
+                    <platform>twitter</platform>
+                    <speech-acts>
+                        <speech-act>
+                            <speech-act-id>21</speech-act-id>
+                            <author>
+                                <author-id>3334234552</author-id>
+                                <author-name>Julia Dehne</author-name>
+                            </author>
+                            <text>
+                                For me as a women and a mother it is hard to decide to vaccinate my child not being sure
+                                how this will effect
+                                her health. I also think that AstraSeneca is dangerous to women and I should not risk my
+                                child not having a mother.
+                            </text>
+                        </speech-act>
+                        <speech-act>
+                            <speech-act-id>22</speech-act-id>
+                            <author>
+                                <author-id>33553423433</author-id>
+                                <author-name>Julius Behne</author-name>
+                            </author>
+                            <text>
+                                Because of egoistic people like you we still have this pandemic raging. Women should not
+                                be allowed to make these decisions
+                                as they are only emotional beings that cannot decide things properly.
+                            </text>
+                            <!-- It is important to make this explicit as the linear structure of xml cannot express trees otherwise -->
+                            <in-reply-to>21</in-reply-to>
+                            <violation>
+                                <is-violation>yes</is-violation>
+                                <violation-argument>The statement clearly violates the part of the norm that states that
+                                    anyone should be allowed their say in a discussion without marginalizing certain
+                                    groups (such as females).
+                                </violation-argument>
+                            </violation>
+                        </speech-act>
+                    </speech-acts>
+                    <!-- there may be violations on the level of analysis of the whole discourse-->
+                    <discouse-violations>
+                        <discourse-violation>
+                            <violation-argument>
+                                After the comment with id 22 only man answered. It looks like the comment created an
+                                atmosphere that did not allow for female
+                                participation. This can only be detected by matching all the following authors to
+                                female/male names and defining a threshold as to when a
+                                discussion is male dominated.
+                            </violation-argument>
+                        </discourse-violation>
+                    </discouse-violations>
+                </discourse>
+            </violation-example>
+        </violation-examples>
+    </norm>
+</norms>

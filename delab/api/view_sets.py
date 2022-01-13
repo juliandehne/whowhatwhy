@@ -59,6 +59,16 @@ class TabbedTextRenderer(renderers.BaseRenderer):
         return smart_text(data, encoding=self.charset)
 
 
+class NormXMLRenderer(renderers.BaseRenderer):
+    # here starts the wonky stuff
+    media_type = 'xhtml+xml'
+    format = 'xml'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        return smart_text(data, encoding=self.charset)
+
+
+
 def get_migration_query_set(topic):
     queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
     return queryset
@@ -196,3 +206,20 @@ def get_zip_view(request, topic, conversation_id):
 def get_full_zip_view(request, topic, full):
     return create_full_zip_response_conversation(request, topic,
                                                  get_file_name("all_conversations", full, ".zip"), full)
+
+
+
+@api_view(['GET'])
+@renderer_classes([NormXMLRenderer])
+def get_xml_conversation_view(request, topic, conversation_id, full):
+    # if full == "cropped":
+    # get_conversation_tree
+    # conversation_trees = get_conversation_trees(topic, conversation_id=conversation_id,
+    #  conversation_filter=ConversationFilter())
+
+    conversation_tree = get_conversation_trees(topic, conversation_id=conversation_id)[conversation_id]
+    xml_dump = conversation_tree.to_norm_xml()
+    response = Response(xml_dump)
+    response['Content-Disposition'] = (
+        'attachment; filename={0}'.format(get_file_name(conversation_id, full, ".xml")))
+    return response

@@ -2,6 +2,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import xml.etree.ElementTree as ET
+
 
 class TreeNode:
     def __init__(self, data, tree_id, parent_id=None):
@@ -65,6 +67,29 @@ class TreeNode:
         return str(self.data.get("tw_author__name", "namenotgiven")) + "/" + str(
             self.data.get("tw_author__location", "locationnotgiven")) + "/" + str(
             self.data["author_id"]) + ":" + tabbed_text + "\n\n"
+
+    def to_norm_xml(self, level=0):
+        discourse_elem = ET.Element('discourse')
+        platform_elem = ET.SubElement(discourse_elem, 'platform')
+        platform_elem.text = self.data['platform']
+        speech_acts_elem = ET.SubElement(discourse_elem, 'speech-acts')
+        self.tweet_to_speech_act_xml(speech_acts_elem)
+        return ET.tostring(discourse_elem, encoding='utf-8')
+
+    def tweet_to_speech_act_xml(self, parent_elem):
+        speech_act_elem = ET.SubElement(parent_elem, 'speech-act')
+        ET.SubElement(speech_act_elem, 'speech-act-id')
+        author_elem = ET.SubElement(speech_act_elem, 'author')
+        author_id_elem = ET.SubElement(author_elem, 'author-id')
+        author_id_elem.text = str(self.data["author_id"])
+        author_name_elem = ET.SubElement(author_elem, 'author-name')
+        author_name_elem.text = self.data["author_name"]
+        text_elem = ET.SubElement(speech_act_elem, 'text')
+        text_elem.text = self.data["text"]
+        in_response_elem = ET.SubElement(speech_act_elem, 'in-reply-to')
+        in_response_elem.text = str(self.data["tn_parent"])
+        for child in self.children:
+            child.tweet_to_speech_act_xml(speech_act_elem)
 
     def list_l1(self):
         conv_id = []

@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from delab.api.view_sets import get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
-    get_all_conversations_tabbed, get_zip_view, get_full_zip_view
+    get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view
 from .api.router import get_routes
 from .views import (
     SimpleRequestCreateView,
@@ -25,6 +25,7 @@ urlpatterns = [
          name='delab-conversation'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('rest/<str:topic>/tweets_text/conversation/<int:conversation_id>/<str:full>', get_tabbed_conversation_view),
+    path('rest/<str:topic>/tweets_xml/conversation/<int:conversation_id>/<str:full>', get_xml_conversation_view),
     path('rest/<str:topic>/tweets_text/conversation_ids', get_cropped_conversation_ids),
     path('rest/<str:topic>/tweets_text/all', get_all_conversations_tabbed),
     path('rest/<str:topic>/tweets_zip/conversation/<int:conversation_id>', get_zip_view),

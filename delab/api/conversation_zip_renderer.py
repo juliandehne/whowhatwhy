@@ -55,6 +55,8 @@ def download_conversations_in_all_formats(conversation_id, request, topic, zip_f
         zip_file.writestr(get_file_name(conversation_id, full_string, ".txt"), cropped_response.content)
         cropped_response = get_file_from_rest(conversation_id, "tweets_excel", full_string, server_adress, topic)
         zip_file.writestr(get_file_name(conversation_id, full_string, ".xlsx"), cropped_response.content)
+        cropped_response = get_file_from_rest(conversation_id, "tweets_xml", full_string, server_adress, topic)
+        zip_file.writestr(get_file_name(conversation_id, full_string, ".xml"), cropped_response.content)
 
 
 def get_file_from_rest(conversation_id, file_type, full, server_address, topic):

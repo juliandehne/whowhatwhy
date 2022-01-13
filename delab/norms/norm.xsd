@@ -1,0 +1,211 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="norms" type="normsType"/>
+    <xs:complexType name="sourceType">
+        <xs:sequence>
+            <xs:element name="type">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="legal"/>
+                        <xs:enumeration value="deliberative"/>
+                        <xs:enumeration value="communicative"/>
+                        <xs:enumeration value="ai"/>
+                        <xs:enumeration value="twitter"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="description">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="reference">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="detectionType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="human-observable"/>
+            <xs:element type="xs:string" name="human-quantifiable"/>
+            <xs:element name="computer-dectable">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="no"/>
+                        <xs:enumeration value="yes"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="xs:string" name="computer-quantifiable" minOccurs="0"/>
+            <xs:element type="xs:string" name="computer-inferrable" minOccurs="0"/>
+            <xs:element type="operationalization-strategyType" name="operationalization-strategy" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="authorType">
+        <xs:sequence>
+            <xs:element name="author-id">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="author-name">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="violationType">
+        <xs:sequence>
+            <xs:element name="is-violation">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="no"/>
+                        <xs:enumeration value="yes"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="violation-argument">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="speech-actType">
+        <xs:sequence>
+            <xs:element name="speech-act-id">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="authorType" name="author"/>
+            <xs:element name="text">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="in-reply-to" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>This tag is optional if it is the root node of the conversation It is important to
+                        make this explicit as the linear structure of xml cannot express trees otherwise It is important
+                        to make this explicit as the linear structure of xml cannot express trees otherwise
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="violationType" name="violation" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>This tag is be optional if it is no violation</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="speech-act" type="speech-actType"></xs:element>
+            </xs:sequence>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="speech-actsType">
+        <xs:sequence>
+            <xs:element type="speech-actType" name="speech-act" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="discourseType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="platform"/>
+            <xs:element type="speech-actsType" name="speech-acts"/>
+            <xs:element type="discouse-violationsType" name="discouse-violations" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>there may be violations on the level of analysis of the whole discourse
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="moderation-exampleType">
+        <xs:sequence>
+            <xs:element name="moderation-text">
+            </xs:element>
+            <xs:element name="moderation-argument">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="moderation-type">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="psychological"/>
+                        <xs:enumeration value="rule-enforcing"/>
+                        <xs:enumeration value="pattern-based"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="moderation-examplesType">
+        <xs:sequence>
+            <xs:element type="moderation-exampleType" name="moderation-example" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="violation-exampleType">
+        <xs:sequence>
+            <xs:element type="discourseType" name="discourse"/>
+            <xs:element type="moderation-examplesType" name="moderation-examples" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="violation-examplesType">
+        <xs:sequence>
+            <xs:element type="violation-exampleType" name="violation-example"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="normType">
+        <xs:sequence>
+            <xs:element name="name">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="text">
+                <xs:annotation>
+                    <xs:documentation>the text should contain the word "should" to make it a norm</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="sourceType" name="source"/>
+            <xs:element type="detectionType" name="detection"/>
+            <xs:element type="violation-examplesType" name="violation-examples"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="approachesType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="approach"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="operationalization-strategyType">
+        <xs:sequence>
+            <xs:element type="approachesType" name="approaches"/>
+            <xs:element type="xs:string" name="evaluation"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="discourse-violationType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="violation-argument"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="discouse-violationsType">
+        <xs:sequence>
+            <xs:element type="discourse-violationType" name="discourse-violation"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="normsType">
+        <xs:sequence>
+            <xs:element type="normType" name="norm" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
