@@ -3,6 +3,8 @@
 {% block content %}
     <h1 class="mb-3">Conversation with id {{ view.kwargs.conversation_id }} ({{ page_obj.paginator.count }})</h1>
     <a href="{% url 'delab-conversations-for-request' tweets.0.simple_request_id %}">back</a>
+    <br>
+    <a href="{% url 'delab-conversation-xml' topic tweets.0.conversation_id 'both' %}">download xml</a>
     {% for tweet in tweets %}
         <article class="media content-section">
             <div class="media-body">

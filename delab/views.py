@@ -75,13 +75,13 @@ class ConversationView(ListView):
         return Tweet.objects.filter(conversation_id=self.request.resolver_match.kwargs['conversation_id']) \
             .order_by("created_at")
 
-    """
     def get_context_data(self, **kwargs):
-        context = super(ConversationListView, self).get_context_data(**kwargs)
-        simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        context['simple_request'] = simple_request
+        context = super(ConversationView, self).get_context_data(**kwargs)
+        # simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
+        conversation_id = self.request.resolver_match.kwargs['conversation_id']
+        topic = Tweet.objects.filter(conversation_id=conversation_id).first().topic.title
+        context['topic'] = topic
         return context
-    """
 
 
 # Create your views here.
