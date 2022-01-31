@@ -78,7 +78,8 @@ class TreeNode:
 
     def tweet_to_speech_act_xml(self, parent_elem):
         speech_act_elem = ET.SubElement(parent_elem, 'speech-act')
-        ET.SubElement(speech_act_elem, 'speech-act-id')
+        speech_act_id_elem = ET.SubElement(speech_act_elem, 'speech-act-id')
+        speech_act_id_elem.text = self.tree_id
         author_elem = ET.SubElement(speech_act_elem, 'author')
         author_id_elem = ET.SubElement(author_elem, 'author-id')
         author_id_elem.text = str(self.data["author_id"])
