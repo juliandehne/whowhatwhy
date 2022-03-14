@@ -46,8 +46,9 @@ urlpatterns = [
              template_name='users/password_reset_complete.html'
          ),
          name='password_reset_complete'),
+    path('delab/', include('delab.urls')),
     path('', include('blog.urls')),
-    path('delab/', include('delab.urls'))
+
 ]
 
 if settings.DEBUG:

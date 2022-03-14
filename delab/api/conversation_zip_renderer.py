@@ -4,12 +4,12 @@ In this file we bundle the methods used for exporting our current data as a zip 
 """
 import io
 import zipfile
+
 import requests
 from django.http import HttpResponse
+
 from django_project.settings import INTERNAL_IPS
-from .api_util import get_file_name
-from ..corpus.api_settings import MERGE_SUBSEQUENT
-from ..corpus.filter_conversation_trees import filter_conversations
+from .api_util import get_file_name, get_all_conversation_ids
 
 
 def create_zip_response_conversation(request, topic, conversation_id, filename):
@@ -36,6 +36,7 @@ def download_conversations_in_all_formats(conversation_id, request, topic, zip_f
     server_adress = "http://" + INTERNAL_IPS[0] + ":" + request.META['SERVER_PORT']
     file_type_text = "tweets_text"
 
+    """
     if full == "cropped" or full == "both":
         cropped_response = get_file_from_rest(conversation_id, file_type_text, full_cropped_string, server_adress,
                                               topic)
@@ -46,14 +47,16 @@ def download_conversations_in_all_formats(conversation_id, request, topic, zip_f
 
         # cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_cropped_string, server_adress, topic)
         # zip_file.writestr(get_file_name(conversation_id, full_cropped_string, ".json"), cropped_response.content)
-
+    """
     if full == "full" or full == "both":
-        # cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_string, server_adress, topic)
-        # zip_file.writestr(get_file_name(conversation_id, full_string, ".json"), cropped_response.content)
+        cropped_response = get_file_from_rest(conversation_id, "tweets_json", full_string, server_adress, topic)
+        zip_file.writestr(get_file_name(conversation_id, full_string, ".json"), cropped_response.content)
         cropped_response = get_file_from_rest(conversation_id, file_type_text, full_string, server_adress, topic)
         zip_file.writestr(get_file_name(conversation_id, full_string, ".txt"), cropped_response.content)
         cropped_response = get_file_from_rest(conversation_id, "tweets_excel", full_string, server_adress, topic)
         zip_file.writestr(get_file_name(conversation_id, full_string, ".xlsx"), cropped_response.content)
+        cropped_response = get_file_from_rest(conversation_id, "tweets_xml", full_string, server_adress, topic)
+        zip_file.writestr(get_file_name(conversation_id, full_string, ".xml"), cropped_response.content)
 
 
 def get_file_from_rest(conversation_id, file_type, full, server_address, topic):
@@ -74,7 +77,7 @@ def create_full_zip_response_conversation(request, topic, filename, full):
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
-    trees, ids, conversation_ids = filter_conversations(topic, merge_subsequent=MERGE_SUBSEQUENT)
+    conversation_ids = get_all_conversation_ids(topic)[:5]
     for conversation_id in conversation_ids:
         download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
     zip_file.close()

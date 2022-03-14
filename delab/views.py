@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
@@ -234,3 +234,7 @@ def candidate_label_proxy(request):
     candidate = choice(candidates)
     pk = candidate.pk
     return redirect('delab-label', pk=pk)
+
+
+def downloads_view(request):
+    return render(request, 'delab/downloads.html')

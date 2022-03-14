@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<norms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="norm.xsd">
+    <!--Zero or more repetitions:-->
+    <norm>
+        <name>string</name>
+        <text>string</text>
+        <source>
+            <type>legal</type>
+            <description>string</description>
+            <reference>string</reference>
+        </source>
+        <detection>
+            <human-observable>string</human-observable>
+            <human-quantifiable>string</human-quantifiable>
+            <computer-dectable>no</computer-dectable>
+            <!--Optional:-->
+            <computer-quantifiable>string</computer-quantifiable>
+            <!--Optional:-->
+            <computer-inferrable>string</computer-inferrable>
+            <!--Optional:-->
+            <operationalization-strategy>
+                <approaches>
+                    <approach>string</approach>
+                </approaches>
+                <evaluation>string</evaluation>
+            </operationalization-strategy>
+        </detection>
+        <violation-examples>
+            <violation-example>
+                <discourse>
+                    <platform>string</platform>
+                    <speech-acts>
+                        <!--Zero or more repetitions:-->
+                        <speech-act>
+                            <speech-act-id>string</speech-act-id>
+                            <author>
+                                <author-id>string</author-id>
+                                <author-name>string</author-name>
+                            </author>
+                            <text>string</text>
+                            <!--Optional:-->
+                            <in-reply-to>string</in-reply-to>
+                            <!--Optional:-->
+                            <violation>
+                                <is-violation>no</is-violation>
+                                <violation-argument>string</violation-argument>
+                            </violation>
+                        </speech-act>
+                        <speech-act>
+                            <speech-act-id>string</speech-act-id>
+                            <author>
+                                <author-id>string</author-id>
+                                <author-name>string</author-name>
+                            </author>
+                            <text>string</text>
+                            <!--Optional:-->
+                            <in-reply-to>string</in-reply-to>
+                            <!--Optional:-->
+                            <violation>
+                                <is-violation>no</is-violation>
+                                <violation-argument>string</violation-argument>
+                            </violation>
+                        </speech-act>
+                    </speech-acts>
+                    <!--Optional:-->
+                    <discouse-violations>
+                        <discourse-violation>
+                            <violation-argument>string</violation-argument>
+                        </discourse-violation>
+                    </discouse-violations>
+                </discourse>
+                <!--Optional:-->
+                <moderation-examples>
+                    <!--Zero or more repetitions:-->
+                    <moderation-example>
+                        <moderation-text>anyType</moderation-text>
+                        <moderation-argument>string</moderation-argument>
+                        <moderation-type>psychological</moderation-type>
+                    </moderation-example>
+                </moderation-examples>
+            </violation-example>
+        </violation-examples>
+    </norm>
+</norms>
