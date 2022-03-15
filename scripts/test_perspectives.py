@@ -1,36 +1,66 @@
-from pathlib import Path
-
-import yaml
-from googleapiclient import discovery
-import os
 import json
+import time
+
+from delab.models import PLATFORM
+from delab.toxicity.perspectives import get_client, UkraineComment
+from delab.tw_connection_util import DelabTwarc
+from delab.models import UkraineComments
+import re
 
 
 def run():
-    settings_dir = os.path.dirname(__file__)
-    project_root = Path(os.path.dirname(settings_dir)).absolute()
-    keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
-    # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
-    filename = keys_path
-    API_KEY = os.environ.get("gcloud_delab")
+    twarc = DelabTwarc()
+    recent_tweets = twarc.search_recent(query="Ukraine Flüchtlinge", )
 
-    with open(filename) as f:
-        my_dict = yaml.safe_load(f)
-        if API_KEY != "":
-            API_KEY = my_dict.get("gcloud_delab")
+    comments = []
+    counter = 0
+    # each loop downloads 100 by default I think
+    while counter < 100:
+        tweet_dict = next(recent_tweets)
+        for recent_tweet in tweet_dict["data"]:
+            comment = UkraineComment(recent_tweet["text"], recent_tweet["lang"],
+                                     recent_tweet["conversation_id"],
+                                     PLATFORM.TWITTER)
+            if comment.language == "de" or comment.language == "en":
+                comments.append(comment)
+        counter += 1
 
-    client = discovery.build(
-        "commentanalyzer",
-        "v1alpha1",
-        developerKey=API_KEY,
-        discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
-        cache_discovery=False
-    )
+    client = get_client()
 
-    analyze_request = {
-        'comment': {'text': 'I fricken hate you people'},
-        'requestedAttributes': {'TOXICITY': {}}
-    }
+    for comment in comments:
+        if len(comment.text) > 1:
+            try:
+                analyze_request = {
+                    'comment': {
+                        'text': comment.text},
+                    'requestedAttributes': {'SEVERE_TOXICITY': {}}
+                }
+                response = client.comments().analyze(body=analyze_request).execute()
+                comment.set_toxicity(response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"])
+                time.sleep(2)
+            except Exception:
+                print("something went wrong")
 
-    response = client.comments().analyze(body=analyze_request).execute()
-    print(json.dumps(response, indent=2))
+    for comment in comments:
+        # if comment.toxicity_value > 0.5:
+        UkraineComments.objects.create(
+            **comment.__dict__
+        )
+
+
+def clean_text(text):
+    temp = text
+    # removing hashtags
+    # temp = re.sub("@[A-Za-z0-9_]+", "", temp)
+    # temp = re.sub("#[A-Za-z0-9_]+", "", temp)
+    # removing links
+    temp = re.sub(r"http\S+", "", temp)
+    temp = re.sub(r"www.\S+", "", temp)
+    # removing punctuation
+    # temp = re.sub('[()!?]', ' ', temp)
+    # temp = re.sub("\[.*?\]", ' ', temp)
+    # alphanumeric
+    temp = re.sub("[^a-z0-9A-ZäöüÄÖÜ\\.\\?\\!]", " ", temp)
+    temp = re.sub("RT", "", temp)
+    temp = temp.strip()
+    return temp
