@@ -294,3 +294,16 @@ class TWCandidate(models.Model):
     # def save(self, force_insert=False, force_update=False, using=None,
     #         update_fields=None):
     #    super(TWCandidate, self).save(self)
+
+
+class UkraineComments(models.Model):
+    """
+    This is a mini project in order to find out toxic comments concerning Ukraine refugees
+    """
+    text = models.TextField()
+    language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
+                                help_text="the language we are querying")
+    conversation_id = models.BigIntegerField()
+    toxicity_value = models.FloatField(null=True)
+    platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
+                                help_text="the plattform used (twitter or reddit)")
