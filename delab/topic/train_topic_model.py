@@ -36,7 +36,8 @@ def train_topic_model_from_db(version, train=True, platform=PLATFORM.TWITTER, la
                               store_vectors=True,
                               number_of_batches=30000):
     """
-    :param train: 
+    :param version: creates different trained bertopic models for the version tag
+    :param train: boolean (retrain or use existing trained model)
     :param platform: 
     :param language:
     :param store_vectors: Stores the embedding vectors from fasttext in a table for quick access for each word in the tweets
@@ -245,6 +246,11 @@ def get_bertopic_location(language, version):
 
 
 def get_embedding_model(language):
+    """
+    the embedding models should be downloaded from huggingface sentence transformer store
+    :param language:
+    :return:
+    """
     if language == LANGUAGE.GERMAN:
         return "distiluse-base-multilingual-cased-v2"
     return "all-mpnet-base-v2"

@@ -1,13 +1,11 @@
 # import Layer from the utils.py file
-import json
 import logging
 
-import numpy as np
 from django.db.models import Q
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 from delab.models import Tweet, LANGUAGE
 from delab.sentiment.sentiment_analysis_ger import classify_german_sentiments
-from nltk.sentiment import SentimentIntensityAnalyzer
 
 
 def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
@@ -31,20 +29,6 @@ def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
 
 
 def classify_tweet_sentiment(tweet_strings, verbose=False, language=LANGUAGE.ENGLISH):
-    """ classifies the sentiment of a tweet based on classic NLP example with trax
-
-        Parameters
-        ----------
-        tweet_strings :  [str]
-            List of tweets as string that are to be classified
-
-        Returns
-        -------
-         prediction_dictionary :  dict
-            keys are the tweets as string and values are the predicted values
-         sentiment_dictionary: dict
-            keys are the tweets as string and values are the sentiment
-    """
     if language == LANGUAGE.GERMAN:
         return classify_german_sentiments(tweet_strings)
 
