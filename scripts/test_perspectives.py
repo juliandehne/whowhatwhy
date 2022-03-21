@@ -10,7 +10,7 @@ import re
 
 def run():
     twarc = DelabTwarc()
-    recent_tweets = twarc.search_recent(query="Ukraine Flüchtlinge", )
+    recent_tweets = twarc.search_recent(query="refugee Ukraine", )
 
     comments = []
     counter = 0
