@@ -27,7 +27,25 @@ class LANGUAGE(models.TextChoices):
     ENGLISH = "en"
     GERMAN = "de"
     POLISH = "pl"
+    SPANISH = "es"
     UNKNOWN = "unk"
+
+
+class Likert(models.IntegerChoices):
+    STRONGLY_NOT_AGREE = -2
+    NOT_AGREE = -1
+    NOT_SURE = 0
+    AGREE = 1
+    AGREE_STRONGLY = 2
+
+
+class INTOLERANCE(models.TextChoices):
+    RELIGIOUS = "rel"
+    SEXUALITY = "sex"
+    ETHNICITY = "eth"
+    RACISM = "rac"
+    OTHERGROUPS = "group"
+    NONE = "none"
 
 
 class ConversationFlow(models.Model):
@@ -268,13 +286,6 @@ class TWCandidate(models.Model):
     moderator_index = models.FloatField(
         help_text="a combined measure of the quality of a tweet in terms of moderating value")
 
-    class Likert(models.IntegerChoices):
-        STRONGLY_NOT_AGREE = -2
-        NOT_AGREE = -1
-        NOT_SURE = 0
-        AGREE = 1
-        AGREE_STRONGLY = 2
-
     u_moderator_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                              help_text="Do you agree that the tweet is moderating the conversation?")
     u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
@@ -307,3 +318,19 @@ class UkraineComments(models.Model):
     toxicity_value = models.FloatField(null=True)
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
+
+
+class TWCandidateIntolerance(models.Model):
+    """
+    The idea is here to verify the "badness" of dictionary based terrible tweets and validate the categories
+    """
+    first_bad_word = models.TextField()
+    tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
+    coders = models.ManyToManyField(User)
+    dict_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
+                                     help_text="the category the bad word is grouped under in the dictionary")
+    user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
+                                     help_text="the category the bad word is grouped under by the user")
+
+    # class Meta:
+    #    unique_together = ('tweet', 'coder',)

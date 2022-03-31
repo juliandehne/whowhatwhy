@@ -11,6 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
+    # path('label/intolerant/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label-intolerance'),
     path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),
     path('labelproxy', candidate_label_proxy, name='delab-label-proxy'),
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),
