@@ -80,7 +80,10 @@ def find_and_link_bad_tweets(data_read, lang):
         if lang == LANGUAGE.SPANISH:
             vector = SearchVector('text', config='spanish')
 
-        found_tweets = Tweet.objects.filter(language=lang).annotate(search=vector).filter(search=search_query).all()
+        found_tweets = Tweet.objects.filter(language=lang)\
+            .annotate(search=vector)\
+            .filter(search=search_query)\
+            .filter(twcandidateintolerance=None).all()
 
         for tweet in found_tweets:
             for word in word2category.keys():

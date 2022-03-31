@@ -7,11 +7,13 @@ from .api.router import get_routes
 from .views import (
     SimpleRequestCreateView,
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
-    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view
+    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view,
+    TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy
 )
 
 urlpatterns = [
-    # path('label/intolerant/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label-intolerance'),
+    path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
+    path('labelproxy/intolerance', intolerance_candidate_label_proxy, name='delab-label-intolerance-proxy'),
     path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),
     path('labelproxy', candidate_label_proxy, name='delab-label-proxy'),
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),

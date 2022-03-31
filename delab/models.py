@@ -44,6 +44,7 @@ class INTOLERANCE(models.TextChoices):
     SEXUALITY = "sex"
     ETHNICITY = "eth"
     RACISM = "rac"
+    BODYSHAMING = "body"
     OTHERGROUPS = "group"
     NONE = "none"
 
@@ -326,11 +327,19 @@ class TWCandidateIntolerance(models.Model):
     """
     first_bad_word = models.TextField()
     tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
-    coders = models.ManyToManyField(User)
     dict_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the bad word is grouped under in the dictionary")
-    user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
-                                     help_text="the category the bad word is grouped under by the user")
 
-    # class Meta:
-    #    unique_together = ('tweet', 'coder',)
+
+class TWIntoleranceRating(models.Model):
+    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
+    user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
+                                     help_text="the category the intolerance could best be grouped by")
+    u_intolerance_rating = models.IntegerField(default=Likert.AGREE_STRONGLY, choices=Likert.choices, null=True,
+                                               help_text="Do you agree that the tweet is intolerant?")
+    u_sentiment_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the tweet expresses a positive sentiment?")
+
+    def get_absolute_url(self):
+        return reverse('delab-label-intolerance-proxy')
