@@ -7,7 +7,7 @@ from delab.models import LANGUAGE, Tweet, TWCandidateIntolerance
 
 
 def run():
-    download = False
+    download = True
     link = True
     for lang in LANGUAGE:
         with open("delab/nce/bad_words.csv") as fp:
@@ -88,11 +88,12 @@ def find_and_link_bad_tweets(data_read, lang):
         for tweet in found_tweets:
             for word in word2category.keys():
                 if word in tweet.text:
-                    TWCandidateIntolerance.objects.get_or_create(
-                        first_bad_word=word,
-                        tweet=tweet,
-                        dict_category=word2category[word],
-                    )
+                    if not TWCandidateIntolerance.objects.filter(tweet_id=tweet.id).exists():
+                        TWCandidateIntolerance.objects.create(
+                            first_bad_word=word,
+                            tweet=tweet,
+                            dict_category=word2category[word],
+                        )
 
 
 def download_bad_tweets(data_read, lang):
