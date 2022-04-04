@@ -192,19 +192,6 @@ class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
         form.instance.coder = self.request.user
         return super().form_valid(form)
 
-    # def get_queryset(self):
-    #     id = self.request.resolver_match.kwargs['pk']
-    #     candidate = TWCandidate.objects.filter(id=id)
-    #     return candidate
-
-    """
-    
-    def get_object(self, queryset=None):
-        id = self.request.resolver_match.kwargs['pk']
-        candidate = TWCandidate.objects.filter(id=id).get()
-        return candidate
-    """
-
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(TWCandidateLabelView, self).get_context_data(**kwargs)
 

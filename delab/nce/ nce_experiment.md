@@ -19,5 +19,5 @@ This is the directory of the norm_culture_experiment
 # datasets
 
 - Munger 2017 
-
-
+- https://en.wikipedia.org/wiki/List_of_ethnic_slurs
+- https://en.wikipedia.org/wiki/List_of_LGBT_slang_terms
