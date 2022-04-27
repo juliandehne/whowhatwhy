@@ -1,74 +1,53 @@
-word, language, category
-beaner,en,eth
-chinc,en,eth
-chink,en,eth
-coon,en,sex
-dego,en,eth
-gook,en,eth
-guido,en,eth
-heeb,en,rel
-kike,en,rel
-kyke,en,rel
-jigaboo,en,rac
-negro,en,rac
-nigger,en,rac
-niglet,en,rac
-porchmonkey,en,rac
-pollock,en,eth
-sandnigger,en,rac
-spic,en,eth
-wop,en,eth
-jap,en,eth
-junglebunny,en,rac
-spick,en,eth
-spic,en,eth
-wetback,en,eth
-cunt,en,sex
-dyke,en,sex
-skank,en,sex
-slut,en,sex
-whore,en,sex
-carpetmuncher,en,sex
-cock,en,sex
-douche,en,sex
-fag,en,sex
-fudgepacker,en,sex
-homo,en,sex
-lesbo,en,sex
-lezzie,en,sex
-queerbait,en,sex
-Judensau,de,rel
-Kopftuchträger,de,rel
-Neger,de,rac
-Schlitzauge,de,eth
-Zigeuner,de,eth
-Schlampe,de,sex
-Schwuchtel,de,sex
-Nutte,de,sex
-Abbo,en,rac
-Aseng,en,rac
-Ashke-Nazi,en,rac
-Bamboula,en,rac
-Bluegum,en,rac
-Chernozhopy,en,eth
-Churka,en,eth
-Crucco,en,eth
-Balija,en,rac
-Bohunk,en,rac
-Bougnoule,en,rac
-Goombah,en,eth
-Greaseball,en,eth
-Injun,en,rac
-Bozgor,en,rac
-Burrhead,en,rac
-Buddhahead,en,eth
-Bootlip,en,rac
-Arabush,en,eth
-Annamite,en,rac
-gabacho,en,eth
-Kanake,de,rac
-Mulignan,en,rac
-Polaco,es,eth
-Sheeny,en,rel
-Ukrop,en,eth
-Wigger,en,rac
+word, language, category, pol_correct_word
+beaner,en,eth,Latino
+chinc,en,eth,Asian
+chink,en,eth,Asian
+coon,en,sex,Black People
+dego,en,eth,Italian
+gook,en,eth,Korean
+heeb,en,rel,Jewish
+kike,en,rel,Jewish
+kyke,en,rel,Jewish
+jigaboo,en,rac,Black People
+negro,en,rac,Black People
+nigger,en,rac,Black People
+niglet,en,rac,Black People
+porchmonkey,en,rac,Black People
+pollock,en,eth,Polish
+sandnigger,en,rac,Arab
+spic,en,eth,Hispanic
+wop,en,eth,Italian
+jap,en,eth,Japanese
+junglebunny,en,rac,Black People
+spick,en,eth,Hispanic
+spic,en,eth,Hispanic
+wetback,en,eth,Mexicans
+dyke,en,sex,Lesbian
+skank,en,sex,Promiscuous People
+carpetmuncher,en,sex,Lesbian
+fags,en,sex,Homosexuals
+fudgepacker,en,sex,Homosexual
+homo,en,sex,Homosexual
+lesbo,en,sex,Lesbian
+lezzie,en,sex,Lesbian
+Judensau,de,rel,Jude
+Kopftuchträger,de,rel,Muslim
+Neger,de,rac,Schwarze
+Schlitzauge,de,eth,Asiate
+Zigeuner,de,eth,Sinti und Roma
+Schwuchtel,de,sex,Homosexueller
+Abbo,en,rac,Aboriginal Australian
+Bluegum,en,rac,African
+Crucco,en,eth,German
+Bohunk,en,rac,Czech
+Bougnoule,en,rac,Arab
+Goombah,en,eth,Italian
+Greaseball,en,eth,Italian
+Injun,en,rac,Native American
+Bozgor,en,rac,Hungarian
+Bootlip,en,rac,African American
+Arabush,en,eth,Arab
+Kanake,de,rac,Türke
+Polaco,es,eth,Polish
+Sheeny,en,rel,Jewish
+Ukrop,en,eth,Ukrainian

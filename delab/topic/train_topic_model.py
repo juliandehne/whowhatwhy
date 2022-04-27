@@ -229,7 +229,7 @@ def clean_corpus(corpus_for_fitting_sentences):
         # temp = re.sub('[()!?]', ' ', temp)
         # temp = re.sub("\[.*?\]", ' ', temp)
         # alphanumeric
-        temp = re.sub("[^a-z0-9A-Z]", " ", temp)
+        temp = re.sub("[^a-z0-9A-ZaäöüÄÖÜ]", " ", temp)
         temp = re.sub("RT", "", temp)
         temp = temp.strip()
 

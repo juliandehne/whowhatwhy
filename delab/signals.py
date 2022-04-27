@@ -6,7 +6,8 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 from django.dispatch import receiver
 
-from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM
+from delab.bot.intolerance_bot import generate_answers
+from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM, TWIntoleranceRating, IntoleranceAnswer
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 from delab.bot.sender import publish_moderation
@@ -18,6 +19,35 @@ logger = logging.getLogger(__name__)
 def process_moderation(sender, instance, created, **kwargs):
     if instance.platform == PLATFORM.DELAB and instance.publish:
         publish_moderation(instance)
+
+
+@receiver(post_save, sender=TWIntoleranceRating)
+def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, created, **kwargs):
+    """
+    If it is the second time the tweet was rated as intolerant by different users, and if there has not been
+    generated answers for the intolerance experiment and the tweet was seen as interpretable from the context
+    and the intolerance was directed versus a group and not a person, in this case the answer is generated
+    in the db table and will be presented as a candidate to be sent to social media after validation.
+    :param sender:
+    :param instance:
+    :param created:
+    :param kwargs:
+    :return:
+    """
+    exists_previous_labeling = TWIntoleranceRating.objects.filter(candidate=instance.candidate, u_intolerance_rating=2,
+                                                                  u_clearness_rating=2,
+                                                                  u_person_hate=False).exists()
+    if exists_previous_labeling:
+        if instance.u_intolerance_rating == 2 and instance.u_clearness_rating == 2 and instance.u_person_hate is False:
+            if instance.candidate.intoleranceanswer is None:
+                answer1, answer2, answer3 = generate_answers(instance.candidate)
+                IntoleranceAnswer.objects.create(
+                    answer1=answer1,
+                    answer2=answer2,
+                    answer3=answer3,
+                    candidate=instance.candidate,
+                )
+                logger.info("answer for intolerance candidate {} was created in db".format(instance.candidate.pk))
 
 
 @receiver(post_save, sender=SimpleRequest)

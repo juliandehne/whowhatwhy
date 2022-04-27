@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib.postgres.search import SearchVector, SearchQuery
+from django.db.utils import IntegrityError
 
 from delab.corpus.download_conversations import download_conversations
 from delab.models import LANGUAGE, Tweet, TWCandidateIntolerance
@@ -62,8 +63,10 @@ def find_and_link_bad_tweets(data_read, lang):
     """
 
     word2category = {}
+    word2goodword = {}
     for row in data_read:
         word2category[row[0]] = row[2]
+        word2goodword[row[0]] = row[3]
 
     if len(data_read) > 5:
         query = "('" + data_read[0][0] + "'" + " | "
@@ -80,10 +83,20 @@ def find_and_link_bad_tweets(data_read, lang):
         if lang == LANGUAGE.SPANISH:
             vector = SearchVector('text', config='spanish')
 
-        found_tweets = Tweet.objects.filter(language=lang)\
-            .annotate(search=vector)\
-            .filter(search=search_query)\
-            .filter(twcandidateintolerance=None).all()
+        found_tweets = Tweet.objects.filter(twcandidateintolerance=None) \
+            .filter(language=lang) \
+            .annotate(search=vector) \
+            .filter(search=search_query)
+
+        not_filtered = found_tweets.all()
+        for word in word2category.keys():
+            found_tweets = found_tweets.exclude(text__iregex=r'@[^\ ]*' + word + '')
+            found_tweets = found_tweets.exclude(text__iregex=r'#[^\ ]*' + word + '')
+            found_tweets = found_tweets.exclude(text__iregex=r'"[^\ ]*' + word + '')
+            found_tweets = found_tweets.exclude(text__iregex=r'„[^\ ]*' + word + '')
+
+        # found_tweets = found_tweets.all()
+        # apply_new_filters(found_tweets, not_filtered)
 
         for tweet in found_tweets:
             for word in word2category.keys():
@@ -93,7 +106,17 @@ def find_and_link_bad_tweets(data_read, lang):
                             first_bad_word=word,
                             tweet=tweet,
                             dict_category=word2category[word],
+                            political_correct_word=word2goodword[word]
                         )
+
+
+def apply_new_filters(found_tweets, not_filtered):
+    for tweet in not_filtered:
+        if tweet not in found_tweets:
+            try:
+                TWCandidateIntolerance.objects.filter(tweet_id=tweet.id).delete()
+            except IntegrityError:
+                pass
 
 
 def download_bad_tweets(data_read, lang):

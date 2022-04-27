@@ -21,3 +21,7 @@ This is the directory of the norm_culture_experiment
 - Munger 2017 
 - https://en.wikipedia.org/wiki/List_of_ethnic_slurs
 - https://en.wikipedia.org/wiki/List_of_LGBT_slang_terms
+
+# adaptations to the dataset
+
+3- changed whore to plural to target group intolerant instead of personal hate

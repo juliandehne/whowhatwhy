@@ -6,6 +6,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
+from model_utils.models import now
 from treenode.models import TreeNodeModel
 
 
@@ -329,6 +330,7 @@ class TWCandidateIntolerance(models.Model):
     tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
     dict_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the bad word is grouped under in the dictionary")
+    political_correct_word = models.TextField(null=True)
 
 
 class TWIntoleranceRating(models.Model):
@@ -336,10 +338,35 @@ class TWIntoleranceRating(models.Model):
     candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
     user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the intolerance could best be grouped by")
-    u_intolerance_rating = models.IntegerField(default=Likert.AGREE_STRONGLY, choices=Likert.choices, null=True,
-                                               help_text="Do you agree that the tweet is intolerant?")
-    u_sentiment_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+    u_intolerance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                               help_text="Do you agree that the tweet is intolerant? (hateful or insensitive towards a specific group)")
+    u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                              help_text="Do you agree that the tweet expresses a positive sentiment?")
+    u_clearness_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the meaning of the statement is clear from the context?")
+    u_person_hate = models.BooleanField(default=False, help_text="Is this comment directed against a person?")
 
     def get_absolute_url(self):
         return reverse('delab-label-intolerance-proxy')
+
+
+class IntoleranceAnswer(models.Model):
+    """
+    This persist the answers based on the strategies and if it was sent to twitter the
+    strategy chosen and the timestamp, when the answer was sent
+    """
+    candidate = models.OneToOneField(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
+    answer1 = models.TextField()
+    answer2 = models.TextField()
+    answer3 = models.TextField()
+    strategy_chosen = models.TextField(blank=True, null=True)
+    date_success_sent = models.DateTimeField(blank=True, null=True)
+
+
+class IntoleranceAnswerValidation(models.Model):
+    """
+    This is a utility table to hold the validation decisions of the users
+    """
+    answer = models.ForeignKey(IntoleranceAnswer, on_delete=models.DO_NOTHING)
+    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
