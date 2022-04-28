@@ -8,7 +8,7 @@ from delab.models import LANGUAGE, Tweet, TWCandidateIntolerance
 
 
 def run():
-    download = True
+    download = False
     link = True
     for lang in LANGUAGE:
         with open("delab/nce/bad_words.csv") as fp:

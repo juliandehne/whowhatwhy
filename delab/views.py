@@ -17,6 +17,7 @@ from django.views.generic import (
 
 from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, PLATFORM, TweetAuthor, TWCandidateIntolerance, \
     TWIntoleranceRating, IntoleranceAnswer, IntoleranceAnswerValidation
+from django_project.settings import min_intolerance_answer_coders_needed, min_intolerance_coders_needed
 from util.abusing_strings import convert_to_hash
 from .tasks import get_tasks_status
 
@@ -253,8 +254,8 @@ class TWCandidateIntoleranceLabelView(LoginRequiredMixin, CreateView, SuccessMes
         # context["text"] = clean_corpus([tweet_text])[0]
         context["text"] = tweet_text
         context["tweet_id"] = tweet_id
-        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id).order_by(
-            '-created_at')
+        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
+            .order_by('-created_at')
 
         full_conversation = list(context_tweets.values_list("text", flat=True))
         index = full_conversation.index(tweet_text)
@@ -274,7 +275,7 @@ def intolerance_candidate_label_proxy(request):
     current_user = request.user
     candidates = TWCandidateIntolerance.objects \
         .annotate(num_coders=Count('twintolerancerating')) \
-        .filter(num_coders__lt=2) \
+        .filter(num_coders__lt=min_intolerance_coders_needed) \
         .exclude(twintolerancerating__in=current_user.twintolerancerating_set.all()) \
         .all()
     if len(candidates) == 0:
@@ -288,9 +289,9 @@ def intolerance_answer_validation_proxy(request):
     current_user = request.user
     candidates = IntoleranceAnswer.objects \
         .annotate(num_coders=Count('intoleranceanswervalidation')) \
+        .filter(num_coders__lt=min_intolerance_answer_coders_needed) \
         .exclude(intoleranceanswervalidation__in=current_user.intoleranceanswervalidation_set.all()) \
         .all()
-    # .filter(num_coders__lt=2) \
     if len(candidates) == 0:
         raise Http404("There seems no more answers to validate!")
     candidate = choice(candidates)
@@ -298,8 +299,9 @@ def intolerance_answer_validation_proxy(request):
     return redirect('delab-intolerance-answer-validation', pk=pk)
 
 
-class IntoleranceAnswerView(LoginRequiredMixin, CreateView, SuccessMessageMixin):
+class IntoleranceAnswerValidationView(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     model = IntoleranceAnswerValidation
+    fields = ["valid", "comment"]
 
     def form_valid(self, form):
         form.instance.coder = self.request.user
@@ -307,7 +309,7 @@ class IntoleranceAnswerView(LoginRequiredMixin, CreateView, SuccessMessageMixin)
         return super().form_valid(form)
 
     def get_context_data(self, *, object_list=None, **kwargs):
-        context = super(IntoleranceAnswerValidation, self).get_context_data(**kwargs)
+        context = super(IntoleranceAnswerValidationView, self).get_context_data(**kwargs)
 
         answer_id = self.request.resolver_match.kwargs['pk']
 

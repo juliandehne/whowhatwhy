@@ -264,8 +264,12 @@ LOGGING = {
 }
 
 # delab_settings
-# max candidates between 10 and 500
+# max candidates when downloading Tweets by query (between 10 and 500)
 MAX_CANDIDATES = 200
-TRAX_CAPABILITIES = False  # set this to true onl if you running on a linux and have AVX commands available
-
+TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 sys.setrecursionlimit(2000)
+
+# the number of people that need to label a tweet as intolerant for it to be labeled correctly
+min_intolerance_coders_needed = 1
+# the number of people that need to validate an answer before it can be sent
+min_intolerance_answer_coders_needed = 1

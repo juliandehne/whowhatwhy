@@ -9,11 +9,11 @@ from .views import (
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
     simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view,
     TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy, intolerance_answer_validation_proxy,
-    IntoleranceAnswerView
+    IntoleranceAnswerValidationView
 )
 
 urlpatterns = [
-    path('answer/validation/<int:pk>', IntoleranceAnswerView.as_view(), name='delab-intolerance-answer-validation'),
+    path('answer/validation/<int:pk>', IntoleranceAnswerValidationView.as_view(), name='delab-intolerance-answer-validation'),
     path('proxy/answer/validation', intolerance_answer_validation_proxy, name='delab-intolerance-answer-validation-proxy'),
 
 

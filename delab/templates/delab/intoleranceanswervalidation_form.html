@@ -4,13 +4,13 @@
     <div class="content-section">
 
         <p>{{ answer1 }}</p>
-        <p>{{ answer1 }}</p>
-        <p>{{ answer1 }}</p>
+        <p>{{ answer2 }}</p>
+        <p>{{ answer3 }}</p>
 
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
-                <legend class="border-bottom mb-4"> .</legend>
+                <legend class="border-bottom mb-4">Can these answers be sent on Twitter/Reddit?</legend>
                 <p>STATEMENT: {{ text }} </p>
                 {{ form|crispy }}
             </fieldset>

@@ -11,6 +11,7 @@ from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM, TWIntolera
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 from delab.bot.sender import publish_moderation
+from django_project.settings import min_intolerance_coders_needed
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +35,16 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
     :param kwargs:
     :return:
     """
-    exists_previous_labeling = TWIntoleranceRating.objects.filter(candidate=instance.candidate, u_intolerance_rating=2,
-                                                                  u_clearness_rating=2,
-                                                                  u_person_hate=False).exists()
+    exists_previous_labeling = True
+    if min_intolerance_coders_needed > 1:
+        exists_previous_labeling = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
+                                                                      u_intolerance_rating=2,
+                                                                      u_clearness_rating=2,
+                                                                      u_person_hate=False).exists()
     if exists_previous_labeling:
         if instance.u_intolerance_rating == 2 and instance.u_clearness_rating == 2 and instance.u_person_hate is False:
-            if instance.candidate.intoleranceanswer is None:
+            already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
+            if not already_exists_answer:
                 answer1, answer2, answer3 = generate_answers(instance.candidate)
                 IntoleranceAnswer.objects.create(
                     answer1=answer1,
