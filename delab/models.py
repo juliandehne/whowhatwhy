@@ -370,3 +370,7 @@ class IntoleranceAnswerValidation(models.Model):
     answer = models.ForeignKey(IntoleranceAnswer, on_delete=models.DO_NOTHING)
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
+
+    def get_absolute_url(self):
+        return reverse('delab-intolerance-answer-validation-proxy')
+

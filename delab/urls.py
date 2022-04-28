@@ -8,10 +8,15 @@ from .views import (
     SimpleRequestCreateView,
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
     simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view,
-    TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy
+    TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy, intolerance_answer_validation_proxy,
+    IntoleranceAnswerView
 )
 
 urlpatterns = [
+    path('answer/validation/<int:pk>', IntoleranceAnswerView.as_view(), name='delab-intolerance-answer-validation'),
+    path('proxy/answer/validation', intolerance_answer_validation_proxy, name='delab-intolerance-answer-validation-proxy'),
+
+
     path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
     path('labelproxy/intolerance', intolerance_candidate_label_proxy, name='delab-label-intolerance-proxy'),
     path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),

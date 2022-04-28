@@ -284,50 +284,52 @@ def intolerance_candidate_label_proxy(request):
     return redirect('delab-label-intolerance', pk=pk)
 
 
-#
-
 def intolerance_answer_validation_proxy(request):
     current_user = request.user
     candidates = IntoleranceAnswer.objects \
         .annotate(num_coders=Count('intoleranceanswervalidation')) \
-        .filter(num_coders__lt=2) \
         .exclude(intoleranceanswervalidation__in=current_user.intoleranceanswervalidation_set.all()) \
         .all()
+    # .filter(num_coders__lt=2) \
     if len(candidates) == 0:
         raise Http404("There seems no more answers to validate!")
     candidate = choice(candidates)
     pk = candidate.pk
-    return redirect('delab-label-intolerance-answer-validation', pk=pk)
+    return redirect('delab-intolerance-answer-validation', pk=pk)
 
-"""
 
 class IntoleranceAnswerView(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     model = IntoleranceAnswerValidation
 
     def form_valid(self, form):
         form.instance.coder = self.request.user
-        form.instance.candidate_id = self.request.resolver_match.kwargs['pk']
+        form.instance.answer_id = self.request.resolver_match.kwargs['pk']
         return super().form_valid(form)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(IntoleranceAnswerValidation, self).get_context_data(**kwargs)
 
-        candidate_id = self.request.resolver_match.kwargs['pk']
+        answer_id = self.request.resolver_match.kwargs['pk']
 
-        candidate = TWCandidateIntolerance.objects.filter(id=candidate_id).get()
+        answer = IntoleranceAnswer.objects.filter(id=answer_id).get()
 
-        tweet_text = candidate.tweet.text
-        tweet_id = candidate.tweet.id
-        # context["text"] = clean_corpus([tweet_text])[0]
+        tweet_text = answer.candidate.tweet.text
+        tweet_id = answer.candidate.tweet.id
+
         context["text"] = tweet_text
         context["tweet_id"] = tweet_id
-        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id).order_by(
-            '-created_at')
 
-        full_conversation = list(context_tweets.values_list("text", flat=True))
-        index = full_conversation.index(tweet_text)
+        # NOT SURE, whether the whole context should be displayed again (may not fit)
+        # context_tweets = Tweet.objects.filter(conversation_id=answer.candidate.tweet.conversation_id).order_by(
+        #    '-created_at')
+
+        # full_conversation = list(context_tweets.values_list("text", flat=True))
+        # index = full_conversation.index(tweet_text)
 
         # full_conversation = clean_corpus(full_conversation)
-        context["conversation"] = full_conversation[index - 2:index + 3]
+        # context["conversation"] = full_conversation[index - 2:index + 3]
+        context["answer1"] = answer.answer1
+        context["answer2"] = answer.answer2
+        context["answer3"] = answer.answer3
+
         return context
-"""
