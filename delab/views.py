@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.generic import (
     ListView,
     CreateView,
-    UpdateView
+    UpdateView, TemplateView
 )
 
 from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, PLATFORM, TweetAuthor, TWCandidateIntolerance, \
@@ -219,7 +219,8 @@ def candidate_label_proxy(request):
     candidates = TWCandidate.objects.filter(
         Q(coder__isnull=True) & ~Q(coded_by=request.user)).all()
     if len(candidates) == 0:
-        raise Http404("There seems no more data to label!")
+        # raise Http404("There seems no more data to label!")
+        return redirect('delab-label-moderation-nomore')
     candidate = choice(candidates)
     pk = candidate.pk
     return redirect('delab-label', pk=pk)
@@ -279,7 +280,8 @@ def intolerance_candidate_label_proxy(request):
         .exclude(twintolerancerating__in=current_user.twintolerancerating_set.all()) \
         .all()
     if len(candidates) == 0:
-        raise Http404("There seems no more data to label!")
+        # raise Http404("There seems no more data to label!")
+        return redirect('delab-label-intolerance-nomore')
     candidate = choice(candidates)
     pk = candidate.pk
     return redirect('delab-label-intolerance', pk=pk)
@@ -293,7 +295,8 @@ def intolerance_answer_validation_proxy(request):
         .exclude(intoleranceanswervalidation__in=current_user.intoleranceanswervalidation_set.all()) \
         .all()
     if len(candidates) == 0:
-        raise Http404("There seems no more answers to validate!")
+        # raise Http404("There seems no more answers to validate!")
+        return redirect('delab-intolerance-answer-validation-nomore')
     candidate = choice(candidates)
     pk = candidate.pk
     return redirect('delab-intolerance-answer-validation', pk=pk)
@@ -335,3 +338,15 @@ class IntoleranceAnswerValidationView(LoginRequiredMixin, CreateView, SuccessMes
         context["answer3"] = answer.answer3
 
         return context
+
+
+class NoMoreIntolerantCandidatesView(TemplateView):
+    template_name = "delab/nomore_intolerant_tweets_tolabel.html"
+
+
+class NoMoreAnswersToValidateView(TemplateView):
+    template_name = "delab/nomore_answers_tovalidate.html"
+
+
+class NoMoreModeratingCandidatesView(TemplateView):
+    template_name = "delab/nomore_moderations_tolabel.html"

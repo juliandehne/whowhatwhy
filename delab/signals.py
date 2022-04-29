@@ -7,11 +7,12 @@ from django.utils import timezone
 from django.dispatch import receiver
 
 from delab.bot.intolerance_bot import generate_answers
-from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM, TWIntoleranceRating, IntoleranceAnswer
+from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM, TWIntoleranceRating, IntoleranceAnswer, \
+    IntoleranceAnswerValidation
 from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 from delab.bot.sender import publish_moderation
-from django_project.settings import min_intolerance_coders_needed
+from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 
 logger = logging.getLogger(__name__)
 
@@ -36,23 +37,33 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
     :return:
     """
     exists_previous_labeling = True
-    if min_intolerance_coders_needed > 1:
-        exists_previous_labeling = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
-                                                                      u_intolerance_rating=2,
-                                                                      u_clearness_rating=2,
-                                                                      u_person_hate=False).exists()
+    ratings_count = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
+                                                       u_intolerance_rating=2,
+                                                       u_clearness_rating=2,
+                                                       u_person_hate=False).count()
+    exists_previous_labeling = ratings_count >= min_intolerance_coders_needed
     if exists_previous_labeling:
-        if instance.u_intolerance_rating == 2 and instance.u_clearness_rating == 2 and instance.u_person_hate is False:
-            already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
-            if not already_exists_answer:
-                answer1, answer2, answer3 = generate_answers(instance.candidate)
-                IntoleranceAnswer.objects.create(
-                    answer1=answer1,
-                    answer2=answer2,
-                    answer3=answer3,
-                    candidate=instance.candidate,
-                )
-                logger.info("answer for intolerance candidate {} was created in db".format(instance.candidate.pk))
+        already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
+        if not already_exists_answer:
+            answer1, answer2, answer3 = generate_answers(instance.candidate)
+            IntoleranceAnswer.objects.create(
+                answer1=answer1,
+                answer2=answer2,
+                answer3=answer3,
+                candidate=instance.candidate,
+            )
+            logger.info("answer for intolerance candidate {} was created in db".format(instance.candidate.pk))
+
+
+@receiver(post_save, sender=IntoleranceAnswerValidation)
+def process_validated_answers(sender, instance: IntoleranceAnswerValidation, created, **kwargs):
+    """
+    This will send the tweet out with the answer if the validation is successful
+    :return:
+    """
+    enough_validations = instance.answer.intoleranceanswervalidation_set.count() >= min_intolerance_answer_coders_needed
+    if enough_validations:
+        logger.info("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
 
 
 @receiver(post_save, sender=SimpleRequest)

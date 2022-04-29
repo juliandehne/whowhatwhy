@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from background_task import background
 from background_task.models import CompletedTask
@@ -9,6 +10,7 @@ from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
 from delab.corpus.download_conversation_reddit import download_conversations_reddit
 from .models import PLATFORM, LANGUAGE
+from .nce.download_intolerant_tweets import download_terrible_tweets
 
 logger = logging.getLogger(__name__)
 
@@ -89,3 +91,9 @@ def get_tasks_status(simple_request_id):
     # print(pending_tasks_qs, running_tasks_qs, completed_tasks_qs)
     # return pending_tasks_qs, running_tasks_qs, completed_tasks_qs
     return running_tasks_qs
+
+
+@background()
+def download_intolerant_tweets(repeat=Task.DAILY):
+    logger.info("downloading intolerant tweets on {}" + datetime.now())
+    download_terrible_tweets(True, True)

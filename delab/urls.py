@@ -9,13 +9,19 @@ from .views import (
     ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
     simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view,
     TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy, intolerance_answer_validation_proxy,
-    IntoleranceAnswerValidationView
+    IntoleranceAnswerValidationView, NoMoreAnswersToValidateView, NoMoreIntolerantCandidatesView,
+    NoMoreModeratingCandidatesView
 )
 
 urlpatterns = [
-    path('answer/validation/<int:pk>', IntoleranceAnswerValidationView.as_view(), name='delab-intolerance-answer-validation'),
-    path('proxy/answer/validation', intolerance_answer_validation_proxy, name='delab-intolerance-answer-validation-proxy'),
-
+    path('moderation/label/nomore', NoMoreModeratingCandidatesView.as_view(),
+         name='delab-label-moderation-nomore'),
+    path('answer/nomore', NoMoreAnswersToValidateView.as_view(), name='delab-intolerance-answer-validation-nomore'),
+    path('label/intolerance/nomore', NoMoreIntolerantCandidatesView.as_view(), name='delab-label-intolerance-nomore'),
+    path('answer/validation/<int:pk>', IntoleranceAnswerValidationView.as_view(),
+         name='delab-intolerance-answer-validation'),
+    path('proxy/answer/validation', intolerance_answer_validation_proxy,
+         name='delab-intolerance-answer-validation-proxy'),
 
     path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
     path('labelproxy/intolerance', intolerance_candidate_label_proxy, name='delab-label-intolerance-proxy'),
