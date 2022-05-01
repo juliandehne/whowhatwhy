@@ -3,3 +3,4 @@ tweepy
 google-api-python-client
 networkx
 germansentiment
+neo4j
