@@ -1,0 +1,45 @@
+# a list of institution twitter accounts focussing on migration
+
+
+## this should reflect a broad picture on institutions or people concerned with migration issues
+## whereas the institutions are rather clear, the people (influencers) should be taken into the sample by most followers
+topics:
+  - migration:
+      - institutional:
+      - science:
+  - climate:
+      - institutional:
+      - science:
+          - sender:
+              - name: 'Steffen M. Olsen'
+              - twitter_account: '@SteffenMalskaer'
+
+  - epidemic:
+      - institutional:
+          - sender:
+              - name: 'Deutscher Ethikrat'
+              - twitter_account: '@ethikrat'
+              - gouvernemental: 'false'
+          - sender:
+              name: 'Karl Lauterbach'
+              twitter_account: '@Karl_Lauterbach'
+              gouvernemental: 'true'
+          - sender:
+              name: 'Robert Koch Institut'
+              twitter_account: '@rki_de'
+              gouvernemental: 'true'
+          - sender:
+              name: 'Jens Spahn'
+              twitter_account: '@jensspahn'
+              gouvernemental: 'true'
+      - science:
+          - sender:
+              name: 'Christian Drosten'
+              twitter_account: '@c_drosten'
+          - sender:
+              name: 'Melanie Brinkmann'
+              twitter_account: '@BrinkmannLab'
+          - sender:
+              name: 'Klaus Stöhr'
+              twitter_account: '@stohr_klaus'
+
