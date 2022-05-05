@@ -1,1 +1,0 @@
-- the topic model learning material was copied from: https://github.com/kapadias/mediumposts

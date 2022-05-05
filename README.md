@@ -8,8 +8,8 @@ Delab is the temporary repository for the delab project of Uni Göttingen.
 
 # What makes this project different
 
-Normally, django us used as a tool to create a business website. Here, it is interlaced with the bot development and the
-man-in-the-loop expriments!
+Normally, django is used as a tool to create a business website. Here, it is interlaced with the bot development and the precursory 
+man-in-the-loop experiments!
 
 # Getting started
 

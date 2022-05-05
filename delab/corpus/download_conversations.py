@@ -229,7 +229,7 @@ def retrieve_replies(conversation_id, max_replies, language):
             raise ConversationNotInRangeException(reply_count)
         node_id = item["id"]
         parent_id = item["in_reply_to_user_id"]
-        # referenced_items = item["referenced_tweets"] TODO update to make it more precise, add , referenced_tweets in query
+        # referenced_items = item["referenced_tweets"] TODO update to m-ake it more precise, add , referenced_tweets in query
         # for referenced_item in referenced_items:
         #    if referenced_item["type"] == "replied_to":
         #       parent_id = referenced_item["id"]
@@ -255,8 +255,8 @@ def retrieve_replies(conversation_id, max_replies, language):
 
 def reply_thread_maker(conv_ids):
     """
-    Retrieves replies for a list of conversation ids (conv_ids
-    Returns a dataframe with columns [conv_id, child_id, text] tuple which shows every reply's tweet_id and text in the last two columns
+    Retrieves replies for a list of conversation ids (conv_ids Returns a dataframe with columns [conv_id, child_id,
+    text] tuple which shows every reply's tweet_id and text in the last two columns
     """
 
     conv_id = []

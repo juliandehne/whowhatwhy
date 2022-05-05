@@ -4,3 +4,4 @@ google-api-python-client
 networkx
 germansentiment
 neo4j
+django-model-utils
