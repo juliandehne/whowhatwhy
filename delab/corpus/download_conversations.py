@@ -80,18 +80,93 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     connector = None  # precaution to terminate the thread and the http socket
 
 
+def get_matching_conversation(connector,
+                              query,
+                              topic,
+                              simple_request,
+                              max_conversation_length=1000,
+                              min_conversation_length=10,
+                              language=LANGUAGE.ENGLISH,
+                              max_number_of_candidates=MAX_CANDIDATES, fast_mode=False, conversation_filter=None,
+                              tweet_filter=None):
+    """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
+
+        Keyword arguments:
+
+        topic : the topic of the query
+        simple_request: the query string in order to link the view
+        max_conversation_length -- the max number of results
+        min_conversation_length -- the min number of results
+        max_number_of_candidates -- the number of candidates to look at,
+                                    downloads num_candidates x max_conversation_length results (max results are 500)
+                                    If a higher number of results are wanted, change the query or
+                                    implement the streaming API. 
+                                    The actual number of is the number of subsets from a given query 
+                                    times the max_number of candidates given here!
+
+    """
+    if fast_mode:
+        max_number_of_candidates = 10
+        min_conversation_length = 3
+        max_conversation_length = 100
+
+    tweets_result = get_tweets_for_hashtags(connector, query, max_number_of_candidates, language)
+    candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
+    # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
+    downloaded_tweets = 0
+    for candidate in candidates:
+        try:
+            logger.debug("selected candidate tweet {}".format(candidate))
+            candidate_id = candidate.conversation_id
+
+            root_node = retrieve_replies(candidate_id, max_conversation_length, language)
+
+            if conversation_filter is not None:
+                root_node = conversation_filter(root_node)
+
+            if root_node is None:
+                logger.error("found conversation_id that could not be processed")
+                continue
+            else:
+                flat_tree_size = root_node.flat_size()
+                logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
+                downloaded_tweets += flat_tree_size
+                if min_conversation_length < flat_tree_size < max_conversation_length:
+                    save_tree_to_db(root_node, topic, simple_request, candidate_id, tweet_filter=tweet_filter)
+                    logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
+                    # for debugging you can ascii art print the downloaded conversation_tree
+                    # root_node.print_tree(0)
+        except TwitterRequestError as e:
+            # traceback.print_exc()
+            logger.info(
+                "############# TwitterRequestError: Rate limit was exceeded while downloading conversations info." +
+                " Going to sleep for 15!")
+            time.sleep(15 * 60)
+
+        except TwitterConnectionError as e:
+            # traceback.print_exc()
+            logger.info("############# TwitterConnectionError Rate limit was exceeded. 169")
+
+        except ConversationNotInRangeException as e:
+            logger.debug("downloading HUGE conversation with current size {}".format(e.conversation_size))
+
+        except requests.exceptions.Timeout:
+            # traceback.print_exc()
+            logger.error("Timeout occurred")
+
+
 def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, tweet_filter=None):
     """ This method persist a conversation tree in the database
 
 
         Parameters
         ----------
-        root_node : TwConversationTree
-        topic : the topic of the query
-        simple_request: the query string in order to link the view
-        conversation_id: the conversation id of the candidate tweet that was found with the request
-        parent: TwConversationTree this is needed for the recursion, is None for root
-        priority: No idea, copied from the original git post
+        :param root_node : TwConversationTree
+        :param topic : the topic of the query
+        :param simple_request: the query string in order to link the view
+        :param conversation_id: the conversation id of the candidate tweet that was found with the request
+        :param parent: TwConversationTree this is needed for the recursion, is None for root
+        :param tweet_filter: a function that takes a tweet model object and validates it (returns None if not)
 
     """
     try:
@@ -126,84 +201,9 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
         if not len(root_node.children) == 0:
             for child in root_node.children:
-                save_tree_to_db(child, topic, simple_request, conversation_id, root_node)
+                save_tree_to_db(child, topic, simple_request, conversation_id, root_node, tweet_filter=tweet_filter)
     except IntegrityError as e:
         logger.debug("found tweet existing in database, not downloading the tree again")
-
-
-def get_matching_conversation(connector,
-                              query,
-                              topic,
-                              simple_request,
-                              max_conversation_length=1000,
-                              min_conversation_length=10,
-                              language=LANGUAGE.ENGLISH,
-                              max_number_of_candidates=MAX_CANDIDATES, fast_mode=False, conversation_filter=None,
-                              tweet_filter=None):
-    """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
-
-        Keyword arguments:
-
-        topic : the topic of the query
-        simple_request: the query string in order to link the view
-        max_conversation_length -- the max number of results
-        min_conversation_length -- the min number of results
-        max_number_of_candidates -- the number of candidates to look at,
-                                    downloads num_candidates x max_conversation_length results (max results are 500)
-                                    If a higher number of results are wanted, change the query or
-                                    implement the streaming API. 
-                                    The actual number of is the number of subsets from a given query 
-                                    times the max_number of candidates given here!
-
-    """
-    if fast_mode:
-        max_number_of_candidates = 10
-        min_conversation_length = 3
-        max_conversation_length = 100
-
-    tweets_result = get_tweets_for_hashtags(connector, query, logger, max_number_of_candidates, language)
-    candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
-    # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
-    downloaded_tweets = 0
-    for candidate in candidates:
-        try:
-            logger.debug("selected candidate tweet {}".format(candidate))
-            candidate_id = candidate.conversation_id
-
-            root_node = retrieve_replies(candidate_id, max_conversation_length, language)
-
-            if conversation_filter is not None:
-                root_node = conversation_filter(root_node)
-
-            if root_node is None:
-                logger.error("found conversation_id that could not be processed")
-                continue
-            else:
-                flat_tree_size = root_node.flat_size()
-                logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
-                downloaded_tweets += flat_tree_size
-                if min_conversation_length < flat_tree_size < max_conversation_length:
-                    save_tree_to_db(root_node, topic, simple_request, candidate_id, tweet_filter)
-                    logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
-                    # for debugging you can ascii art print the downloaded conversation_tree
-                    # root_node.print_tree(0)
-        except TwitterRequestError as e:
-            # traceback.print_exc()
-            logger.info(
-                "############# TwitterRequestError: Rate limit was exceeded while downloading conversations info." +
-                " Going to sleep for 15!")
-            time.sleep(15 * 60)
-
-        except TwitterConnectionError as e:
-            # traceback.print_exc()
-            logger.info("############# TwitterConnectionError Rate limit was exceeded. 169")
-
-        except ConversationNotInRangeException as e:
-            logger.debug("downloading HUGE conversation with current size {}".format(e.conversation_size))
-
-        except requests.exceptions.Timeout:
-            # traceback.print_exc()
-            logger.error("Timeout occurred")
 
 
 def retrieve_replies(conversation_id, max_replies, language):
@@ -244,13 +244,8 @@ def retrieve_replies(conversation_id, max_replies, language):
             raise ConversationNotInRangeException(reply_count)
         node_id = item["id"]
         parent_id = item["in_reply_to_user_id"]
-        # referenced_items = item["referenced_tweets"] TODO update to m-ake it more precise, add , referenced_tweets in query
-        # for referenced_item in referenced_items:
-        #    if referenced_item["type"] == "replied_to":
-        #       parent_id = referenced_item["id"]
         node = TreeNode(item, node_id, parent_id)
 
-        # print(f'{node.id()} => {node.reply_to()}')
         # COLLECT ANY ORPHANS THAT ARE NODE'S CHILD
         orphans = [orphan for orphan in orphans if not node.find_parent_of(orphan)]
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
@@ -258,10 +253,6 @@ def retrieve_replies(conversation_id, max_replies, language):
             if not root.find_parent_of(node):
                 orphans.append(node)
         reply_count += 1
-
-    # conv_id, child_id, text = root.list_l1()
-    #         print('\nTREE...')
-    # 	    root.print_tree(0)
 
     if len(orphans) > 0:
         logger.error('{} orphaned tweets for conversation {}'.format(len(orphans), conversation_id))
@@ -291,15 +282,16 @@ def reply_thread_maker(conv_ids):
     return replies
 
 
-def get_tweets_for_hashtags(connector, query, logger, max_results, language=LANGUAGE.ENGLISH):
+def get_tweets_for_hashtags(connector, query, max_results, language=LANGUAGE.ENGLISH):
     """ downloads the tweets matching the hashtag list.
         using https://api.twitter.com/2/tweets/search/all
 
         Keyword arguments:
-        connector -- TwitterConnector
-        query -- twitter query query
-        logger -- Logger
-        max_results -- the number of max length the conversation should have
+        :param connector -- TwitterConnector
+        :param query -- twitter query query
+        :param max_results -- the number of max length the conversation should have
+        :param language:
+        :returns json_object with found tweets
     """
     # twitter_accounts_query_1 = map(lambda x: "{} OR".format(x), hashtags)
     # twitter_accounts_query_1 = map(lambda x: "{} ".format(x), hashtags)
@@ -319,7 +311,7 @@ def convert_tweet_result_to_list(tweets_result, topic, full_tweet=False, has_con
     """ converts the raw data to python objects.
 
         Keyword arguments:
-        tweets_result -- the json objeect
+        tweets_result -- the json object
         topic -- the TwTopic object
         query -- the used query
         full_tweet -- a flag indicating whether author_id and other specific fields where queried

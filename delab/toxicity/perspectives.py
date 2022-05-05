@@ -11,12 +11,11 @@ def get_client():
     keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
     # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
     filename = keys_path
-    API_KEY = os.environ.get("gcloud_delab")
+    # API_KEY = os.environ.get("gcloud_delab")
 
     with open(filename) as f:
         my_dict = yaml.safe_load(f)
-        if API_KEY != "":
-            API_KEY = my_dict.get("gcloud_delab")
+        API_KEY = my_dict.get("gcloud_delab")
 
     client = discovery.build(
         "commentanalyzer",

@@ -1,12 +1,16 @@
 import csv
 import os
+import time
 from pathlib import Path
 
+import yaml
 from django.contrib.postgres.search import SearchVector, SearchQuery
 from django.db.utils import IntegrityError
 
 from delab.corpus.download_conversations import download_conversations
 from delab.models import LANGUAGE, Tweet, TWCandidateIntolerance
+from delab.toxicity.perspectives import get_client
+from util.abusing_lists import batch
 
 
 def download_terrible_tweets(download_dictionary, link, download_right_wing=False):
@@ -143,11 +147,20 @@ def mark_tweet_as_intolerant_candidate(tweet):
 def get_right_wing_tag_based_query():
     settings_dir = os.path.dirname(__file__)
     project_root = Path(os.path.dirname(settings_dir)).absolute()
-    keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
+    keys_path = os.path.join(project_root, '../twitter/nce/far_right_tweet_authors.yaml')
+    with open(keys_path) as f:
+        my_dict = yaml.safe_load(f)
+        right_wing_german_tags = my_dict.get("de")
+    return right_wing_german_tags
 
 
 def download_right_wing_toxic_tweets():
     def conversation_filter(root_node):
+        """
+        This makes sure that only conversations with a general toxicity are returned
+        :param root_node:
+        :return:
+        """
         toxic_sum, count = check_toxic_tree(root_node)
         # if the general toxicity level of the conversation is fine, we are not interested
         if toxic_sum / count < 0.5:
@@ -156,13 +169,26 @@ def download_right_wing_toxic_tweets():
             return root_node
 
     def tweet_filter(tweet):
+        """
+        This marks highly toxic tweets as candidates to be labeled as intolerant
+        :param tweet:
+        :return:
+        """
         if get_toxicity(tweet.text) > 0.9:
             # this is only a proxy other measures such as involvement of a group might be interesting
-            mark_tweet_as_intolerant_candidate(tweet)
+            return mark_tweet_as_intolerant_candidate(tweet)
+        else:
+            return tweet
 
-    query = get_right_wing_tag_based_query()
+    query = ""
+    tags = get_right_wing_tag_based_query()
+    for b in batch(tags, 10):
+        for tag in b[:-1]:
+            query += "from:" + tag + " OR "
+        query += tags[-1]
 
-    download_conversations("right_wing")
+        download_conversations("right_wing", query, conversation_filter=conversation_filter, tweet_filter=tweet_filter,
+                               language=LANGUAGE.GERMAN)
 
 
 def check_toxic_tree(parent):
@@ -177,5 +203,18 @@ def check_toxic_tree(parent):
 
 
 def get_toxicity(text):
-    # TODO add perspective api here
-    return 0.5
+    toxicity = 0
+    client = get_client()
+    if len(text) > 1:
+        try:
+            analyze_request = {
+                'comment': {
+                    'text': text},
+                'requestedAttributes': {'SEVERE_TOXICITY': {}}
+            }
+            response = client.comments().analyze(body=analyze_request).execute()
+            toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
+            time.sleep(2)
+        except Exception:
+            print("something went wrong")
+    return toxicity
