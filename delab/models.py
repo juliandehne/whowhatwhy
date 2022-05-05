@@ -326,7 +326,7 @@ class TWCandidateIntolerance(models.Model):
     """
     The idea is here to verify the "badness" of dictionary based terrible tweets and validate the categories
     """
-    first_bad_word = models.TextField()
+    first_bad_word = models.TextField(null=True)
     tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
     dict_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the bad word is grouped under in the dictionary")
@@ -344,7 +344,9 @@ class TWIntoleranceRating(models.Model):
                                              help_text="Do you agree that the tweet expresses a positive sentiment?")
     u_clearness_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                              help_text="Do you agree that the meaning of the statement is clear from the context?")
-    u_person_hate = models.BooleanField(default=False, help_text="Is this comment directed against a person?")
+    u_person_hate = models.BooleanField(help_text="Is this comment directed against a person?")
+
+    u_political_correct_word = models.TextField(help_text="the correct label for the group")
 
     def get_absolute_url(self):
         return reverse('delab-label-intolerance-proxy')
@@ -371,7 +373,8 @@ class IntoleranceAnswerValidation(models.Model):
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     valid = models.BooleanField(help_text="Should this answer be sent to social media for the experiment?")
-    comment = models.TextField(null=True, blank=True, help_text="Plz write a comment why you don't think this is valid, if you think it is a bug!")
+    comment = models.TextField(null=True, blank=True,
+                               help_text="Plz write a comment why you don't think this is valid, if you think it is a bug!")
 
     def get_absolute_url(self):
         return reverse('delab-intolerance-answer-validation-proxy')
