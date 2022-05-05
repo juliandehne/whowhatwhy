@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False):
+                           fast_mode=False, conversation_filter=None, tweet_filter=None):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -68,17 +68,19 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                 combination_counter += 1
                 new_query = " ".join(hashtag_set)
                 get_matching_conversation(connector, new_query, topic, simple_request, language=language,
-                                          fast_mode=fast_mode)
+                                          fast_mode=fast_mode, conversation_filter=conversation_filter,
+                                          tweet_filter=tweet_filter)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         get_matching_conversation(connector, query_string, topic, simple_request, language=language,
-                                  fast_mode=fast_mode)
+                                  fast_mode=fast_mode, conversation_filter=conversation_filter,
+                                  tweet_filter=tweet_filter)
 
     connector = None  # precaution to terminate the thread and the http socket
 
 
-def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None):
+def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, tweet_filter=None):
     """ This method persist a conversation tree in the database
 
 
@@ -110,7 +112,16 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
                       tn_parent_id=tn_parent,
                       # tn_priority=priority,
                       language=root_node.data["lang"])
-        tweet.save()
+        if tweet_filter is not None:
+            tweet = tweet_filter(tweet)
+            # the idea here is that the filter may have to save the tweet to create foreign keys
+            # in this case the save method will fail because of an integrity error
+            try:
+                tweet.save()
+            except IntegrityError as e:
+                pass
+        else:
+            tweet.save()
         # after = dt.now()
         # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
         if not len(root_node.children) == 0:
@@ -127,7 +138,8 @@ def get_matching_conversation(connector,
                               max_conversation_length=1000,
                               min_conversation_length=10,
                               language=LANGUAGE.ENGLISH,
-                              max_number_of_candidates=MAX_CANDIDATES, fast_mode=False):
+                              max_number_of_candidates=MAX_CANDIDATES, fast_mode=False, conversation_filter=None,
+                              tweet_filter=None):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
@@ -160,6 +172,9 @@ def get_matching_conversation(connector,
 
             root_node = retrieve_replies(candidate_id, max_conversation_length, language)
 
+            if conversation_filter is not None:
+                root_node = conversation_filter(root_node)
+
             if root_node is None:
                 logger.error("found conversation_id that could not be processed")
                 continue
@@ -168,7 +183,7 @@ def get_matching_conversation(connector,
                 logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
                 downloaded_tweets += flat_tree_size
                 if min_conversation_length < flat_tree_size < max_conversation_length:
-                    save_tree_to_db(root_node, topic, simple_request, candidate_id)
+                    save_tree_to_db(root_node, topic, simple_request, candidate_id, tweet_filter)
                     logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
                     # for debugging you can ascii art print the downloaded conversation_tree
                     # root_node.print_tree(0)

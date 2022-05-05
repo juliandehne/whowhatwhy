@@ -236,7 +236,15 @@ class TWCandidateIntoleranceLabelView(LoginRequiredMixin, CreateView, SuccessMes
     to be registered.
     """
     model = TWIntoleranceRating
-    fields = ['u_person_hate', 'u_clearness_rating', 'user_category', 'u_intolerance_rating', 'u_sentiment_rating']
+    fields = ['u_person_hate', 'u_clearness_rating', 'user_category', 'u_intolerance_rating', 'u_sentiment_rating',
+              'u_political_correct_word']
+
+    def get_initial(self):
+        initial = super().get_initial()
+        candidate_id = self.request.resolver_match.kwargs['pk']
+        candidate = TWCandidateIntolerance.objects.filter(id=candidate_id).get()
+        initial['u_political_correct_word'] = candidate.political_correct_word
+        return initial
 
     def form_valid(self, form):
         form.instance.coder = self.request.user
