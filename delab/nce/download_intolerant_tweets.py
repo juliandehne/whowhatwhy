@@ -184,7 +184,7 @@ def download_right_wing_toxic_tweets():
     tags = get_right_wing_tag_based_query()
     for b in batch(tags, 10):
         for tag in b[:-1]:
-            query += "from:" + tag + " OR "
+            query += " from:" + tag + " OR "
         query += tags[-1]
 
         download_conversations("right_wing", query, conversation_filter=conversation_filter, tweet_filter=tweet_filter,
