@@ -191,10 +191,9 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
             tweet = tweet_filter(tweet)
             # the idea here is that the filter may have to save the tweet to create foreign keys
             # in this case the save method will fail because of an integrity error
-            try:
+            if tweet.pk is None:
                 tweet.save()
-            except IntegrityError as e:
-                pass
+
         else:
             tweet.save()
         # after = dt.now()

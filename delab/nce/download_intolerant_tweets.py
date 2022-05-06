@@ -142,6 +142,7 @@ def mark_tweet_as_intolerant_candidate(tweet):
     TWCandidateIntolerance.objects.create(
         tweet=tweet
     )
+    return tweet
 
 
 def get_right_wing_tag_based_query():
@@ -187,8 +188,9 @@ def download_right_wing_toxic_tweets():
             query += " from:" + tag + " OR "
         query += tags[-1]
 
-        download_conversations("right_wing", query, conversation_filter=conversation_filter, tweet_filter=tweet_filter,
+        download_conversations("right_wing", query, conversation_filter=None, tweet_filter=tweet_filter,
                                language=LANGUAGE.GERMAN)
+        break
 
 
 def check_toxic_tree(parent):
