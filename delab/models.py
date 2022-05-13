@@ -50,6 +50,12 @@ class INTOLERANCE(models.TextChoices):
     NONE = "none"
 
 
+class STRATEGIES(models.TextChoices):
+    NORMATIVE = "normative"
+    KANTIAN = "kantian"
+    EXPERIENCE = "experience"
+
+
 class ConversationFlow(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
@@ -364,7 +370,7 @@ class IntoleranceAnswer(models.Model):
     answer1 = models.TextField()
     answer2 = models.TextField()
     answer3 = models.TextField()
-    strategy_chosen = models.TextField(blank=True, null=True)
+    strategy_chosen = models.TextField(default=STRATEGIES.NORMATIVE, choices=STRATEGIES.choices, null=True)
     date_success_sent = models.DateTimeField(blank=True, null=True)
 
 

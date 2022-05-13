@@ -53,22 +53,38 @@ class TwitterUtil:
         return access_token, access_token_secret, bearer_token, consumer_key, consumer_secret
 
     @staticmethod
-    def get_reddit_secret():
+    def get_bot_secret():
         settings_dir = os.path.dirname(__file__)
         project_root = Path(os.path.dirname(settings_dir)).absolute()
-        keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
-        # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
-        filename = keys_path
-        reddit_secret = os.environ.get("reddit_secret")
-        reddit_script_id = os.environ.get("reddit_script_id")
-
+        filename = os.path.join(project_root, 'twitter/secret/keys_bot.yaml')
         with open(filename) as f:
             my_dict = yaml.safe_load(f)
-            if reddit_secret != "":
-                reddit_secret = my_dict.get("reddit_secret")
-            if reddit_script_id != "":
-                reddit_script_id = my_dict.get("reddit_script_id")
-        return reddit_secret, reddit_script_id
+            consumer_key = my_dict.get("consumer_key")
+            consumer_secret = my_dict.get("consumer_secret")
+            access_token = my_dict.get("access_token")
+            access_token_secret = my_dict.get("access_token_secret")
+            bearer_token = my_dict.get("bearer_token")
+
+        return access_token, access_token_secret, bearer_token, consumer_key, consumer_secret
+
+
+@staticmethod
+def get_reddit_secret():
+    settings_dir = os.path.dirname(__file__)
+    project_root = Path(os.path.dirname(settings_dir)).absolute()
+    keys_path = os.path.join(project_root, 'twitter/secret/keys_simple.yaml')
+    # filename = "C:\\Users\\julia\\PycharmProjects\\djangoProject\\twitter\\secret\\keys_simple.yaml"
+    filename = keys_path
+    reddit_secret = os.environ.get("reddit_secret")
+    reddit_script_id = os.environ.get("reddit_script_id")
+
+    with open(filename) as f:
+        my_dict = yaml.safe_load(f)
+        if reddit_secret != "":
+            reddit_secret = my_dict.get("reddit_secret")
+        if reddit_script_id != "":
+            reddit_script_id = my_dict.get("reddit_script_id")
+    return reddit_secret, reddit_script_id
 
 
 class TwitterConnector:
@@ -229,7 +245,7 @@ def get_praw():
 
 
 def send_tweet(text, tweet_id):
-    access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
+    access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_bot_secret()
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     # Creation of the actual interface, using authentication

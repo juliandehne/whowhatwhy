@@ -13,6 +13,7 @@ from django.db.models.signals import post_save
 from delab.tasks import download_conversations_scheduler
 from delab.bot.sender import publish_moderation
 from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
+from delab.bot.intolerance_bot import send_message
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def process_validated_answers(sender, instance: IntoleranceAnswerValidation, cre
     enough_validations = instance.answer.intoleranceanswervalidation_set.count() >= min_intolerance_answer_coders_needed
     if enough_validations:
         logger.info("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
+        send_message(instance.answer.candidate)
 
 
 @receiver(post_save, sender=SimpleRequest)
@@ -88,24 +90,3 @@ def process_simple_request(sender, instance, created, **kwargs):
                                          fast_mode=instance.fast_mode, language=instance.language)
 
 
-def convert_request_to_hashtag_list(title):
-    """ description
-
-        Parameters
-        ----------
-        title : str
-            i.e. "#covid #vaccination"
-        Returns
-        -------
-        [str]
-            i.e. [covid, vaccination]
-    """
-    cleaned_hashtags = []
-    if ' ' in title:
-        hashtags = title.split(" ")
-        for hashtag in hashtags:
-            cleaned_hashtags.append(hashtag[1:])  # removes the # symbol
-    else:
-        cleaned_hashtags.append(title[1:])
-
-    return cleaned_hashtags

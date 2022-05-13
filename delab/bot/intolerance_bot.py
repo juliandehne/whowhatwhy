@@ -1,10 +1,12 @@
-import re
-from time import sleep
+import datetime
+import random
+import time
 
-import spacy
-
-from delab.models import TWCandidateIntolerance, LANGUAGE
+from delab.bot.intolerance_strategies_texts import *
+from delab.models import LANGUAGE
 from delab.toxicity.perspectives import get_client
+from delab.models import TWCandidateIntolerance
+from delab.bot.sender import send_generated_tweet
 
 
 def get_toxicity_from_perspective(text):
@@ -37,16 +39,28 @@ def generate_answers(candidate):
         verbs = verbs_de
         feelings = feelings_de
         group_mapping = group_de_mapping
-        strategy1 = strategy1_de
-        strategy2 = strategy2_de
-        strategy3 = strategy3_de
+        strategy1 = strategies_de[0]
+        strategy2 = strategies_de[1]
+        strategy3 = strategies_de[2]
+    else:
+        if language == LANGUAGE.ENGLISH:
+            verbs = verbs_en
+            feelings = feelings_en
+            group_mapping = group_en_mapping
+            strategy1 = strategies_en[0]
+            strategy2 = strategies_en[1]
+            strategy3 = strategies_en[2]
 
     group = candidate.political_correct_word
     if group is None:
         if candidate.dict_category is not None:
             group = group_mapping[candidate.dict_category]
         else:
-            group = "Menschen dieser Art"
+            if language == LANGUAGE.GERMAN:
+                group = "Menschen dieser Art"
+            else:
+                if language == LANGUAGE.ENGLISH:
+                    group = "Humans of this kind"
 
     verb = verbs[tox_level]
     feeling = feelings[tox_level]
@@ -57,32 +71,14 @@ def generate_answers(candidate):
     return answer1, answer2, answer3
 
 
-verbs_de = ["hassen", "angreifen", "verurteilen"]
-verbs_en = ["hate", "attack", "judge"]
+def send_message(candidate: TWCandidateIntolerance):
+    answers = [candidate.intoleranceanswer.answer1]
+    answers += candidate.intoleranceanswer.answer2
+    answers += candidate.intoleranceanswer.answer3
 
-feelings_de = ["hasserfüllt gegen", "wütend auf", "genervt von"]
-feelings_en = ["full of hate against" "angry at", "annoyed by"]
-
-group_de_mapping = {"rel": "Menschen anderer Religionen",
-                    "eth": "Menschen anderer Ethnien",
-                    "sex": "Menschen anderer Sexualität",
-                    "bod": "Menschen mit anderen Körperformen",
-                    "rac": "Menschen anderer Hautfarbe"}
-
-strategy1_de = "Art. 1 der Allgemeinen Erklärung der Menschenrechte lautet:" \
-               " „Alle Menschen sind frei und gleich an Würde und Rechten geboren. " \
-               "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit" \
-               " begegnen.“ Das gilt auch für {}. Sie sollten diese nicht pauschal {}, " \
-               "sondern sich im Geiste der Brüderlichkeit üben."
-
-strategy2_de = "Sagen Sie, dass alle {} schlechte Mitbürger sind? " \
-               "Wenn man daraus eine allgemeine Regel machen würde," \
-               " dass es reicht zu einer Gruppe wie den {} zu gehören," \
-               " um so beurteilt zu werden, würde unsere plurale Gesellschaft in Hass und Spaltungen versinken." \
-               " Das kann auch nicht in ihrem Interesse sein!"
-
-strategy3_de = "Warum sind Sie so {} {}? " \
-               "Haben Sie alle ihre Möglichkeiten ausgereizt, ihre Meinung zu {} zu überprüfen," \
-               " bevor Sie so eine starke Haltung angenommen haben? " \
-               "Wenn Sie sich danach fühlen, schreiben Sie doch, " \
-               "warum Sie so zu {} denken. Es interessiert mich, warum das so ist."
+    alternatives = [0, 1, 2]
+    answer_choice_index = random.choice(alternatives)
+    answer = answers[answer_choice_index]
+    send_generated_tweet(text=answer, reply_to_id=candidate.tweet.twitter_id)
+    candidate.intoleranceanswer.date_success_sent(datetime.datetime.now())
+    candidate.save(update_fields=["date_success_sent"])
