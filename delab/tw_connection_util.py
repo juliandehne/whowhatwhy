@@ -245,7 +245,8 @@ def get_praw():
 
 
 def send_tweet(text, tweet_id):
-    access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_bot_secret()
+    # access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_bot_secret()
+    access_token, access_token_secret, bearer_token, consumer_key, consumer_secret = TwitterUtil.get_secret()
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     # Creation of the actual interface, using authentication

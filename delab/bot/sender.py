@@ -28,6 +28,7 @@ def send_generated_tweet(text, reply_to_id):
         text = text + delab_admission
         response = send_tweet(text, tweet_id=reply_to_id)
         logger.info(response)
-
+        # the twitter id is returned under response.id, the created_date under response.created_at, the sourceurl
+        return response
     except tweepy.errors.Unauthorized:
         logger.error("could not send post out because of authorization issue")

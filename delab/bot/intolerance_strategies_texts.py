@@ -19,36 +19,18 @@ group_en_mapping = {"rel": "people of other religions",
 strategies_de = {
     0: "Art. 1 der Allgemeinen Erklärung der Menschenrechte lautet:" \
        " „Alle Menschen sind frei und gleich an Würde und Rechten geboren. " \
-       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit" \
-       " begegnen.“ Das gilt auch für {}. Sie sollten diese nicht pauschal {}, " \
-       "sondern sich im Geiste der Brüderlichkeit üben.",
+       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit\"",
+    1: "Wäre es eine allgemeine Regel, dass Menschen so beurteilt werden, "
+       "nur weil sie einer Gruppe wie den {} angehören, "
+       "würde unsere plurale Gesellschaft in Hass und Spaltung versinken.",
+    2: "Warum sind Sie so {} {}? "}
 
-    1: "Sagen Sie, dass alle {} schlechte Mitbürger sind? " \
-       "Wenn man daraus eine allgemeine Regel machen würde," \
-       " dass es reicht zu einer Gruppe wie den {} zu gehören," \
-       " um so beurteilt zu werden, würde unsere plurale Gesellschaft in Hass und Spaltungen versinken." \
-       " Das kann auch nicht in Ihrem Interesse sein!",
-    2: "Warum sind Sie so {} {}? " \
-       "Haben Sie alle ihre Möglichkeiten ausgereizt, ihre Meinung zu {} zu überprüfen," \
-       " bevor Sie so eine starke Haltung angenommen haben? " \
-       "Wenn Sie sich danach fühlen, schreiben Sie doch, " \
-       "warum Sie so zu {} denken. Es interessiert mich, warum das so ist."
-}
 
 strategies_en = {
     0: "Article 1 of the Universal Declaration of Human Rights reads." \
        "All human beings are born free and equal in dignity and rights. " \
-       "They are endowed with reason and conscience, and shall bear one another in the spirit of brotherhood!" \
-       "This also applies to {}. You should not  {} sweepingly, " \
-       " but practice the spirit of brotherhood.",
-    1: "Are you saying that all {} are bad fellow citizens? " \
-       "If you were to make this a general rule." \
-       " that it is enough to belong to a group like the {}," \
-       " to be judged that way, our plural society would sink into hatred and divisions." \
-       " That can't be in your interest either!",
-    2: "Why are you so {} {}? " \
-       "Have you exhausted all her opportunities to check her opinion on {}" \
-       " before you adopted such a strong stance? " \
-       "If you feel like it, why don't you write " \
-       " why you feel that way about {}. I'm interested in why that is."
-}
+       "They are endowed with reason and conscience, and ought to treat one another in a spirit of brotherhood.\"",
+    1: "Were it a general rule that men should be so judged, " \
+       "just because they belong to a group like the {}, " \
+       "our plural society would sink into hatred and division.", \
+    2: "Why are you so {} {}? "}

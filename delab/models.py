@@ -372,6 +372,7 @@ class IntoleranceAnswer(models.Model):
     answer3 = models.TextField()
     strategy_chosen = models.TextField(default=STRATEGIES.NORMATIVE, choices=STRATEGIES.choices, null=True)
     date_success_sent = models.DateTimeField(blank=True, null=True)
+    twitter_id = models.BigIntegerField(unique=True, null=True, blank=True)
 
 
 class IntoleranceAnswerValidation(models.Model):

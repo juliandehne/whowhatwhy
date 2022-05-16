@@ -65,20 +65,20 @@ def generate_answers(candidate):
     verb = verbs[tox_level]
     feeling = feelings[tox_level]
 
-    answer1 = strategy1.format(group, verb)
-    answer2 = strategy2.format(group, group)
-    answer3 = strategy3.format(feeling, group, group, group)
+    answer1 = strategy1.format()
+    answer2 = strategy2.format(group)
+    answer3 = strategy3.format(feeling, group)
     return answer1, answer2, answer3
 
 
 def send_message(candidate: TWCandidateIntolerance):
-    answers = [candidate.intoleranceanswer.answer1]
-    answers += candidate.intoleranceanswer.answer2
-    answers += candidate.intoleranceanswer.answer3
+    answers = {0: candidate.intoleranceanswer.answer1, 1: candidate.intoleranceanswer.answer2,
+               2: candidate.intoleranceanswer.answer3}
 
     alternatives = [0, 1, 2]
     answer_choice_index = random.choice(alternatives)
     answer = answers[answer_choice_index]
-    send_generated_tweet(text=answer, reply_to_id=candidate.tweet.twitter_id)
-    candidate.intoleranceanswer.date_success_sent(datetime.datetime.now())
-    candidate.save(update_fields=["date_success_sent"])
+    response = send_generated_tweet(text=answer, reply_to_id=candidate.tweet.twitter_id)
+    candidate.intoleranceanswer.date_success_sent(response["created_at"])
+    candidate.intoleranceanswer.twitter_id = response["id"]
+    candidate.intoleranceanswer.save(update_fields=["date_success_sent", "twitter_id"])

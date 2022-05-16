@@ -298,6 +298,7 @@ def intolerance_candidate_label_proxy(request):
 def intolerance_answer_validation_proxy(request):
     current_user = request.user
     candidates = IntoleranceAnswer.objects \
+        .filter(twitter_id__isnull=True) \
         .annotate(num_coders=Count('intoleranceanswervalidation')) \
         .filter(num_coders__lt=min_intolerance_answer_coders_needed) \
         .exclude(intoleranceanswervalidation__in=current_user.intoleranceanswervalidation_set.all()) \
