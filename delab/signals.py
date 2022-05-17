@@ -44,8 +44,13 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
                                                        u_person_hate=False).count()
     exists_previous_labeling = ratings_count >= min_intolerance_coders_needed
     if exists_previous_labeling:
+        # filter if the candidate has already a generated answer
         already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
-        if not already_exists_answer:
+        # filter if the candidate belongs to a discussion where an intervention has taken place
+        already_sent_answer_in_discussion = IntoleranceAnswer.objects.filter(
+            candidate__tweet__conversation_id=instance.candidate.tweet.conversation_id).filter(
+            twitter_id__isnull=False).exists()
+        if not already_exists_answer and not already_sent_answer_in_discussion:
             answer1, answer2, answer3 = generate_answers(instance.candidate)
             IntoleranceAnswer.objects.create(
                 answer1=answer1,
@@ -62,7 +67,8 @@ def process_validated_answers(sender, instance: IntoleranceAnswerValidation, cre
     This will send the tweet out with the answer if the validation is successful
     :return:
     """
-    enough_validations = instance.answer.intoleranceanswervalidation_set.count() >= min_intolerance_answer_coders_needed
+    enough_validations = instance.answer.intoleranceanswervalidation_set.filter(
+        valid=True).count() >= min_intolerance_answer_coders_needed
     if enough_validations:
         logger.info("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
         send_message(instance.answer.candidate)
@@ -88,5 +94,3 @@ def process_simple_request(sender, instance, created, **kwargs):
                                          schedule=timezone.now(),
                                          simulate=False, max_data=instance.max_data,
                                          fast_mode=instance.fast_mode, language=instance.language)
-
-

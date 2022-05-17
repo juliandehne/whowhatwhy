@@ -19,7 +19,7 @@ group_en_mapping = {"rel": "people of other religions",
 strategies_de = {
     0: "Art. 1 der Allgemeinen Erklärung der Menschenrechte lautet:" \
        " „Alle Menschen sind frei und gleich an Würde und Rechten geboren. " \
-       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit\"",
+       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit begegnen\"",
     1: "Wäre es eine allgemeine Regel, dass Menschen so beurteilt werden, "
        "nur weil sie einer Gruppe wie den {} angehören, "
        "würde unsere plurale Gesellschaft in Hass und Spaltung versinken.",

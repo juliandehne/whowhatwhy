@@ -79,6 +79,6 @@ def send_message(candidate: TWCandidateIntolerance):
     answer_choice_index = random.choice(alternatives)
     answer = answers[answer_choice_index]
     response = send_generated_tweet(text=answer, reply_to_id=candidate.tweet.twitter_id)
-    candidate.intoleranceanswer.date_success_sent(response["created_at"])
+    candidate.intoleranceanswer.date_success_sent = response["created_at"]
     candidate.intoleranceanswer.twitter_id = response["id"]
     candidate.intoleranceanswer.save(update_fields=["date_success_sent", "twitter_id"])

@@ -249,6 +249,10 @@ class TWCandidateIntoleranceLabelView(LoginRequiredMixin, CreateView, SuccessMes
     def form_valid(self, form):
         form.instance.coder = self.request.user
         form.instance.candidate_id = self.request.resolver_match.kwargs['pk']
+        candidate_political_correct_word = form.cleaned_data.get("u_political_correct_word", "")
+        candidate = TWCandidateIntolerance.objects.filter(id=form.instance.candidate_id).get()
+        candidate.political_correct_word = candidate_political_correct_word
+        candidate.save(update_fields=["political_correct_word"])
         return super().form_valid(form)
 
     def get_context_data(self, *, object_list=None, **kwargs):

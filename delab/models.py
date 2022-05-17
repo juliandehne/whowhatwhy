@@ -367,9 +367,9 @@ class IntoleranceAnswer(models.Model):
     strategy chosen and the timestamp, when the answer was sent
     """
     candidate = models.OneToOneField(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
-    answer1 = models.TextField()
-    answer2 = models.TextField()
-    answer3 = models.TextField()
+    answer1 = models.CharField(max_length=280)
+    answer2 = models.CharField(max_length=280)
+    answer3 = models.CharField(max_length=280)
     strategy_chosen = models.TextField(default=STRATEGIES.NORMATIVE, choices=STRATEGIES.choices, null=True)
     date_success_sent = models.DateTimeField(blank=True, null=True)
     twitter_id = models.BigIntegerField(unique=True, null=True, blank=True)
