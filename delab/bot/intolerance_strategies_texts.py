@@ -19,7 +19,7 @@ group_en_mapping = {"rel": "people of other religions",
 strategies_de = {
     0: "Art. 1 der Allgemeinen Erklärung der Menschenrechte lautet:" \
        " „Alle Menschen sind frei und gleich an Würde und Rechten geboren. " \
-       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit begegnen\"",
+       "Sie sind mit Vernunft und Gewissen begabt und sollen einander im Geiste der Brüderlichkeit begegnen!\"",
     1: "Wäre es eine allgemeine Regel, dass Menschen so beurteilt werden, "
        "nur weil sie einer Gruppe wie den {} angehören, "
        "würde unsere plurale Gesellschaft in Hass und Spaltung versinken.",
@@ -29,7 +29,7 @@ strategies_de = {
 strategies_en = {
     0: "Article 1 of the Universal Declaration of Human Rights reads." \
        "All human beings are born free and equal in dignity and rights. " \
-       "They are endowed with reason and conscience, and ought to treat one another in a spirit of brotherhood.\"",
+       "They are endowed with reason and conscience, and ought to treat one another in a spirit of brotherhood!\"",
     1: "Were it a general rule that men should be so judged, " \
        "just because they belong to a group like the {}, " \
        "our plural society would sink into hatred and division.", \

@@ -23,11 +23,9 @@ def publish_moderation(instance):
 
 
 def send_generated_tweet(text, reply_to_id):
-    try:
-        delab_admission = " (This was automatically send by the deliberation app)"
-        text = text + delab_admission
-        response = send_tweet(text, tweet_id=reply_to_id)
-        logger.info(response)
-        return response
-    except tweepy.errors.Unauthorized:
-        logger.error("could not send post out because of authorization issue")
+    delab_admission = " (Sent by the deliberation app)"
+    # text = text + delab_admission
+    text = text
+    response = send_tweet(text, tweet_id=reply_to_id)
+    logger.info(response)
+    return response
