@@ -1,6 +1,7 @@
 from delab.nce.download_intolerant_tweets import download_terrible_tweets
+from delab.tasks import download_intolerant_tweets
 
 
 def run():
-    download_terrible_tweets(True, True, download_right_wing=False)
+    download_intolerant_tweets()
 

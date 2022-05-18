@@ -55,3 +55,12 @@ services:
       - migrate
     environment:
       - DJANGO_DATABASE=postgres
+
+  download_intolerant_tweets:
+    image: delab-server
+    command: python manage.py runscript download_terrible_tweets
+    depends_on:
+      - process_tasks
+    environment:
+      - DJANGO_DATABASE=postgres
+
