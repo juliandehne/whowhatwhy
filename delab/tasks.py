@@ -94,6 +94,6 @@ def get_tasks_status(simple_request_id):
 
 
 @background()
-def download_intolerant_tweets(repeat=Task.DAILY):
+def download_intolerant_tweets():
     logger.info("CRONJOB: downloading intolerant tweets")
     download_terrible_tweets(True, True)
