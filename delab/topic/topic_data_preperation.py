@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def save_author_tweet_to_tb(json_result, author_id):
+    """
+    This saves single tweets from the timeline to the database
+    :param json_result: the timeline result payload
+    :param author_id: the twitter id of timeline's owner
+    :return:
+    """
     if "data" in json_result:
         data = json_result["data"]
         for tweet_dict in data:
@@ -38,6 +44,14 @@ def save_author_tweet_to_tb(json_result, author_id):
 
 
 def fix_legacy():
+    """
+    Download missing authors and link them with existing timeline elements
+    This method only provides database consistency if the following order is not kept:
+    1. download conversations
+    2. download authors
+    3. download timelines
+    :return:
+    """
     # update authors "has_timeline" field
     authors = TweetAuthor.objects.filter(has_timeline__isnull=True)
     authors_ids = authors.values_list('twitter_id', flat=True)
@@ -68,6 +82,13 @@ def fix_legacy():
 def update_timelines_from_conversation_users(simple_request_id=-1,
                                              platform=PLATFORM.TWITTER,
                                              fix_legacy_db=True):
+    """
+    This downloads the timelines for a given conversation
+    :param simple_request_id: the request id that was used when querying the conversation
+    :param platform: PLATFORM.TWITTER or PLATFORM.REDDIT
+    :param fix_legacy_db: Download the authors for the conversation, that are still missing in the database
+    :return:
+    """
     if platform == PLATFORM.REDDIT:
         download_timelines(simple_request_id)
     if platform == PLATFORM.TWITTER:
@@ -84,6 +105,12 @@ def update_timelines_from_conversation_users(simple_request_id=-1,
 
 
 def get_user_timeline_twarc(author_ids, max_results=10):
+    """
+    get user timelines on a batch basis
+    :param author_ids: [author_id1, author_id2, ...]
+    :param max_results: int (the number of elements from the timeline
+    :return:
+    """
     twarc_connector = DelabTwarc()
 
     author_count = 0
@@ -99,7 +126,13 @@ def get_user_timeline_twarc(author_ids, max_results=10):
                 break
             save_author_tweet_to_tb(tweet, author_id)
         if count == 0:
-            logger.debug("could not find a timeline for the give")
-            author = TweetAuthor.objects.filter(twitter_id=author_id).get()
-            author.has_timeline = False
-            author.save(update_fields=["has_timeline"])
+            try:
+                logger.debug("could not find a timeline for the give")
+                author = TweetAuthor.objects.filter(twitter_id=author_id).get()
+                author.has_timeline = False
+                author.save(update_fields=["has_timeline"])
+            except TweetAuthor.DoesNotExist:
+                if author_id is None:
+                    raise ValueError("there is a programming error in the timeline download")
+                else:
+                    logger.error("could not set timeline to false for author_id: {}".format(author_id))
