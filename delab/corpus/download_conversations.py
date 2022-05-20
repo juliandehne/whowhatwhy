@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False, conversation_filter=None, tweet_filter=None):
+                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -67,13 +67,13 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
             if len(hashtag_set) > 0:
                 combination_counter += 1
                 new_query = " ".join(hashtag_set)
-                get_matching_conversation(connector, new_query, topic, simple_request, language=language,
+                get_matching_conversation(connector, new_query, topic, simple_request, platform, language=language,
                                           fast_mode=fast_mode, conversation_filter=conversation_filter,
                                           tweet_filter=tweet_filter)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
-        get_matching_conversation(connector, query_string, topic, simple_request, language=language,
+        get_matching_conversation(connector, query_string, topic, simple_request, platform, language=language,
                                   fast_mode=fast_mode, conversation_filter=conversation_filter,
                                   tweet_filter=tweet_filter)
 
@@ -84,6 +84,7 @@ def get_matching_conversation(connector,
                               query,
                               topic,
                               simple_request,
+                              platform,
                               max_conversation_length=1000,
                               min_conversation_length=10,
                               language=LANGUAGE.ENGLISH,
@@ -132,7 +133,7 @@ def get_matching_conversation(connector,
                 logger.debug("retrieved node with number of children: {}".format(flat_tree_size))
                 downloaded_tweets += flat_tree_size
                 if min_conversation_length < flat_tree_size < max_conversation_length:
-                    save_tree_to_db(root_node, topic, simple_request, candidate_id, tweet_filter=tweet_filter)
+                    save_tree_to_db(root_node, topic, simple_request, candidate_id, platform, tweet_filter=tweet_filter)
                     logger.debug("found suitable conversation and saved to db {}".format(candidate_id))
                     # for debugging you can ascii art print the downloaded conversation_tree
                     # root_node.print_tree(0)
@@ -155,7 +156,7 @@ def get_matching_conversation(connector,
             logger.error("Timeout occurred")
 
 
-def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=None, tweet_filter=None):
+def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform, parent=None, tweet_filter=None):
     """ This method persist a conversation tree in the database
 
 
@@ -165,6 +166,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         :param topic : the topic of the query
         :param simple_request: the query string in order to link the view
         :param conversation_id: the conversation id of the candidate tweet that was found with the request
+        :param platform: this was added to allow for a "fake" delab platform to come in
         :param parent: TwConversationTree this is needed for the recursion, is None for root
         :param tweet_filter: a function that takes a tweet model object and validates it (returns None if not)
 
@@ -185,6 +187,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
                       in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                       in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
                       tn_parent_id=tn_parent,
+                      platform=platform,
                       # tn_priority=priority,
                       language=root_node.data["lang"])
         if tweet_filter is not None:
@@ -200,9 +203,11 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, parent=No
         # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
         if not len(root_node.children) == 0:
             for child in root_node.children:
-                save_tree_to_db(child, topic, simple_request, conversation_id, root_node, tweet_filter=tweet_filter)
+                save_tree_to_db(child, topic, simple_request, conversation_id, platform, parent,
+                                tweet_filter=tweet_filter)
     except IntegrityError as e:
-        logger.debug("found tweet existing in database, not downloading the tree again")
+        raise ValueError("shittyy")
+        # logger.debug("found tweet existing in database, not downloading the tree again")
 
 
 def retrieve_replies(conversation_id, max_replies, language):

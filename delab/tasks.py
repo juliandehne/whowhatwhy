@@ -24,7 +24,7 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
     else:
         if platform == PLATFORM.TWITTER:
             download_conversations(topic_string, query_string, simple_request_id, language=language, max_data=max_data,
-                                   fast_mode=fast_mode)
+                                   fast_mode=fast_mode, platform=platform)
         if platform == PLATFORM.REDDIT:
             download_conversations_reddit(topic_string, simple_request_id)
 

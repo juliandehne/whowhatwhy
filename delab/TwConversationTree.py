@@ -13,6 +13,22 @@ class TreeNode:
         """
         self.tree_id = tree_id
         self.data = data
+        """
+        the following data fields are required
+          text= root_node.data["text"],
+          simple_request=simple_request,
+          twitter_id=root_node.data["id"],
+          author_id=root_node.data["author_id"],
+          conversation_id=conversation_id,
+          created_at=root_node.data["created_at"],
+          in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
+          in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
+          tn_parent_id=tn_parent,
+          # tn_priority=priority,
+          language=root_node.data["lang"])
+
+        """
+
         self.children = []
         self.max_path_length = 0
         self.parent_id = parent_id
