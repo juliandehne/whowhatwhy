@@ -10,4 +10,10 @@ def run():
 
     :return:
     """
+    # deleting previous daily cron jobs
+    background_tasks = Task.objects.filter(task_name='delab.tasks.download_intolerant_tweets')
+    for background_task in background_tasks:
+        background_task.delete()
+
+    # adding the new task to the stack
     download_intolerant_tweets(repeat=Task.DAILY)
