@@ -270,6 +270,6 @@ TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and
 sys.setrecursionlimit(2000)
 
 # the number of people that need to label a tweet as intolerant for it to be labeled correctly
-min_intolerance_coders_needed = 1
+min_intolerance_coders_needed = 2
 # the number of people that need to validate an answer before it can be sent
-min_intolerance_answer_coders_needed = 1
+min_intolerance_answer_coders_needed = 2
