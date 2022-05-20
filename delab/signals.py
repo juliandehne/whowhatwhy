@@ -1,19 +1,17 @@
-import copy
 import logging
 
 from django.db.models.signals import post_save
+from django.dispatch import receiver
 # from django.dispatch import receiver
 from django.utils import timezone
-from django.dispatch import receiver
 
 from delab.bot.intolerance_bot import generate_answers
-from delab.models import SimpleRequest, Tweet, TWCandidate, PLATFORM, TWIntoleranceRating, IntoleranceAnswer, \
-    IntoleranceAnswerValidation
-from django.db.models.signals import post_save
-from delab.tasks import download_conversations_scheduler
-from delab.bot.sender import publish_moderation
-from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 from delab.bot.intolerance_bot import send_message
+from delab.bot.sender import publish_moderation
+from delab.models import SimpleRequest, Tweet, PLATFORM, TWIntoleranceRating, IntoleranceAnswer, \
+    IntoleranceAnswerValidation
+from delab.tasks import download_conversations_scheduler
+from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +35,7 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
     :param kwargs:
     :return:
     """
-    exists_previous_labeling = True
+
     ratings_count = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
                                                        u_intolerance_rating=2,
                                                        u_clearness_rating=2,
