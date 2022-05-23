@@ -44,7 +44,7 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
     if exists_previous_labeling:
         # filter if the candidate has already a generated answer
         already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
-        # filter if the candidate belongs to a discussion where an intervention has taken place
+        # filter if the candidate belongs to a discussion where an intervention has taken place already
         already_sent_answer_in_discussion = IntoleranceAnswer.objects.filter(
             candidate__tweet__conversation_id=instance.candidate.tweet.conversation_id).filter(
             twitter_id__isnull=False).exists()

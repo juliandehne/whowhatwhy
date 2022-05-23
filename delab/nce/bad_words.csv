@@ -1,10 +1,10 @@
 word, language, category, pol_correct_word
-beaner,en,eth,Latino
-chinc,en,eth,Asian
-chink,en,eth,Asian
+beaner,en,eth,Latinos
+chinc,en,eth,Asians
+chink,en,eth,Asians
 coon,en,sex,Black People
-dego,en,eth,Italian
-gook,en,eth,Korean
+dego,en,eth,Italians
+gook,en,eth,Koreans
 heeb,en,rel,Jewish
 kike,en,rel,Jewish
 kyke,en,rel,Jewish
@@ -14,39 +14,39 @@ nigger,en,rac,Black People
 niglet,en,rac,Black People
 porchmonkey,en,rac,Black People
 pollock,en,eth,Polish
-sandnigger,en,rac,Arab
-spic,en,eth,Hispanic
-wop,en,eth,Italian
+sandnigger,en,rac,Arabs
+spic,en,eth,Hispanics
+wop,en,eth,Italians
 jap,en,eth,Japanese
 junglebunny,en,rac,Black People
-spick,en,eth,Hispanic
-spic,en,eth,Hispanic
+spick,en,eth,Hispanics
+spic,en,eth,Hispanics
 wetback,en,eth,Mexicans
 dyke,en,sex,Lesbian
 skank,en,sex,Promiscuous People
 carpetmuncher,en,sex,Lesbian
 fags,en,sex,Homosexuals
-fudgepacker,en,sex,Homosexual
-homo,en,sex,Homosexual
+fudgepacker,en,sex,Homosexuals
+homo,en,sex,Homosexuals
 lesbo,en,sex,Lesbian
 lezzie,en,sex,Lesbian
-Judensau,de,rel,Jude
-Kopftuchträger,de,rel,Muslim
+Judensau,de,rel,Juden
+Kopftuchträger,de,rel,Muslims
 Neger,de,rac,Schwarze
 Schlitzauge,de,eth,Asiate
 Zigeuner,de,eth,Sinti und Roma
-Schwuchtel,de,sex,Homosexueller
-Abbo,en,rac,Aboriginal Australian
-Bluegum,en,rac,African
-Crucco,en,eth,German
+Schwuchtel,de,sex,Homosexuelle
+Abbo,en,rac,Aboriginal Australians
+Bluegum,en,rac,Africans
+Crucco,en,eth,Germans
 Bohunk,en,rac,Czech
-Bougnoule,en,rac,Arab
-Goombah,en,eth,Italian
-Greaseball,en,eth,Italian
-Injun,en,rac,Native American
-Bozgor,en,rac,Hungarian
-Bootlip,en,rac,African American
-Arabush,en,eth,Arab
+Bougnoule,en,rac,Arabs
+Goombah,en,eth,Italians
+Greaseball,en,eth,Italians
+Injun,en,rac,Native Americans
+Bozgor,en,rac,Hungarians
+Bootlip,en,rac,African Americans
+Arabush,en,eth,Arabs
 Kanake,de,rac,Türken
 Polaco,es,eth,Polish
 Sheeny,en,rel,Jewish
