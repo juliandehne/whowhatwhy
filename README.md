@@ -138,7 +138,7 @@ For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wi
 ## Norm Culture Experiment
 
 The idea here is to experiment with different strategies to approach norm violations like intolerance.
-For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/nce)
+For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/Norm-Culture-Experiment)
 
 
 # Code Overview
