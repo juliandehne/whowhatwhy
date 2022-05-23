@@ -118,16 +118,6 @@ There are several options to get data for analysis without having having to code
 - use the download tab on the website 
 - use the rest-services programatically. For this see the [wiki entry](https://github.com/juliandehne/delab/wiki/REST-Services).
 
-# Code Overview
-
-- django_project contains the settings.py file which shows most decisions
-- delab/templates contains the different webpages
-- delab/models.py contains the tables and main concepts
-- delab/views.py contains the view-controllers
-- delab/tasks.py contains the background tasks that are triggered by the website when downloading data
-- delab/signals.py contains some anti-patterns that after a models is saved additional events are triggered
-- delab/corpus contains the logic for downloading conversations in social media, espc. twitter
-- delab/nce contains the important logic for the basic prototype that answers intolerant tweets
 
 # Deploy with docker
 
@@ -149,4 +139,16 @@ For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wi
 
 The idea here is to experiment with different strategies to approach norm violations like intolerance.
 For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/nce)
+
+
+# Code Overview
+
+- django_project contains the settings.py file which shows most decisions
+- delab/templates contains the different webpages
+- delab/models.py contains the tables and main concepts
+- delab/views.py contains the view-controllers
+- delab/tasks.py contains the background tasks that are triggered by the website when downloading data
+- delab/signals.py contains some anti-patterns that after a models is saved additional events are triggered
+- delab/corpus contains the logic for downloading conversations in social media, espc. twitter
+- delab/nce contains the important logic for the basic prototype that answers intolerant tweets
 
