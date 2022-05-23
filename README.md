@@ -113,86 +113,10 @@ In the folder notebooks you can access the notebooks by using your own jupyter n
 
 ### Provide Data to Project Partners
 
-Using the Django REST framework you can provide access to the data by exposing the following endpoints:
+There are several options to get data for analysis without having having to code yourselves:
 
-Note: This documentation is not up-to-date concerning the REST endpoints as they are not currently in use.
-
-```python
-# this example illustrates how Tweets or Reddit posts are exposed in REST
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import serializers, viewsets
-
-from delab.models import Tweet, TweetAuthor
-
-# Serializers define the API representation.
-
-
-tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
-                     'in_reply_to_user_id',
-                     'sentiment_value', 'language']
-
-
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TweetAuthor
-        fields = '__all__'
-
-
-# Serializers define the API representation.
-class TweetSerializer(serializers.ModelSerializer):
-    tw_author = AuthorSerializer()
-
-    # tw_author__name = serializers.StringRelatedField()
-    # tw_author__location = serializers.StringRelatedField()
-
-    class Meta:
-        model = Tweet
-        fields = tweet_fields_used + ["tw_author"]
-        # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
-
-        
-def get_migration_query_set(topic):
-    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
-    return queryset
-
-# ViewSets define the view behavior.
-class TweetViewSet(viewsets.ModelViewSet):
-    queryset = Tweet.objects.none()
-    serializer_class = TweetSerializer
-    filter_backends = [DjangoFilterBackend]
-    # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
-    filterset_fields = tweet_fields_used
-
-    # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    def get_queryset(self):
-        topic = self.kwargs["topic"]
-        return get_migration_query_set(topic)
-```
-
-#### Conversation data
-
-In order to get the conversations there are four endpoints
-
-
-- localhost:8000/delab/rest/migration/tweets_json/
-- localhost:8000/delab/rest/migration/tweets_excel/
-- localhost:8000/delab/rest/migration/tweets_text/
-- localhost:8000/delab/rest/migration/tweets_zip/
-
-In order to get single conversations you need to specify id and (full|cropped), i.e.
-
-- localhost:8000/delab/rest/migration/tweets_json/\
-  conversation/<conversation_id>/<(full|cropped)>
-
-In order to get all conversation_ids that contain a valid cropped conversation tree use:
-
-- localhost:8000/delab/rest/migration/tweets_text/conversation_ids
-- Note: Firefox will round the last two decimals so use another tool to read the json response, i.e. curl, chrome,
-  intellij
-
-In order to get all conversations bundled as a zip file you can use:
-
-- localhost:8000/delab/rest/migration/tweets_zip/all/(both|cropped|full)
+- use the download tab on the website 
+- use the rest-services programatically. For this see the [wiki entry](https://github.com/juliandehne/delab/wiki/REST-Services).
 
 # Code Overview
 
