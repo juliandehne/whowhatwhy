@@ -109,7 +109,7 @@ python manage.py runscript scriptname_without_file_ending [--script-args arg1 ar
 
 ### Using Jupyter Notebooks
 
-In the folder notebooks you can access the notebooks by using your own jupyter notebook server
+In the folder notebooks you can access the notebooks by using your own jupyter notebook server. The notebooks will also access the postgres_db which needs to be running, for example using the scriptsh/start_postgres_docker.sh script. Another option is to use ssh port forwarding to provide access to the server, where the postgres db is running.
 
 ### Provide Data to Project Partners
 
