@@ -213,3 +213,16 @@ docker build . -t delab-server
 docker-compose down --volumes --remove-orphans
 docker-compose up
 ```
+
+# Ongoing studies and the corresponding setup
+
+## Moderation Mining 
+
+The idea here is to find tweets that try to moderate the ongoing chat based. 
+For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/moderation_mining)
+
+## Norm Culture Experiment
+
+The idea here is to experiment with different strategies to approach norm violations like intolerance.
+For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/nce)
+
