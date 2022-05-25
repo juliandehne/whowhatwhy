@@ -61,7 +61,7 @@ api is assumed. The consumer key etc. references Twitter. In order to get the pr
 
 ## Entry points for using the code actively
 
-1. Run the Code as a Django Website for Man-In-the-Loop experiments
+1. Run the Code as a Django Website for Human-In-the-Loop experiments
 2. Run Django Scripts (Python Scripts that connect to the Django models) sharing the DB from 1
 3. Run JupyterNotebooks that connects to the DB from 1
 4. Provide data downloaded to project partners
