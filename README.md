@@ -61,7 +61,7 @@ api is assumed. The consumer key etc. references Twitter. In order to get the pr
 
 ## Entry points for using the code actively
 
-1. Run the Code as a Django Website for Man-In-the-Loop experiments
+1. Run the Code as a Django Website for Human-In-the-Loop experiments
 2. Run Django Scripts (Python Scripts that connect to the Django models) sharing the DB from 1
 3. Run JupyterNotebooks that connects to the DB from 1
 4. Provide data downloaded to project partners
@@ -109,20 +109,15 @@ python manage.py runscript scriptname_without_file_ending [--script-args arg1 ar
 
 ### Using Jupyter Notebooks
 
-In the folder notebooks you can access the notebooks by using your own jupyter notebook server
+In the folder notebooks you can access the notebooks by using your own jupyter notebook server. The notebooks will also access the postgres_db which needs to be running, for example using the scriptsh/start_postgres_docker.sh script. Another option is to use ssh port forwarding to provide access to the server, where the postgres db is running.
 
+### Provide Data to Project Partners
 
+There are several options to get data for analysis without having having to code yourselves:
 
-# Code Overview
+- use the download tab on the website 
+- use the rest-services programatically. For this see the [wiki entry](https://github.com/juliandehne/delab/wiki/REST-Services).
 
-- django_project contains the settings.py file which shows most decisions
-- delab/templates contains the different webpages
-- delab/models.py contains the tables and main concepts
-- delab/views.py contains the view-controllers
-- delab/tasks.py contains the background tasks that are triggered by the website when downloading data
-- delab/signals.py contains some anti-patterns that after a models is saved additional events are triggered
-- delab/corpus contains the logic for downloading conversations in social media, espc. twitter
-- delab/nce contains the important logic for the basic prototype that answers intolerant tweets
 
 # Deploy with docker
 
@@ -143,5 +138,17 @@ For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wi
 ## Norm Culture Experiment
 
 The idea here is to experiment with different strategies to approach norm violations like intolerance.
-For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/nce)
+For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wiki/Norm-Culture-Experiment)
+
+
+# Code Overview
+
+- django_project contains the settings.py file which shows most decisions
+- delab/templates contains the different webpages
+- delab/models.py contains the tables and main concepts
+- delab/views.py contains the view-controllers
+- delab/tasks.py contains the background tasks that are triggered by the website when downloading data
+- delab/signals.py contains some anti-patterns that after a models is saved additional events are triggered
+- delab/corpus contains the logic for downloading conversations in social media, espc. twitter
+- delab/nce contains the important logic for the basic prototype that answers intolerant tweets
 
