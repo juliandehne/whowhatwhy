@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER):
+                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
+                           start_date=None, end_date=None):
     """ This downloads a random twitter conversation with the given hashtags.
         The approach is similar to https://cborchers.com/2021/03/23/notes-on-downloading-conversations-through-twitters-v2-api/
         The approach is to use the conversation id and api 2 to get the conversation, for API 1 this workaround
@@ -69,13 +70,13 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                 new_query = " ".join(hashtag_set)
                 get_matching_conversation(connector, new_query, topic, simple_request, platform, language=language,
                                           fast_mode=fast_mode, conversation_filter=conversation_filter,
-                                          tweet_filter=tweet_filter)
+                                          tweet_filter=tweet_filter, start_date=start_date, end_date=end_date)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         get_matching_conversation(connector, query_string, topic, simple_request, platform, language=language,
                                   fast_mode=fast_mode, conversation_filter=conversation_filter,
-                                  tweet_filter=tweet_filter)
+                                  tweet_filter=tweet_filter, start_date=start_date, end_date=end_date)
 
     connector = None  # precaution to terminate the thread and the http socket
 
@@ -89,7 +90,7 @@ def get_matching_conversation(connector,
                               min_conversation_length=10,
                               language=LANGUAGE.ENGLISH,
                               max_number_of_candidates=MAX_CANDIDATES, fast_mode=False, conversation_filter=None,
-                              tweet_filter=None):
+                              tweet_filter=None, start_date=None, end_date=None):
     """ Helper Function that finds conversation_ids from the hashtags until the criteria are met.
 
         Keyword arguments:
@@ -111,7 +112,8 @@ def get_matching_conversation(connector,
         min_conversation_length = 3
         max_conversation_length = 100
 
-    tweets_result = get_tweets_for_hashtags(connector, query, max_number_of_candidates, language)
+    tweets_result = construct_query(connector, query, max_number_of_candidates, language, start_date=start_date,
+                                    end_date=end_date)
     candidates = convert_tweet_result_to_list(tweets_result, topic, full_tweet=False)
     # deal_with_conversation_candidates_as_stream(candidates, hashtags, language, topic, min_results, max_results)
     downloaded_tweets = 0
@@ -286,7 +288,7 @@ def reply_thread_maker(conv_ids):
     return replies
 
 
-def get_tweets_for_hashtags(connector, query, max_results, language=LANGUAGE.ENGLISH):
+def construct_query(connector, query, max_results, language=LANGUAGE.ENGLISH, start_date=None, end_date=None):
     """ downloads the tweets matching the hashtag list.
         using https://api.twitter.com/2/tweets/search/all
 
@@ -301,10 +303,16 @@ def get_tweets_for_hashtags(connector, query, max_results, language=LANGUAGE.ENG
     # twitter_accounts_query_1 = map(lambda x: "{} ".format(x), hashtags)
     # twitter_accounts_query_2 = reduce(lambda x, y: x + y, twitter_accounts_query_1)
     # twitter_accounts_query_3 = "(" + twitter_accounts_query_2 + ")"
+
     twitter_accounts_query = query + " lang:" + language
     logger.debug(twitter_accounts_query)
     params = {'query': twitter_accounts_query, 'max_results': max_results,
               "tweet.fields": "conversation_id,author_id"}
+    if start_date is not None:
+        params['start_time'] = start_date
+
+    if end_date is not None:
+        params['start_time'] = end_date
 
     json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)
     # logger.info(json.dumps(json_result, indent=4, sort_keys=True))

@@ -2,6 +2,7 @@ import json
 
 from delab.corpus.download_conversations import *
 from delab.tw_connection_util import TwitterStreamConnector
+from datetime import date
 
 """ This is a django runscript, it can be started in the django home directory with
     $ python manage.py runscript [filename_no_ending]    
@@ -9,9 +10,13 @@ from delab.tw_connection_util import TwitterStreamConnector
 
 
 def run():
-    download_conversations("migration", "chain wall", max_data=False)
-    #  download_conversations("migration", "chain OR wall", max_data=True)
+    from_date = '2021-04-10T00:00:00.000-00:00'
+    end_date = '2021-09-26T00:00:00.000-00:00'
+    download_conversations("stud_schaefer",
+                           "(from:AfD_Thueringen OR from:AfD_ThL OR from:BjoernHoecke OR from:AlternativeNRW OR from:AfD_FraktionNRW)",
+                           max_data=False, fast_mode=True, start_date=from_date, end_date=end_date)
 
+    #  download_conversations("migration", "chain OR wall", max_data=True)
     # download_conversations("Vaccination", ["covid_19", "vaccine", "getvaccienated", "vaccination"])
     # download_conversations("Migration", ["migration", "UNHCR"])
     # download_conversations("Impfung", ["rki_de"])
