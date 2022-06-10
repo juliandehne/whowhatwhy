@@ -51,6 +51,5 @@ django-annoying==0.10.6
 twarc==2.8.0
 fasttext==0.9.2
 praw==7.5.0
-tweepy
 google-api-python-client
 

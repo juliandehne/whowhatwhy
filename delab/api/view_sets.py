@@ -68,7 +68,6 @@ class NormXMLRenderer(renderers.BaseRenderer):
         return smart_text(data, encoding=self.charset)
 
 
-
 def get_migration_query_set(topic):
     queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
     return queryset
@@ -206,7 +205,6 @@ def get_zip_view(request, topic, conversation_id):
 def get_full_zip_view(request, topic, full):
     return create_full_zip_response_conversation(request, topic,
                                                  get_file_name("all_conversations", full, ".zip"), full)
-
 
 
 @api_view(['GET'])

@@ -10,9 +10,27 @@
     <a href="{{ request.path }}../../rest/moderation_mining/tweets_text/all">Get Tabbed TXTs</a>
     <br>
     <a href="{{ request.path }}../../rest/moderation_mining/tweets_zip/all/both">all files</a>
-    {% comment %}<br>
-    <a href="{{ request.path }}../../rest/moderation_mining/tweets_json">JSON all</a>
+
+    <h4>Other Downloads</h4>
+    Topic Name: <input id="topic-input"></input>
     <br>
-    <a href="{{ request.path }}../../rest/moderation_mining/tweets_xml/conversation/1471018660626112512/full">xml example</a>{% endcomment %}
+    <a class="dynamic-topic" href="{{ request.path }}../../rest/topic/tweets_json">JSON all</a>
+    <br>
+    <a class="dynamic-topic" href="{{ request.path }}../../rest/topic/tweets_zip/all/both">all files</a>
+
+    <script type="application/javascript">
+        $(function () {
+            $("a.dynamic-topic").click(function (e) {
+                e.preventDefault();
+                original_url = e.target.href;
+                topic_entered = $('#topic-input').text();
+                log_url = original_url.replace("topic", topic_entered);
+                ajaxLogSuggestClick(log_url, original_url)
+                return;
+            });
+        });
+
+    </script>
+
 {% endblock content %}
 

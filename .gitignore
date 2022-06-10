@@ -152,3 +152,5 @@ documentation/reveal/**/*
 /media/institution_pics/*.jpg
 /media/sa_flow_pics/*.jpg
 
+/notebooks/data/*
+

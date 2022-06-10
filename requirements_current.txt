@@ -1,5 +1,4 @@
 praw==7.5.0
-tweepy
 google-api-python-client
 networkx
 germansentiment

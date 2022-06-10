@@ -33,20 +33,15 @@ class TreeNode:
         self.max_path_length = 0
         self.parent_id = parent_id
 
-    def find_parent_of(self, node, recurson_counter=0):
-        """append a node to the children of it's reply-to user"""
-        if recurson_counter > 1000:
-            logger.error("got into a recursion with more then 1000 steps for conversation {}".format(self.data))
-            return False
+    def find_parent_of(self, node):
+        if node.parent_id == self.tree_id:
+            self.children.append(node)
+            return True
         else:
-            if node.parent_id == self.tree_id:
-                self.children.append(node)
-                return True
-            else:
-                for child in self.children:
-                    result = child.find_parent_of(node, recurson_counter=recurson_counter + 1)
-                    if result:
-                        return result
+            for child in self.children:
+                result = child.find_parent_of(node)
+                if result:
+                    return result
         return False
 
     def print_tree(self, level):
