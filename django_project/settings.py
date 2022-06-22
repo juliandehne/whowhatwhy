@@ -259,6 +259,9 @@ LOGGING = {
         },
         'praw': {
             'level': 'ERROR'
+        },
+        'neo4j': {
+            'level': 'ERROR'
         }
     },
 }
