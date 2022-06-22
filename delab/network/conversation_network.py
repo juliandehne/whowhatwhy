@@ -23,7 +23,7 @@ def download_followers_recursively(user_ids, n_level=1):
 def download_followers(user_ids, twarc, n_level=1):
     follower_ids = []
     for user in user_ids:
-        followers = twarc.followers(user=user)
+        followers = twarc.following(user=user)
         for follower_iter in followers:
             # time.sleep(2)
             if "data" in follower_iter:

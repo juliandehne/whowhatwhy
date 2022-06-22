@@ -1,4 +1,6 @@
+import networkx as nx
 from neo4j import GraphDatabase
+from neo4j.graph import Node, Relationship
 
 uri = "neo4j://localhost:7687"
 driver = GraphDatabase.driver(uri, auth=("neo4j", "test"))
@@ -21,6 +23,7 @@ def add_follower(follower_id, target_id):
     with driver.session() as session:
         session.write_transaction(create_follower_rel)
 
+    session.close()
     driver.close()
 
 
@@ -40,6 +43,7 @@ def add_follow_rels(followerpairs):
     with driver.session() as session:
         session.write_transaction(create_follower_rel)
 
+    session.close()
     driver.close()
 
 
@@ -61,8 +65,8 @@ def add_discussion(participant_ids, discussion_id):
     with driver.session() as session:
         session.write_transaction(create_participant_rel)
 
+    session.close()
     driver.close()
-
 
 
 def get_discussion_graph(discussion_id):
@@ -71,7 +75,65 @@ def get_discussion_graph(discussion_id):
     :param discussion_id:
     :return:
     """
-    pass
+
+    query = "match (p:Person)-[:PARTICIPATESIN]->(d) " \
+            "match (p2:Person)-[:PARTICIPATESIN]->(d:Discussion{id:"+str(discussion_id)+"}) " \
+            "MATCH path = (p)-[:FOLLOWS*1..3]-(p2) return p,p2,relationships(path) as f"
+
+    with driver.session() as session:
+        result = session.run(query)
+        G = graph_from_cypher(result.graph())
+
+    session.close()
+    driver.close()
+
+    return G
+
+
+def graph_from_cypher(data):
+    """Constructs a networkx graph from the results of a neo4j cypher query.
+    Example of use:
+    >>> result = session.run(query)
+    >>> G = graph_from_cypher(result.data())
+
+    Nodes have fields 'labels' (frozenset) and 'properties' (dicts). Node IDs correspond to the neo4j graph.
+    Edges have fields 'type_' (string) denoting the type of relation, and 'properties' (dict)."""
+
+    G = nx.MultiDiGraph()
+
+    def add_node(node):
+        # Adds node id it hasn't already been added
+        u = node.id
+        if G.has_node(u):
+            return
+        G.add_node(u, labels=node._labels, properties=dict(node))
+
+    def add_edge(relation):
+        # Adds edge if it hasn't already been added.
+        # Make sure the nodes at both ends are created
+        for node in (relation.start_node, relation.end_node):
+            add_node(node)
+        # Check if edge already exists
+        u = relation.start_node.id
+        v = relation.end_node.id
+        eid = relation.id
+        if G.has_edge(u, v, key=eid):
+            return
+        # If not, create it
+        G.add_edge(u, v, key=eid, type_=relation.type, properties=dict(relation))
+
+    for d in data:
+        for entry in d.values():
+            # Parse node
+            if isinstance(entry, Node):
+                add_node(entry)
+
+            # Parse link
+            elif isinstance(entry, Relationship):
+                add_edge(entry)
+            else:
+                raise TypeError("Unrecognized object")
+    return G
 
 
 def get_polarization_measure(discussion_id):

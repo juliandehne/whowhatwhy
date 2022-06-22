@@ -262,6 +262,9 @@ LOGGING = {
         },
         'neo4j': {
             'level': 'ERROR'
+        },
+        'twarc': {
+            'level': 'ERROR'
         }
     },
 }
