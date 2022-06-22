@@ -1,10 +1,6 @@
-import time
-
-import networkx as nx
-
 from delab.models import Tweet
-from delab.tw_connection_util import DelabTwarc
 from delab.network import Neo4jDAO as dao
+from delab.tw_connection_util import DelabTwarc
 
 twarc = DelabTwarc()
 
