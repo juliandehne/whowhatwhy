@@ -264,7 +264,7 @@ LOGGING = {
             'level': 'ERROR'
         },
         'twarc': {
-            'level': 'ERROR'
+            'level': 'DEBUG'
         }
     },
 }
