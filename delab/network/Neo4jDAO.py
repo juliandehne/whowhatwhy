@@ -48,11 +48,11 @@ class Neo4jDAO(NetworkDAO):
         session.close()
         driver.close()
 
-    def add_discussion(self, participant_ids, discussion_id):
+    def add_discussion(self, participant_ids, conversation_id):
         """
         Creates a discussion node that all the participants are connected, too
         :param participant_ids:
-        :param discussion_id:
+        :param conversation_id:
         :return:
         """
 
@@ -61,7 +61,7 @@ class Neo4jDAO(NetworkDAO):
                 tx.run("MERGE (a:Person {id: $source_id}) "
                        "MERGE (b:Discussion {id: $target_id}) "
                        "MERGE (a)-[:PARTICIPATESIN]->(b)",
-                       source_id=participant_id, target_id=discussion_id)
+                       source_id=participant_id, target_id=conversation_id)
 
         with driver.session() as session:
             session.write_transaction(create_participant_rel)

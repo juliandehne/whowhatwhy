@@ -15,27 +15,27 @@ class NetworkDAO:
         """
         pass
 
-    def add_discussion(self, participant_ids, discussion_id):
+    def add_discussion(self, participant_ids, conversation_id):
         """
         Creates a discussion node that all the participants are connected, too
         :param participant_ids:
-        :param discussion_id:
+        :param conversation_id:
         :return:
         """
         pass
 
-    def get_discussion_graph(self, discussion_id):
+    def get_discussion_graph(self, conversation_id):
         """
         Get all connectected nodes to a discussion (traversing the discussion -> participants -> follow path)
-        :param discussion_id:
+        :param conversation_id:
         :return:
         """
         pass
 
-    def get_polarization_measure(self, discussion_id):
+    def get_polarization_measure(self, conversation_id):
         """
         Uses Neo4j-Internal Mechanism to measure how connected / polarized a discussion is (or else computes it in python)
-        :param discussion_id:
+        :param conversation_id:
         :return:
         """
         pass
