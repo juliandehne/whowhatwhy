@@ -1,9 +1,10 @@
-from delab.models import Tweet
+from delab.models import Tweet, TweetAuthor
 from delab.tw_connection_util import DelabTwarc
-from delab.network import Neo4jDAO as dao
+from delab.network.DjangoTripleDAO import DjangoTripleDAO
 
 
 def download_discussion_follower(conversation_id):
+    dao = DjangoTripleDAO()
     discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
     nodes = set()
     for discussion_tweet in discussion_tweets:
@@ -20,17 +21,28 @@ def download_followers_recursively(user_ids, n_level=1):
     download_followers(user_ids, twarc, n_level)
 
 
+def persist_user(follower_data):
+    TweetAuthor.objects.get_or_create(
+        twitter_id=follower_data["id"],
+        name=follower_data["name"],
+        screen_name=follower_data["username"],
+        location=follower_data["location"]
+    )
+
+
 def download_followers(user_ids, twarc, n_level=1):
+    dao = DjangoTripleDAO()
     follower_ids = []
     for user in user_ids:
-        followers = twarc.following(user=user)
+        followers = twarc.following(user=user, user_fields=["id", "name", "location", "username"])
         for follower_iter in followers:
             # time.sleep(2)
             if "data" in follower_iter:
                 follower_datas = follower_iter["data"]
                 for follower_data in follower_datas:
+                    persist_user(follower_data)
                     follower = follower_data["id"]
-                    follower_ids.append(follower)
+                    follower_ids.append(follower)                    
                     dao.add_follower(follower, user)
     n_level = n_level - 1
     if n_level > 0:

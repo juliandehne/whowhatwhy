@@ -56,6 +56,11 @@ class STRATEGIES(models.TextChoices):
     EXPERIENCE = "experience"
 
 
+class NETWORKRELS(models.TextChoices):
+    FOLLOWS = "follows"
+    mentions = "mentions"
+
+
 class ConversationFlow(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
@@ -389,3 +394,13 @@ class IntoleranceAnswerValidation(models.Model):
 
     def get_absolute_url(self):
         return reverse('delab-intolerance-answer-validation-proxy')
+
+
+class FollowerNetwork(models.Model):
+    source = models.ForeignKey(TweetAuthor, related_name="follower", on_delete=models.DO_NOTHING)
+    target = models.ForeignKey(TweetAuthor,  related_name="followed", on_delete=models.DO_NOTHING)
+    relationship = models.TextField(default=NETWORKRELS.FOLLOWS, choices=NETWORKRELS.choices,
+                                help_text="the kind of relationship, could also be mentions or something else")
+
+    class Meta:
+        unique_together = ('source', 'target', 'relationship')
