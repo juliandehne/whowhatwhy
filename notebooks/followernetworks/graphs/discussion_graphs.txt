@@ -1,0 +1,4 @@
+The graphs are stored by the pattern:
+
+for conversation_id in conversation_id:
+     nx.read_gpickle(f"{out_fp}/{conversation_id}_Gs.gpickle")
