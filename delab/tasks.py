@@ -9,7 +9,7 @@ from django.utils import timezone
 from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
 from delab.corpus.download_conversation_reddit import download_conversations_reddit
-from .models import PLATFORM, LANGUAGE
+from .delab_enums import PLATFORM, LANGUAGE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 
 logger = logging.getLogger(__name__)

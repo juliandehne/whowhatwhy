@@ -4,7 +4,8 @@ import logging
 from django.db.models import Q
 from nltk.sentiment import SentimentIntensityAnalyzer
 
-from delab.models import Tweet, LANGUAGE
+from delab.models import Tweet
+from delab.delab_enums import LANGUAGE
 from delab.sentiment.sentiment_analysis_ger import classify_german_sentiments
 
 

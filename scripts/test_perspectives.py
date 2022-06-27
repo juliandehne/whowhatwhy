@@ -1,7 +1,7 @@
 import json
 import time
 
-from delab.models import PLATFORM
+from delab.delab_enums import PLATFORM
 from delab.toxicity.perspectives import get_client, UkraineComment
 from delab.tw_connection_util import DelabTwarc
 from delab.models import UkraineComments

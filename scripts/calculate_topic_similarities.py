@@ -1,4 +1,4 @@
-from delab.models import PLATFORM, VERSION
+from delab.delab_enums import VERSION, PLATFORM
 from delab.topic.train_topic_model import train_topic_model_from_db
 
 

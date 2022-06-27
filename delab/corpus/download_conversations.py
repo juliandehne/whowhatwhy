@@ -11,7 +11,8 @@ from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.magic_http_strings import TWEETS_SEARCH_All_URL
-from delab.models import Tweet, TwTopic, SimpleRequest, PLATFORM, LANGUAGE
+from delab.models import Tweet, TwTopic, SimpleRequest
+from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.tw_connection_util import TwitterConnector
 from django_project.settings import MAX_CANDIDATES
 from util.abusing_lists import powerset

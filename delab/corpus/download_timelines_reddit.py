@@ -2,7 +2,8 @@ import datetime
 import logging
 from time import sleep
 from pytz.exceptions import AmbiguousTimeError
-from delab.models import TweetAuthor, PLATFORM, Timeline
+from delab.models import TweetAuthor, Timeline
+from delab.delab_enums import PLATFORM
 from delab.tw_connection_util import get_praw
 from util.abusing_strings import convert_to_hash
 

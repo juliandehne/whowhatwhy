@@ -1,64 +1,13 @@
 # Create your models here.
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
-from model_utils.models import now
 from treenode.models import TreeNodeModel
 
-
-class VERSION(models.TextChoices):
-    v001 = "v0.0.1"
-    v002 = "v0.0.2"
-    v003 = "v0.0.3"  # current
-    v004 = "v0.0.4"
-    v005 = "v0.0.5"
-
-
-class PLATFORM(models.TextChoices):
-    REDDIT = "reddit"
-    TWITTER = "twitter"
-    DELAB = "delab"
-
-
-class LANGUAGE(models.TextChoices):
-    ENGLISH = "en"
-    GERMAN = "de"
-    POLISH = "pl"
-    SPANISH = "es"
-    UNKNOWN = "unk"
-
-
-class Likert(models.IntegerChoices):
-    STRONGLY_NOT_AGREE = -2
-    NOT_AGREE = -1
-    NOT_SURE = 0
-    AGREE = 1
-    AGREE_STRONGLY = 2
-
-
-class INTOLERANCE(models.TextChoices):
-    RELIGIOUS = "rel"
-    SEXUALITY = "sex"
-    ETHNICITY = "eth"
-    RACISM = "rac"
-    BODYSHAMING = "body"
-    OTHERGROUPS = "group"
-    NONE = "none"
-
-
-class STRATEGIES(models.TextChoices):
-    NORMATIVE = "normative"
-    KANTIAN = "kantian"
-    EXPERIENCE = "experience"
-
-
-class NETWORKRELS(models.TextChoices):
-    FOLLOWS = "follows"
-    mentions = "mentions"
+from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, INTOLERANCE, STRATEGIES, NETWORKRELS
 
 
 class ConversationFlow(models.Model):
@@ -227,8 +176,19 @@ class Tweet(models.Model):
     conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
                                 help_text="the language we are querying")
-    bertopic_id = models.IntegerField(null=True)
-    bert_visual = models.TextField(null=True, blank=True)
+    bertopic_id = models.IntegerField(null=True,
+                                      help_text="the bertopic id given by running a language based bertopic model")
+    bert_visual = models.TextField(null=True, blank=True,
+                                   help_text="the bertopic representation given by running a language based bertopic model")
+    conversation_bertopic_id = models.IntegerField(null=True,
+                                                   help_text="the bertopic id given by running a conversation based bertopic model")
+    conversation_bert_visual = models.TextField(null=True, blank=True,
+                                                help_text="the bertopic represantation given by running a conversation based bertopic model")
+    topic_bertopic_id = models.IntegerField(null=True,
+                                            help_text="the bertopic id given by running a delab topic based bertopic model")
+    topic_bert_visual = models.TextField(null=True, blank=True,
+                                         help_text="the bertopic represantation given by running a delab topic based bertopic model")
+
     tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,
                                   help_text="This holds the twitter_id (!) of the tweet that was responded to")
     c_is_local_moderator = models.BooleanField(null=True,
@@ -398,9 +358,9 @@ class IntoleranceAnswerValidation(models.Model):
 
 class FollowerNetwork(models.Model):
     source = models.ForeignKey(TweetAuthor, related_name="follower", on_delete=models.DO_NOTHING)
-    target = models.ForeignKey(TweetAuthor,  related_name="followed", on_delete=models.DO_NOTHING)
+    target = models.ForeignKey(TweetAuthor, related_name="followed", on_delete=models.DO_NOTHING)
     relationship = models.TextField(default=NETWORKRELS.FOLLOWS, choices=NETWORKRELS.choices,
-                                help_text="the kind of relationship, could also be mentions or something else")
+                                    help_text="the kind of relationship, could also be mentions or something else")
 
     class Meta:
         unique_together = ('source', 'target', 'relationship')

@@ -2,7 +2,8 @@ import logging
 
 import tweepy.errors
 
-from delab.models import Tweet, PLATFORM
+from delab.models import Tweet
+from delab.delab_enums import PLATFORM
 from delab.tw_connection_util import send_tweet
 
 logger = logging.getLogger(__name__)

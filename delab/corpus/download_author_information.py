@@ -7,7 +7,8 @@ import time
 from django.db import IntegrityError
 from django.db.models import Q
 
-from delab.models import Tweet, TweetAuthor, PLATFORM
+from delab.models import Tweet, TweetAuthor
+from delab.delab_enums import PLATFORM
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
 
@@ -32,31 +33,33 @@ def update_authors(simple_request_id=-1, platform=PLATFORM.TWITTER):
                                               & Q(simple_request_id=simple_request_id)
                                               & Q(platform=platform)).values_list('author_id', flat=True)
         # create only one connector for quote reasons
-        # connector = TwitterConnector(1)
-        twarc = DelabTwarc()
+        download_authors(author_ids)
 
-        new_authors = []
-        for author_id in author_ids:
 
-            try:
-                author = TweetAuthor.objects.get(twitter_id=author_id)
-            except TweetAuthor.DoesNotExist:
-                author = None
+def download_authors(author_ids):
+    # connector = TwitterConnector(1)
+    twarc = DelabTwarc()
+    new_authors = []
+    for author_id in author_ids:
 
-            # author = get_object_or_None(TweetAuthor, twitter_id=author_id)
-            # author = TweetAuthor.objects.filter(twitter_id=author_id).
-            if author:
-                tweets = Tweet.objects.filter(author_id=author_id).all()
-                for tweet in tweets:
-                    tweet.tw_author = author
-                    tweet.save(update_fields=["tw_author"])
-            else:
-                new_authors.append(author_id)
+        try:
+            author = TweetAuthor.objects.get(twitter_id=author_id)
+        except TweetAuthor.DoesNotExist:
+            author = None
 
-        new_authors = list(set(new_authors))
-        author_batches = batch(new_authors, 99)
-        for author_batch in author_batches:
-            download_user_batch(author_batch, twarc)
+        # author = get_object_or_None(TweetAuthor, twitter_id=author_id)
+        # author = TweetAuthor.objects.filter(twitter_id=author_id).
+        if author:
+            tweets = Tweet.objects.filter(author_id=author_id).all()
+            for tweet in tweets:
+                tweet.tw_author = author
+                tweet.save(update_fields=["tw_author"])
+        else:
+            new_authors.append(author_id)
+    new_authors = list(set(new_authors))
+    author_batches = batch(new_authors, 99)
+    for author_batch in author_batches:
+        download_user_batch(author_batch, twarc)
 
 
 def download_user_batch(author_batch, twarc):

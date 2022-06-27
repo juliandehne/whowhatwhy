@@ -3,7 +3,7 @@ import random
 import time
 
 from delab.bot.intolerance_strategies_texts import *
-from delab.models import LANGUAGE
+from delab.delab_enums import LANGUAGE
 from delab.toxicity.perspectives import get_client
 from delab.models import TWCandidateIntolerance
 from delab.bot.sender import send_generated_tweet

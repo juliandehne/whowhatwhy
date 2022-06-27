@@ -6,7 +6,8 @@ import pytz
 from django.db import IntegrityError
 
 from delab.tw_connection_util import get_praw
-from delab.models import TweetAuthor, Tweet, PLATFORM, SimpleRequest, TwTopic
+from delab.models import TweetAuthor, Tweet, SimpleRequest, TwTopic
+from delab.delab_enums import PLATFORM
 from util.abusing_strings import convert_to_hash
 
 """

@@ -1,4 +1,5 @@
 import copy
+import html
 import json
 import logging
 import os
@@ -13,11 +14,11 @@ from django.db import IntegrityError
 from django.db.models import Q
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet, TweetAuthor, PLATFORM, LANGUAGE
+from delab.models import Timeline, Tweet, TweetAuthor
+from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.models import TopicDictionary
+from delab.topic.topic_settings import get_embedding_model, get_bertopic_location
 from util import TVocabulary
-
-BERTOPIC_MODEL_LOCATION = "BERTopic"
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +35,9 @@ logger = logging.getLogger(__name__)
 
 def train_topic_model_from_db(version, train=True, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH,
                               store_vectors=True,
-                              number_of_batches=30000):
+                              number_of_batches=30000, topic=None):
     """
+    :param topic:
     :param version: creates different trained bertopic models for the version tag
     :param train: boolean (retrain or use existing trained model)
     :param platform: 
@@ -46,22 +48,24 @@ def train_topic_model_from_db(version, train=True, platform=PLATFORM.TWITTER, la
     """
     logger.debug("starting to train the topic model")
     corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform,
-                                                                  max_size=number_of_batches)
+                                                                  max_size=number_of_batches, topic=topic)
 
-    if train:
-        train_bert(corpus_for_fitting_sentences, language, version)
+    if len(corpus_for_fitting_sentences) < 10:
+        logger.info("not enough data found to train model")
+    else:
+        if train:
+            train_bert(corpus_for_fitting_sentences, language, version, topic)
 
-    if store_vectors:
-        vocab = create_vocabulary(corpus_for_fitting_sentences)
-        store_embedding_vectors(vocab, language, version)
+        if store_vectors:
+            vocab = create_vocabulary(corpus_for_fitting_sentences)
+            store_embedding_vectors(vocab, language, version, topic)
 
-    logger.debug("finished training the topic model")
+        logger.debug("finished training the topic model")
 
 
-def train_bert(corpus_for_fitting_sentences, language, version):
+def train_bert(corpus_for_fitting_sentences, language, version, topic=None):
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    count = 0
     # for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
     trainings_batch = corpus_for_fitting_sentences
 
@@ -74,7 +78,7 @@ def train_bert(corpus_for_fitting_sentences, language, version):
                               calculate_probabilities=False)
 
     bertopic_model.fit_transform(trainings_batch)
-    location = get_bertopic_location(language, version)
+    location = get_bertopic_location(language, version, topic)
     bertopic_model.save(location)
     logger.debug("saved trained model to location {}".format(location))
 
@@ -89,7 +93,7 @@ def filter_bad_topics(bertopic_model, vocab):
     return topic_info
 
 
-def store_embedding_vectors(vocab, lang, version):
+def store_embedding_vectors(vocab, lang, version, topic=None):
     """
     This calculates the words that are in the topics, finds fasttext vectors for these words
     and stores them in the database for the distance measuring later on.
@@ -108,7 +112,7 @@ def store_embedding_vectors(vocab, lang, version):
         ft = fasttext.load_model('cc.de.300.bin')
     logger.debug("loaded fasttext model into memory")
     # dim = ft.get_dimension()
-    location = get_bertopic_location(lang, version)
+    location = get_bertopic_location(lang, version, topic)
     embedding_model = get_embedding_model(lang)
     bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
     logger.debug("loaded berttopic model")
@@ -170,18 +174,20 @@ def get_bad_topics(vocab, topic_model_2):
     return bad_topics
 
 
-def get_train_corpus_for_sentences(version, lang, platform, max_size=-1):
+def get_train_corpus_for_sentences(version, lang, platform, max_size=-1, topic=None):
     """
     This constructs the training corpus for the topic analysis.
+    :param topic:
     :param platform:
     :param lang:
     :param max_size: in order to improve testing, it is possible to set max_size > 0 to just train on a subset of the data
     :return: list[str] a list of tweets
     """
     # author_tweets_texts, logger = load_author_tweets(version, lang, platform)
-    conversation_tweets_texts = load_conversation_tweets(version, lang, platform)
+    conversation_tweets_texts = load_conversation_tweets(version, lang, platform, topic)
     # corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
     corpus_for_fitting_sentences = conversation_tweets_texts
+    corpus_for_fitting_sentences = clean_corpus(corpus_for_fitting_sentences)
     if max_size < 0:
         return corpus_for_fitting_sentences
     if len(corpus_for_fitting_sentences) < max_size:
@@ -220,8 +226,8 @@ def clean_corpus(corpus_for_fitting_sentences):
     for temp in corpus_for_fitting_sentences:
         temp_copy = str(copy.deepcopy(temp))
         # removing hashtags
-        temp = re.sub("@[A-Za-z0-9_]+", "", temp)
-        temp = re.sub("#[A-Za-z0-9_]+", "", temp)
+        temp = re.sub("@[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
+        temp = re.sub("#[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
         # removing links
         temp = re.sub(r"http\S+", "", temp)
         temp = re.sub(r"www.\S+", "", temp)
@@ -229,84 +235,93 @@ def clean_corpus(corpus_for_fitting_sentences):
         # temp = re.sub('[()!?]', ' ', temp)
         # temp = re.sub("\[.*?\]", ' ', temp)
         # alphanumeric
-        temp = re.sub("[^a-z0-9A-ZaäöüÄÖÜ]", " ", temp)
+        # temp = re.sub("[^a-z0-9A-ZaäöüÄÖÜ]", "", temp)
         temp = re.sub("RT", "", temp)
+        temp = re.sub("\n", "", temp)
+        temp = html.unescape(temp)
         temp = temp.strip()
 
         number_of_words = len(temp.split(" ")) > 3
         if len(temp) > 1 and number_of_words:
             result.append(temp)
-        else:
-            result.append(temp_copy)
     return result
 
 
-def get_bertopic_location(language, version):
-    return BERTOPIC_MODEL_LOCATION + "_" + language + "_" + version
+def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_topics=True, topic=None):
+    try:
+        location = get_bertopic_location(language, version, topic)
+        embedding_model = get_embedding_model(language)
+        bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
+        logger.debug("loaded berttopic model for classifying the tweets")
+
+        # corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform)
+        # vocab = create_vocabulary(corpus_for_fitting_sentences)
+        # load tweets
+        # topic_info = filter_bad_topics(bertopic_model, vocab)
+        topic_info = bertopic_model.get_topic_info()
+        if update_topics:
+            if topic is not None:
+                conversation_tweets = Tweet.objects.filter(
+                    Q(language=language) & Q(platform=platform) & Q(simple_request__version=version) & Q(
+                        topic__title=topic))
+            else:
+                conversation_tweets = Tweet.objects.filter(
+                    Q(language=language) & Q(platform=platform) & Q(simple_request__version=version))
+        else:
+            if topic is not None:
+                conversation_tweets = Tweet.objects.filter(
+                    Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform) & Q(
+                        simple_request__version=version) & Q(topic__title=topic))
+            else:
+                conversation_tweets = Tweet.objects.filter(
+                    Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform) & Q(
+                        simple_request__version=version))
+
+        if len(conversation_tweets) > 0:
+            conversation_texts = list(conversation_tweets.values_list("text", flat=True))
+            logger.debug("classifying the tweet topics...")
+            suggested_topics = bertopic_model.transform(conversation_texts)[0]
+            index = 0
+            conversation_tweet_objs = conversation_tweets.all()
+            for conversation_tweet in conversation_tweet_objs:
+                if suggested_topics[index] in topic_info.Topic:
+                    if topic is not None:
+                        conversation_tweet.topic_bertopic_id = suggested_topics[index]
+                        topic_model = bertopic_model.get_topic(conversation_tweet.topic_bertopic_id)
+                        visual_model = "{}".format(conversation_tweet.topic_bertopic_id)
+                    else:
+                        conversation_tweet.bertopic_id = suggested_topics[index]
+                        topic_model = bertopic_model.get_topic(conversation_tweet.bertopic_id)
+                        visual_model = "{}".format(conversation_tweet.bertopic_id)
+                    for t_word in topic_model:
+                        str_w = t_word[0]
+                        visual_model += "_" + str_w
+                        if topic is not None:
+                            conversation_tweet.topic_bert_visual = visual_model
+                        else:
+                            conversation_tweet.bert_visual = visual_model
+                else:
+                    if topic is not None:
+                        conversation_tweet.topic_bertopic_id = -2
+                    else:
+                        conversation_tweet.bertopic_id = -2
+                index += 1
+            if topic is not None:
+                Tweet.objects.bulk_update(conversation_tweet_objs, ["topic_bertopic_id", "topic_bert_visual"])
+            else:
+                Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
+    except FileNotFoundError:
+        logger.error("could not find model file for language {} and topic {}".format(language, topic))
 
 
-def get_embedding_model(language):
-    """
-    the embedding models should be downloaded from huggingface sentence transformer store
-    :param language:
-    :return:
-    """
-    # if language == LANGUAGE.GERMAN:
-    #    return "sentence-transformers/distiluse-base-multilingual-cased-v2"
-    # return "all-mpnet-base-v2"
-    return "sentence-transformers/all-mpnet-base-v2"
-
-
-def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_topics=True):
-    location = get_bertopic_location(language, version)
-    embedding_model = get_embedding_model(language)
-    bertopic_model = BERTopic.load(location, embedding_model=embedding_model)
-    logger.debug("loaded berttopic model for classifying the tweets")
-
-    # corpus_for_fitting_sentences = get_train_corpus_for_sentences(version, language, platform)
-    # vocab = create_vocabulary(corpus_for_fitting_sentences)
-    # load tweets
-    # topic_info = filter_bad_topics(bertopic_model, vocab)
-    topic_info = bertopic_model.get_topic_info()
-    if update_topics:
+def load_conversation_tweets(version, lang, platform, topic=None):
+    if topic is not None:
         conversation_tweets = Tweet.objects.filter(
-            Q(language=language) & Q(platform=platform) & Q(simple_request__version=version))
+            Q(language=lang) & Q(simple_request__version=version) & Q(platform=platform) & Q(topic__title=topic)).all()
     else:
         conversation_tweets = Tweet.objects.filter(
-            Q(language=language) & Q(bertopic_id__isnull=True) & Q(platform=platform) & Q(
-                simple_request__version=version))
-
-    if len(conversation_tweets) > 0:
-        conversation_texts = list(conversation_tweets.values_list("text", flat=True))
-        logger.debug("classifying the tweet topics...")
-        suggested_topics = bertopic_model.transform(conversation_texts)[0]
-        index = 0
-        conversation_tweet_objs = conversation_tweets.all()
-        for conversation_tweet in conversation_tweet_objs:
-            if suggested_topics[index] in topic_info.Topic:
-                conversation_tweet.bertopic_id = suggested_topics[index]
-                topic_model = bertopic_model.get_topic(conversation_tweet.bertopic_id)
-                visual_model = "{}".format(conversation_tweet.bertopic_id)
-                for t_word in topic_model:
-                    str_w = t_word[0]
-                    visual_model += "_" + str_w
-                conversation_tweet.bert_visual = visual_model
-            else:
-                conversation_tweet.bertopic_id = -2
-            index += 1
-
-        Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
-
-
-def load_conversation_tweets(version, lang, platform):
-    conversation_tweets = Tweet.objects.filter(
-        Q(language=lang) & Q(simple_request__version=version) & Q(platform=platform)).all()
-    df_conversations = read_frame(conversation_tweets, fieldnames=["id",
-                                                                   "author_id",
-                                                                   "text",
-                                                                   ])
-    # logger.info("loaded the timeline from the database")
-    conversation_tweets_texts = list(df_conversations.text)
+            Q(language=lang) & Q(simple_request__version=version) & Q(platform=platform)).all()
+    conversation_tweets_texts = list(conversation_tweets.values_list("text", flat=True))
     return conversation_tweets_texts
 
 

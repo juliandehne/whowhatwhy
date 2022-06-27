@@ -5,7 +5,8 @@ from django.contrib.auth.models import User
 
 from delab.corpus.download_conversations import save_tree_to_db
 from delab.TwConversationTree import TreeNode
-from delab.models import LANGUAGE, Tweet, TwTopic, SimpleRequest, PLATFORM, TWCandidateIntolerance, TWIntoleranceRating
+from delab.models import Tweet, TwTopic, SimpleRequest, TWCandidateIntolerance, TWIntoleranceRating
+from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.nce.download_intolerant_tweets import download_terrible_tweets
 
 """

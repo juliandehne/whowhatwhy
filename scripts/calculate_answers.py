@@ -3,7 +3,8 @@ import re
 import spacy
 
 from delab.bot.intolerance_bot import generate_answers
-from delab.models import TWCandidateIntolerance, LANGUAGE
+from delab.models import TWCandidateIntolerance
+from delab.delab_enums import LANGUAGE
 from delab.toxicity.perspectives import get_client
 
 NER = spacy.load("en_core_web_lg")

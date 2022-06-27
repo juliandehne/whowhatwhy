@@ -9,7 +9,8 @@ from numpy import NaN
 from scipy import spatial
 from tqdm import tqdm
 
-from delab.models import Tweet, TopicDictionary, TWCandidate, PLATFORM, LANGUAGE
+from delab.models import Tweet, TopicDictionary, TWCandidate
+from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.topic.train_topic_model import get_bertopic_location, get_embedding_model
 from util.abusing_lists import powerset
 

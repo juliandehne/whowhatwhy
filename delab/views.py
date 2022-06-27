@@ -15,8 +15,9 @@ from django.views.generic import (
     UpdateView, TemplateView
 )
 
-from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, PLATFORM, TweetAuthor, TWCandidateIntolerance, \
+from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, TweetAuthor, TWCandidateIntolerance, \
     TWIntoleranceRating, IntoleranceAnswer, IntoleranceAnswerValidation
+from .delab_enums import PLATFORM
 from django_project.settings import min_intolerance_answer_coders_needed, min_intolerance_coders_needed
 from util.abusing_strings import convert_to_hash
 from .tasks import get_tasks_status

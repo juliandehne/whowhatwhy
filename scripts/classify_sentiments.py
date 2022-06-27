@@ -1,4 +1,4 @@
-from delab.models import LANGUAGE
+from delab.delab_enums import LANGUAGE
 from delab.sentiment.sentiment_classification import classify_tweet_sentiment
 
 """ This is a django runscript, it can be started in the django home directory with

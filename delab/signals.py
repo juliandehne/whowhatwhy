@@ -8,8 +8,9 @@ from django.utils import timezone
 from delab.bot.intolerance_bot import generate_answers
 from delab.bot.intolerance_bot import send_message
 from delab.bot.sender import publish_moderation
-from delab.models import SimpleRequest, Tweet, PLATFORM, TWIntoleranceRating, IntoleranceAnswer, \
+from delab.models import SimpleRequest, Tweet, TWIntoleranceRating, IntoleranceAnswer, \
     IntoleranceAnswerValidation
+from delab.delab_enums import PLATFORM
 from delab.tasks import download_conversations_scheduler
 from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Tweet)
 def process_moderation(sender, instance, created, **kwargs):
-    if instance.platform == PLATFORM.DELAB and instance.publish:
+    if instance.platform == PLATFORM.DELAB and instance.publish and created:
         publish_moderation(instance)
 
 
