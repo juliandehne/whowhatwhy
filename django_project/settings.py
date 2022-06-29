@@ -264,14 +264,14 @@ LOGGING = {
             'level': 'ERROR'
         },
         'twarc': {
-            'level': 'DEBUG'
+            'level': 'WARNING'
         }
     },
 }
 
 # delab_settings
-# max candidates when downloading Tweets by query (between 10 and 500)
-MAX_CANDIDATES = 400
+# max candidates when downloading Tweets by query must be bigger then 10
+MAX_CANDIDATES = 1000
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
 

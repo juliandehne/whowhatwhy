@@ -1,4 +1,3 @@
-import copy
 import html
 import json
 import logging
@@ -8,14 +7,15 @@ import re
 
 import fasttext.util
 import numpy as np
+import spacy
 from bertopic import BERTopic
 from django.contrib.postgres.aggregates import StringAgg
 from django.db import IntegrityError
 from django.db.models import Q
 from django_pandas.io import read_frame
 
-from delab.models import Timeline, Tweet, TweetAuthor
 from delab.delab_enums import PLATFORM, LANGUAGE
+from delab.models import Timeline, Tweet, TweetAuthor
 from delab.models import TopicDictionary
 from delab.topic.topic_settings import get_embedding_model, get_bertopic_location
 from util import TVocabulary
@@ -186,8 +186,9 @@ def get_train_corpus_for_sentences(version, lang, platform, max_size=-1, topic=N
     # author_tweets_texts, logger = load_author_tweets(version, lang, platform)
     conversation_tweets_texts = load_conversation_tweets(version, lang, platform, topic)
     # corpus_for_fitting_sentences = create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts)
-    corpus_for_fitting_sentences = conversation_tweets_texts
-    corpus_for_fitting_sentences = clean_corpus(corpus_for_fitting_sentences)
+
+    corpus_for_fitting_sentences = clean_corpus(conversation_tweets_texts)
+
     if max_size < 0:
         return corpus_for_fitting_sentences
     if len(corpus_for_fitting_sentences) < max_size:
@@ -197,6 +198,49 @@ def get_train_corpus_for_sentences(version, lang, platform, max_size=-1, topic=N
         return corpus_for_fitting_sentences
     corpus = random.sample(corpus_for_fitting_sentences, max_size)
     return corpus
+
+
+def seperate_sentences_manually(text):
+    # -*- coding: utf-8 -*-
+    import re
+    alphabets = "([A-Za-zÄÖÜäöü0-9])"
+    prefixes = "(Mr|St|Mrs|Ms|Dr|Prof)[.]"
+    suffixes = "(Inc|Ltd|Jr|Sr|Co)"
+    starters = "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
+    acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
+    websites = "[.](com|net|org|io|gov)"
+
+    text = " " + text + "  "
+    text = text.replace("\n", " ")
+    text = re.sub(prefixes, "\\1<prd>", text)
+    text = re.sub(websites, "<prd>\\1", text)
+    if "Ph.D" in text: text = text.replace("Ph.D.", "Ph<prd>D<prd>")
+    text = re.sub("\s" + alphabets + "[.] ", " \\1<prd> ", text)
+    text = re.sub(acronyms + " " + starters, "\\1<stop> \\2", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>\\3<prd>", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>", text)
+    text = re.sub(" " + suffixes + "[.] " + starters, " \\1<stop> \\2", text)
+    text = re.sub(" " + suffixes + "[.]", " \\1<prd>", text)
+    text = re.sub(" " + alphabets + "[.]", " \\1<prd>", text)
+    if "”" in text: text = text.replace(".”", "”.")
+    if "\"" in text: text = text.replace(".\"", "\".")
+    if "!" in text: text = text.replace("!\"", "\"!")
+    if "?" in text: text = text.replace("?\"", "\"?")
+    text = text.replace(".", ".<stop>")
+    text = text.replace("?", "?<stop>")
+    text = text.replace("!", "!<stop>")
+    text = text.replace("<prd>", ".")
+    sentences = text.split("<stop>")
+    sentences = sentences[:-1]
+    sentences = [s.strip() for s in sentences]
+    return sentences
+
+
+def seperate_sentences_spacy(corpus_for_fitting_sentences, lang, tweet_text):
+    nlp = spacy.load(lang + "_core_web_sm")
+    tokens = nlp(tweet_text)
+    for sent in tokens.sents:
+        corpus_for_fitting_sentences.append(sent)
 
 
 def create_tweet_corpus_for_bertopic(author_tweets_texts, conversation_tweets_texts):
@@ -224,7 +268,7 @@ def clean_corpus(corpus_for_fitting_sentences):
     """
     result = []
     for temp in corpus_for_fitting_sentences:
-        temp_copy = str(copy.deepcopy(temp))
+        original = temp
         # removing hashtags
         temp = re.sub("@[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
         temp = re.sub("#[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
@@ -240,11 +284,60 @@ def clean_corpus(corpus_for_fitting_sentences):
         temp = re.sub("\n", "", temp)
         temp = html.unescape(temp)
         temp = temp.strip()
+        temp = remove_emojis(temp)
+        temp = re.sub(' +', ' ', temp)
+        temp = re.sub("\.\.\.", " ldots ", temp)
 
+        tweet_sentences = seperate_sentences_manually(temp + ".")
+        cleaned_sentences = clean_sentences(tweet_sentences)
+        result += cleaned_sentences
+
+    return corpus_for_fitting_sentences
+
+
+def clean_sentences(sentences):
+    """
+    This is typical preprocessing in order to improve on the outcome of the topic analysis
+    :param corpus_for_fitting_sentences:
+    :return:
+    """
+    result = []
+    for temp in sentences:
+        original = temp
+        # removing hashtags
+
+        # alphanumeric
+        temp = re.sub("[^a-z0-9A-ZaäöüÄÖÜ\ \(\)\-\"\,\/]", "", temp)
+        temp = re.sub("\(", " (", temp)
+        temp = re.sub("\)", ") ", temp)
         number_of_words = len(temp.split(" ")) > 3
         if len(temp) > 1 and number_of_words:
             result.append(temp)
     return result
+
+
+def remove_emojis(data):
+    emoj = re.compile("["
+                      u"\U0001F600-\U0001F64F"  # emoticons
+                      u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                      u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                      u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                      u"\U00002500-\U00002BEF"  # chinese char
+                      u"\U00002702-\U000027B0"
+                      u"\U00002702-\U000027B0"
+                      u"\U000024C2-\U0001F251"
+                      u"\U0001f926-\U0001f937"
+                      u"\U00010000-\U0010ffff"
+                      u"\u2640-\u2642"
+                      u"\u2600-\u2B55"
+                      u"\u200d"
+                      u"\u23cf"
+                      u"\u23e9"
+                      u"\u231a"
+                      u"\ufe0f"  # dingbats
+                      u"\u3030"
+                      "]+", re.UNICODE)
+    return re.sub(emoj, '', data)
 
 
 def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_topics=True, topic=None):
@@ -279,8 +372,11 @@ def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_t
 
         if len(conversation_tweets) > 0:
             conversation_texts = list(conversation_tweets.values_list("text", flat=True))
+            conversation_texts_cleaned = clean_corpus(conversation_texts)
+            assert len(conversation_texts_cleaned) == len(conversation_texts)
             logger.debug("classifying the tweet topics...")
-            suggested_topics = bertopic_model.transform(conversation_texts)[0]
+            suggested_topics = bertopic_model.transform(conversation_texts)
+            suggested_topics = suggested_topics[0]
             index = 0
             conversation_tweet_objs = conversation_tweets.all()
             for conversation_tweet in conversation_tweet_objs:
@@ -310,6 +406,7 @@ def classify_tweet_topics(version, language, platform=PLATFORM.TWITTER, update_t
                 Tweet.objects.bulk_update(conversation_tweet_objs, ["topic_bertopic_id", "topic_bert_visual"])
             else:
                 Tweet.objects.bulk_update(conversation_tweet_objs, ["bertopic_id", "bert_visual"])
+        return bertopic_model
     except FileNotFoundError:
         logger.error("could not find model file for language {} and topic {}".format(language, topic))
 

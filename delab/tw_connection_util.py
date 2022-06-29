@@ -112,11 +112,14 @@ class TwitterConnector:
     def __connect_to_endpoint(search_url, headers, params):
         response = requests.request("GET", search_url, headers=headers, params=params)
         # print(response.status_code)
-        if response.status_code != 200:
-            if response.status_code == 429:  # too many requests
-                raise TwitterRequestError()
+        if response.status_code is not None:
+            if response.status_code != 200:
+                if response.status_code == 429:  # too many requests
+                    raise TwitterRequestError()
+                else:
+                    logger.error("{}{}".format(response.status_code, response.text))
             else:
-                logger.error("{}{}".format(response.status_code, response.text))
+                logger.error(response)
         time.sleep(2)
 
         return response.json()

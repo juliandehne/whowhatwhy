@@ -1,19 +1,13 @@
 import logging
 import re
-import time
-
-import requests
-from TwitterAPI import TwitterRequestError, TwitterConnectionError
 from django.db import IntegrityError
-
 from delab import tw_connection_util
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
-from delab.magic_http_strings import TWEETS_SEARCH_All_URL
-from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.delab_enums import PLATFORM, LANGUAGE
-from delab.tw_connection_util import TwitterConnector
+from delab.models import Tweet, TwTopic, SimpleRequest
+from delab.tw_connection_util import DelabTwarc
 from django_project.settings import MAX_CANDIDATES
 from util.abusing_lists import powerset
 
@@ -53,8 +47,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
             topic=topic
         )
 
-    # create only one connector for quote reasons
-    connector = TwitterConnector(1)
+    twarc = DelabTwarc()
 
     # download the conversations
     if max_data:
@@ -68,20 +61,20 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
             if len(hashtag_set) > 0:
                 combination_counter += 1
                 new_query = " ".join(hashtag_set)
-                filter_conversations(connector, new_query, topic, simple_request, platform, language=language,
+                filter_conversations(twarc, new_query, topic, simple_request, platform, language=language,
                                      fast_mode=fast_mode, conversation_filter=conversation_filter,
                                      tweet_filter=tweet_filter)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
-        filter_conversations(connector, query_string, topic, simple_request, platform, language=language,
+        filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter)
 
     connector = None  # precaution to terminate the thread and the http socket
 
 
-def filter_conversations(connector,
+def filter_conversations(twarc,
                          query,
                          topic,
                          simple_request,
@@ -94,7 +87,7 @@ def filter_conversations(connector,
                          conversation_filter=None,
                          tweet_filter=None):
     """
-    :param connector:
+    :param twarc:
     :param query:
     :param topic:
     :param simple_request:
@@ -113,77 +106,73 @@ def filter_conversations(connector,
         min_conversation_length = 3
         max_conversation_length = 100
 
-    tweets_result = download_conversation_representative_tweets(connector, query, max_number_of_candidates,
-                                                                min_conversation_length, language)
-    candidates = tweets_result.get("data", [])
+    candidates = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language)
+
     downloaded_tweets = 0
     n_dismissed_candidates = 0
     for candidate in candidates:
         if candidate["public_metrics"]["reply_count"] > min_conversation_length / 2:
-            try:
-                logger.debug("selected candidate tweet {}".format(candidate))
-                conversation_id = candidate["conversation_id"]
+            logger.debug("selected candidate tweet {}".format(candidate))
+            conversation_id = candidate["conversation_id"]
 
-                root_node = download_conversation_as_tree(conversation_id, max_conversation_length)
+            root_node = download_conversation_as_tree(conversation_id, max_conversation_length)
 
-                if conversation_filter is not None:
-                    root_node = conversation_filter(root_node)
+            if conversation_filter is not None:
+                root_node = conversation_filter(root_node)
 
-                if root_node is None:
-                    logger.error("found conversation_id that could not be processed")
-                    continue
-                else:
-                    flat_tree_size = root_node.flat_size()
-                    logger.debug("found tree with size: {}".format(flat_tree_size))
-                    logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
-                    downloaded_tweets += flat_tree_size
-                    if min_conversation_length < flat_tree_size:
-                        save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
-                                        tweet_filter=tweet_filter)
-                        logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
-                        # for debugging you can ascii art print the downloaded conversation_tree
-                        # root_node.print_tree(0)
-            except TwitterRequestError as e:
-                # traceback.print_exc()
-                logger.info(
-                    "############# TwitterRequestError: Rate limit was exceeded while downloading conversations info." +
-                    " Going to sleep for 15!")
-                time.sleep(15 * 60)
-
-            except TwitterConnectionError as e:
-                # traceback.print_exc()
-                logger.info("############# TwitterConnectionError Rate limit was exceeded. 169")
-
-            except ConversationNotInRangeException as e:
-                logger.debug("downloading HUGE conversation with current size {}".format(e.conversation_size))
-
-            except requests.exceptions.Timeout:
-                # traceback.print_exc()
-                logger.error("Timeout occurred")
+            if root_node is None:
+                logger.error("found conversation_id that could not be processed")
+                continue
+            else:
+                flat_tree_size = root_node.flat_size()
+                logger.debug("found tree with size: {}".format(flat_tree_size))
+                logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
+                downloaded_tweets += flat_tree_size
+                if min_conversation_length < flat_tree_size:
+                    save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
+                                    tweet_filter=tweet_filter)
+                    logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
+                    # for debugging you can ascii art print the downloaded conversation_tree
+                    # root_node.print_tree(0)
         else:
             n_dismissed_candidates += 1
     logger.debug("{} of {} candidates were dismissed".format(n_dismissed_candidates, len(candidates)))
 
 
-def download_conversation_representative_tweets(connector, query, max_results, min_conversation_length,
-                                                language=LANGUAGE.ENGLISH, ):
+def download_conversation_representative_tweets(twarc, query, n_candidates,
+                                                language=LANGUAGE.ENGLISH):
     """ downloads the tweets matching the hashtag list.
         using https://api.twitter.com/2/tweets/search/all
 
         Keyword arguments:
-        :param connector -- TwitterConnector
+        :param twarc:
         :param query -- twitter query query
         :param max_results -- the number of max length the conversation should have
         :param language:
         :returns json_object with found tweets
     """
+    min_page_size = 10
+    max_page_size = 500
+    if n_candidates > max_page_size:
+        page_size = 500
+    else:
+        page_size = n_candidates
+    assert page_size >= min_page_size
+
     twitter_accounts_query = query + " lang:" + language
     logger.debug(twitter_accounts_query)
-    params = {'query': twitter_accounts_query, 'max_results': max_results,
-              "tweet.fields": "conversation_id,author_id,public_metrics"}
+    candidates = twarc.search_all(query=twitter_accounts_query, tweet_fields="conversation_id,author_id,public_metrics",
+                                  max_results=page_size)
+    result = []
+    n_pages = 1
+    for candidate in candidates:
+        result += candidate.get("data", [])
+        n_pages += 1
+        # logger.debug("number of candidates downloaded: {}".format(str(count)))
+        if n_pages * page_size > n_candidates:
+            break
 
-    json_result = connector.get_from_twitter(TWEETS_SEARCH_All_URL, params, True)
-    return json_result
+    return result
 
 
 def download_conversation_as_tree(conversation_id, max_replies):
