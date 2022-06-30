@@ -10,10 +10,13 @@ from delab.tw_connection_util import TwitterStreamConnector
 
 
 def run():
-    download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
-                           language=LANGUAGE.GERMAN)
-    download_conversations('Klimawandel', "(climate change) OR (earth warming)",
-                           language=LANGUAGE.ENGLISH)
+    # download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
+    #                       language=LANGUAGE.GERMAN)
+    # download_conversations('Klimawandel', "(climate change) OR (earth warming)",
+    #                       language=LANGUAGE.ENGLISH)
+
+    download_conversations('freespech', '(#FreeSpeech OR #FreedomOfSpeech)', language=LANGUAGE.GERMAN)
+    logger.info("finished downloading conversations")
 
 
 def delete_rules_tests():

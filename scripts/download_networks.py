@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def run():
-    levels = 1
-    n_conversations = 2
+    levels = 3
+    n_conversations = -1
     count = 0
     conversation_ids = set(Tweet.objects.values_list('conversation_id', flat=True))
     unhandled_conversation_ids = prevent_multiple_downloads(conversation_ids)
@@ -37,13 +37,14 @@ def run():
             for conversation_id in conversation_ids:
                 count += 1
                 download_conversation_network(conversation_id, conversation_ids, count, levels)
+    logger.info("finished downloading networks")
 
 
 def download_conversation_network(conversation_id, conversation_ids, count, levels):
     user_ids = get_participants(conversation_id)
     download_followers_recursively(user_ids, levels, following=True)
     # this would also search the network in the other direction
-    # download_followers_recursively(user_ids, levels, following=False)
+    download_followers_recursively(user_ids, levels, following=False)
     logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
 
 

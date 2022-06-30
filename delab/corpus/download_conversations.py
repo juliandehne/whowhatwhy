@@ -1,6 +1,8 @@
 import logging
 import re
+
 from django.db import IntegrityError
+
 from delab import tw_connection_util
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
@@ -8,7 +10,7 @@ from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import DelabTwarc
-from django_project.settings import MAX_CANDIDATES
+from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH
 from util.abusing_lists import powerset
 
 logger = logging.getLogger(__name__)
@@ -71,15 +73,13 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter)
 
-    connector = None  # precaution to terminate the thread and the http socket
-
 
 def filter_conversations(twarc,
                          query,
                          topic,
                          simple_request,
                          platform,
-                         max_conversation_length=1000,
+                         max_conversation_length=MAX_CONVERSATION_LENGTH,
                          min_conversation_length=10,
                          language=LANGUAGE.ENGLISH,
                          max_number_of_candidates=MAX_CANDIDATES,
@@ -111,7 +111,9 @@ def filter_conversations(twarc,
     downloaded_tweets = 0
     n_dismissed_candidates = 0
     for candidate in candidates:
-        if candidate["public_metrics"]["reply_count"] > min_conversation_length / 2:
+        # assert that the conversation is long enough
+        reply_count = candidate["public_metrics"]["reply_count"]
+        if min_conversation_length / 2 < reply_count < max_conversation_length:
             logger.debug("selected candidate tweet {}".format(candidate))
             conversation_id = candidate["conversation_id"]
 
@@ -145,9 +147,9 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
         using https://api.twitter.com/2/tweets/search/all
 
         Keyword arguments:
+        :param n_candidates:
         :param twarc:
         :param query -- twitter query query
-        :param max_results -- the number of max length the conversation should have
         :param language:
         :returns json_object with found tweets
     """
@@ -200,7 +202,7 @@ def download_conversation_as_tree(conversation_id, max_replies):
             orphans.append(node)
         reply_count += 1
 
-    logger.error('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
+    logger.info('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
     orphan_added, rest_orphans = solve_orphans(orphans, root)
 
     if len(orphans) > 0:
@@ -257,6 +259,7 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
         pass
     # after = dt.now()
     # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
+    # recursively persisting the children in the database
     if not len(root_node.children) == 0:
         for child in root_node.children:
             save_tree_to_db(child, topic, simple_request, conversation_id, platform, parent,

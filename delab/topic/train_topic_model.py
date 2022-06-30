@@ -270,10 +270,13 @@ def clean_corpus(corpus_for_fitting_sentences):
     for temp in corpus_for_fitting_sentences:
         original = temp
         # removing hashtags
-        temp = re.sub("@[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
-        temp = re.sub("#[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
+        temp = re.sub(r"@[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
+        temp = re.sub(r"#[A-Za-z0-9äöüÄÖÜ_]+", "", temp)
         # removing links
+        # if "https " in temp:
+        #    print(temp)
         temp = re.sub(r"http\S+", "", temp)
+        temp = re.sub(r"https\S+", "", temp)
         temp = re.sub(r"www.\S+", "", temp)
         # removing punctuation
         # temp = re.sub('[()!?]', ' ', temp)
