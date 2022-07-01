@@ -176,39 +176,44 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
 
 
 def download_conversation_as_tree(twarc, conversation_id, max_replies):
-    root_tweet = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))["data"][0]
-    result = next(twarc.search_all("conversation_id:{}".format(conversation_id)))
-    tweets = result.get("data", [])
-    tweets.sort(key=lambda x: x["created_at"], reverse=False)
-    root = TreeNode(root_tweet, root_tweet["id"])
+    results = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))
+    if "data" not in results:
+        logger.error(results["errors"])
+        return None
+    else:
+        root_tweet = results["data"][0]
+        result = next(twarc.search_all("conversation_id:{}".format(conversation_id)))
+        tweets = result.get("data", [])
+        tweets.sort(key=lambda x: x["created_at"], reverse=False)
+        root = TreeNode(root_tweet, root_tweet["id"])
 
-    orphans = []
+        orphans = []
 
-    reply_count = 0
-    for item in tweets:
-        if reply_count == 10:
-            logger.debug("downloading bigger conversation ...")
-        if reply_count >= max_replies:
-            raise ConversationNotInRangeException(reply_count)
-        # node_id = item["author_id"]
-        # parent_id = item["in_reply_to_user_id"]
-        node_id = item["id"]
-        parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
-        # parent_id = item["referenced_tweets.id"]
-        node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
-        # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
-        if not root.find_parent_of(node):
-            orphans.append(node)
-        reply_count += 1
+        reply_count = 0
+        for item in tweets:
+            if reply_count == 10:
+                logger.debug("downloading bigger conversation ...")
+            if reply_count >= max_replies:
+                raise ConversationNotInRangeException(reply_count)
+            # node_id = item["author_id"]
+            # parent_id = item["in_reply_to_user_id"]
+            node_id = item["id"]
+            parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
+            # parent_id = item["referenced_tweets.id"]
+            node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
+            # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
+            if not root.find_parent_of(node):
+                orphans.append(node)
+            reply_count += 1
 
-    logger.info('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
-    orphan_added, rest_orphans = solve_orphans(orphans, root)
+        logger.info('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
+        orphan_added, rest_orphans = solve_orphans(orphans, root)
 
-    if len(orphans) > 0:
-        logger.error('{} orphaned tweets for conversation {}'.format(len(rest_orphans), conversation_id))
-        logger.error('{} downloaded tweets'.format(reply_count))
+        if len(orphans) > 0:
+            logger.error('{} orphaned tweets for conversation {}'.format(len(rest_orphans), conversation_id))
+            logger.error('{} downloaded tweets'.format(reply_count))
 
-    return root
+        return root
 
 
 def get_priority_parent_from_references(references):

@@ -29,9 +29,9 @@ def update_authors(simple_request_id=-1, topic: str = None, platform=PLATFORM.TW
         if simple_request_id < 0:
             if topic is not None:
                 author_ids = Tweet.objects.filter(tw_author__isnull=True, topic__title=topic,
-                                                  platform=platform).all().values_list('author_id', flat=True)
+                                                  platform=platform).values_list('author_id', flat=True)
             else:
-                author_ids = Tweet.objects.filter(tw_author__isnull=True, platform=platform).all().values_list(
+                author_ids = Tweet.objects.filter(tw_author__isnull=True, platform=platform).values_list(
                     'author_id', flat=True)
         else:
             if topic is not None:
