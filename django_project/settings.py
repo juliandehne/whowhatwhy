@@ -272,7 +272,7 @@ LOGGING = {
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10
 MAX_CANDIDATES = 10000
-MAX_CONVERSATION_LENGTH=1000,
+MAX_CONVERSATION_LENGTH = 1000
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
 

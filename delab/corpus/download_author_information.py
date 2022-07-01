@@ -15,9 +15,10 @@ from util.abusing_lists import batch
 logger = logging.getLogger(__name__)
 
 
-def update_authors(simple_request_id=-1, platform=PLATFORM.TWITTER):
+def update_authors(simple_request_id=-1, topic: str = None, platform=PLATFORM.TWITTER):
     """
     downlaod detailed author information for the author's of the tweets
+    :param topic:
     :param platform:
     :param simple_request_id: (int) for the web-downloader. if it is negative, all authors will be queried
     :return:
@@ -26,12 +27,21 @@ def update_authors(simple_request_id=-1, platform=PLATFORM.TWITTER):
         print("author detail download NOT IMPLEMENTED FOR REDDIT")
     if platform == PLATFORM.TWITTER:
         if simple_request_id < 0:
-            author_ids = Tweet.objects.filter(tw_author__isnull=True, platform=platform).all().values_list(
-                'author_id', flat=True)
+            if topic is not None:
+                author_ids = Tweet.objects.filter(tw_author__isnull=True, topic__title=topic,
+                                                  platform=platform).all().values_list('author_id', flat=True)
+            else:
+                author_ids = Tweet.objects.filter(tw_author__isnull=True, platform=platform).all().values_list(
+                    'author_id', flat=True)
         else:
-            author_ids = Tweet.objects.filter(Q(tw_author__isnull=True)
-                                              & Q(simple_request_id=simple_request_id)
-                                              & Q(platform=platform)).values_list('author_id', flat=True)
+            if topic is not None:
+                author_ids = Tweet.objects.filter(Q(tw_author__isnull=True) & Q(topic__title=topic)
+                                                  & Q(simple_request_id=simple_request_id)
+                                                  & Q(platform=platform)).values_list('author_id', flat=True)
+            else:
+                author_ids = Tweet.objects.filter(Q(tw_author__isnull=True)
+                                                  & Q(simple_request_id=simple_request_id)
+                                                  & Q(platform=platform)).values_list('author_id', flat=True)
         # create only one connector for quote reasons
         download_authors(author_ids)
 

@@ -15,6 +15,12 @@ class PLATFORM(models.TextChoices):
     DELAB = "delab"
 
 
+class TWEET_RELATIONSHIPS(models.TextChoices):
+    REPLIED_TO = "replied_to"
+    RETWEETED = "retweeted"
+    QUOTED = "quoted"
+
+
 class LANGUAGE(models.TextChoices):
     ENGLISH = "en"
     GERMAN = "de"

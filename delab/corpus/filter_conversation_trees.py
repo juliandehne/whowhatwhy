@@ -108,6 +108,6 @@ def solve_orphans(orphans, tree_node):
             orphan_added = True
     if len(orphans) == len(rest_orphans):
         print(f"could not reconstruct faulty tree for conversation_id {orphans[0].data['conversation_id']}")
-        return False, []
-    # assert len(orphans) != len(rest_orphans)
+        # return False, []
+    assert len(orphans) != len(rest_orphans)
     return orphan_added, rest_orphans

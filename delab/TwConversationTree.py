@@ -1,12 +1,14 @@
 import logging
 
+from delab.delab_enums import TWEET_RELATIONSHIPS
+
 logger = logging.getLogger(__name__)
 
 import xml.etree.ElementTree as ET
 
 
 class TreeNode:
-    def __init__(self, data, tree_id, parent_id=None):
+    def __init__(self, data, tree_id, parent_id=None, parent_type=TWEET_RELATIONSHIPS.REPLIED_TO):
         """data is a tweet's json object
            tree_id is the logical id of the treenode (either author id when downloading, or twitter id in db)
            parent references the tree_id of the parent
@@ -32,6 +34,7 @@ class TreeNode:
         self.children = []
         self.max_path_length = 0
         self.parent_id = parent_id
+        self.parent_type = parent_type
 
     def find_parent_of(self, node):
         if node.parent_id == self.tree_id:

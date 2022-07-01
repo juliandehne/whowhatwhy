@@ -3,11 +3,10 @@ import re
 
 from django.db import IntegrityError
 
-from delab import tw_connection_util
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
-from delab.delab_enums import PLATFORM, LANGUAGE
+from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import DelabTwarc
 from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH
@@ -113,11 +112,12 @@ def filter_conversations(twarc,
     for candidate in candidates:
         # assert that the conversation is long enough
         reply_count = candidate["public_metrics"]["reply_count"]
-        if min_conversation_length / 2 < reply_count < max_conversation_length:
+
+        if (min_conversation_length / 2) < reply_count < max_conversation_length:
             logger.debug("selected candidate tweet {}".format(candidate))
             conversation_id = candidate["conversation_id"]
 
-            root_node = download_conversation_as_tree(conversation_id, max_conversation_length)
+            root_node = download_conversation_as_tree(twarc, conversation_id, max_conversation_length)
 
             if conversation_filter is not None:
                 root_node = conversation_filter(root_node)
@@ -136,22 +136,20 @@ def filter_conversations(twarc,
                     logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
                     # for debugging you can ascii art print the downloaded conversation_tree
                     # root_node.print_tree(0)
-        else:
-            n_dismissed_candidates += 1
+
+    else:
+        n_dismissed_candidates += 1
     logger.debug("{} of {} candidates were dismissed".format(n_dismissed_candidates, len(candidates)))
 
 
 def download_conversation_representative_tweets(twarc, query, n_candidates,
                                                 language=LANGUAGE.ENGLISH):
-    """ downloads the tweets matching the hashtag list.
-        using https://api.twitter.com/2/tweets/search/all
-
-        Keyword arguments:
-        :param n_candidates:
-        :param twarc:
-        :param query -- twitter query query
-        :param language:
-        :returns json_object with found tweets
+    """
+    :param twarc:
+    :param query:
+    :param n_candidates:
+    :param language:
+    :return:
     """
     min_page_size = 10
     max_page_size = 500
@@ -177,14 +175,12 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
     return result
 
 
-def download_conversation_as_tree(conversation_id, max_replies):
-    twarc = tw_connection_util.DelabTwarc()
-
+def download_conversation_as_tree(twarc, conversation_id, max_replies):
     root_tweet = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))["data"][0]
     result = next(twarc.search_all("conversation_id:{}".format(conversation_id)))
     tweets = result.get("data", [])
     tweets.sort(key=lambda x: x["created_at"], reverse=False)
-    root = TreeNode(root_tweet, root_tweet["author_id"])
+    root = TreeNode(root_tweet, root_tweet["id"])
 
     orphans = []
 
@@ -194,9 +190,12 @@ def download_conversation_as_tree(conversation_id, max_replies):
             logger.debug("downloading bigger conversation ...")
         if reply_count >= max_replies:
             raise ConversationNotInRangeException(reply_count)
-        node_id = item["author_id"]
-        parent_id = item["in_reply_to_user_id"]
-        node = TreeNode(item, node_id, parent_id)
+        # node_id = item["author_id"]
+        # parent_id = item["in_reply_to_user_id"]
+        node_id = item["id"]
+        parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
+        # parent_id = item["referenced_tweets.id"]
+        node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if not root.find_parent_of(node):
             orphans.append(node)
@@ -212,10 +211,27 @@ def download_conversation_as_tree(conversation_id, max_replies):
     return root
 
 
-def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform, parent=None, tweet_filter=None):
+def get_priority_parent_from_references(references):
+    reference_types = [ref["type"] for ref in references]
+    replied_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.REPLIED_TO]
+    retweeted_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.RETWEETED]
+    quoted_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.QUOTED]
+    if TWEET_RELATIONSHIPS.REPLIED_TO in reference_types:
+        return replied_tos[0], TWEET_RELATIONSHIPS.REPLIED_TO
+    if TWEET_RELATIONSHIPS.QUOTED in reference_types:
+        return quoted_tos[0], TWEET_RELATIONSHIPS.QUOTED
+    if TWEET_RELATIONSHIPS.RETWEETED in reference_types:
+        return retweeted_tos[0], TWEET_RELATIONSHIPS.RETWEETED
+    raise Exception("no parent found")
+
+
+def save_tree_to_db(root_node: TreeNode,
+                    topic: TwTopic,
+                    simple_request: SimpleRequest,
+                    conversation_id: int,
+                    platform: PLATFORM,
+                    tweet_filter=None):
     """ This method persist a conversation tree in the database
-
-
         Parameters
         ----------
         :param root_node : TwConversationTree
@@ -223,14 +239,15 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
         :param simple_request: the query string in order to link the view
         :param conversation_id: the conversation id of the candidate tweet that was found with the request
         :param platform: this was added to allow for a "fake" delab platform to come in
-        :param parent: TwConversationTree this is needed for the recursion, is None for root
         :param tweet_filter: a function that takes a tweet model object and validates it (returns None if not)
 
     """
-    tn_parent = None
-    if parent is not None:
-        tn_parent = parent.data.get("id", None)
+    store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
+    # run some tree validations
 
+
+def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
+                    topic: TwTopic, tweet_filter):
     # before = dt.now()
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],
@@ -241,8 +258,9 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
                   created_at=root_node.data["created_at"],
                   in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                   in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-                  tn_parent_id=tn_parent,
                   platform=platform,
+                  tn_parent_id=root_node.parent_id,
+                  tn_parent_type=root_node.parent_type,
                   # tn_priority=priority,
                   language=root_node.data["lang"])
     try:
@@ -262,5 +280,4 @@ def save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
     # recursively persisting the children in the database
     if not len(root_node.children) == 0:
         for child in root_node.children:
-            save_tree_to_db(child, topic, simple_request, conversation_id, platform, parent,
-                            tweet_filter=tweet_filter)
+            store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)

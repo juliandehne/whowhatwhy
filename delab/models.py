@@ -7,7 +7,8 @@ from django.db.models import UniqueConstraint
 from django.urls import reverse
 from treenode.models import TreeNodeModel
 
-from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, INTOLERANCE, STRATEGIES, NETWORKRELS
+from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, INTOLERANCE, STRATEGIES, NETWORKRELS, \
+    TWEET_RELATIONSHIPS
 
 
 class ConversationFlow(models.Model):
@@ -191,6 +192,8 @@ class Tweet(models.Model):
 
     tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,
                                   help_text="This holds the twitter_id (!) of the tweet that was responded to")
+    tn_parent_type = models.TextField(choices=TWEET_RELATIONSHIPS.choices,
+                              help_text="replied_to, retweeted or quoted", null=True, blank=True)
     c_is_local_moderator = models.BooleanField(null=True,
                                                help_text="True if it is the most moderating tweet in the conversation, based on m_index")
     c_is_local_moderator_score = models.FloatField(null=True, help_text="m_index without weights")
