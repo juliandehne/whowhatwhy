@@ -193,7 +193,7 @@ class Tweet(models.Model):
     tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,
                                   help_text="This holds the twitter_id (!) of the tweet that was responded to")
     tn_parent_type = models.TextField(choices=TWEET_RELATIONSHIPS.choices,
-                              help_text="replied_to, retweeted or quoted", null=True, blank=True)
+                                      help_text="replied_to, retweeted or quoted", null=True, blank=True)
     c_is_local_moderator = models.BooleanField(null=True,
                                                help_text="True if it is the most moderating tweet in the conversation, based on m_index")
     c_is_local_moderator_score = models.FloatField(null=True, help_text="m_index without weights")
@@ -367,3 +367,52 @@ class FollowerNetwork(models.Model):
 
     class Meta:
         unique_together = ('source', 'target', 'relationship')
+
+
+class ModerationCandidate2(models.Model):
+    """
+    represents the tweets which where selected using a dictionary approach.
+    This table is also the selector for the manual labeling at the web-interface
+    """
+    tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
+    exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the ditionary was used")
+    c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
+    sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
+    c_author_number_changed_norm = models.FloatField(null=True,
+                                                     help_text="the number of different authors posting before and after the tweet")
+    c_author_topic_variance_norm = models.FloatField(null=True,
+                                                     help_text="the normalized author diversity")
+    moderator_index = models.FloatField(null=True,
+                                        help_text="a combined measure of the quality of a tweet in terms of moderating value")
+
+    u_moderator_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the tweet is moderating the conversation?")
+    u_sentiment_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the tweet expresses a positive sentiment?")
+    u_author_topic_variance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                                         help_text="Do you agree that the tweet has caused a greater variety of perspectives?")
+
+
+class ModerationRating(models.Model):
+    mod_coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    mod_candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
+    user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
+                                     help_text="the category the intolerance could best be grouped by")
+    u_mod_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                       help_text="Do you agree that the tweet is moderating?")
+    u_sis_issues = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                       help_text="Do you agree that the situation before the tweet was issue centered?")
+    u_sit_consensus = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                          help_text="Do you agree that the situation before the tweet was consensus oriented?")
+    u_mod_issues = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                       help_text="Do you agree that the moderating tweet tried to focus debating the issues (non-emotionally)?")
+    u_mod_consensus = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                          help_text="Do you agree that the moderating tweet tried to focus support consensus building?")
+    u_clearness_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                             help_text="Do you agree that the meaning of the statement is clear from "
+                                                       "the context?")
+    u_moderating_part = models.TextField(null=True,
+                                         help_text="Please copy the part of the tweet that is moderating to here!")
+
+    def get_absolute_url(self):
+        return reverse('delab-label-moderation-proxy')

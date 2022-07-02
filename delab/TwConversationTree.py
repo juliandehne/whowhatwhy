@@ -98,7 +98,7 @@ class TreeNode:
         author_id_elem = ET.SubElement(author_elem, 'author-id')
         author_id_elem.text = str(self.data["author_id"])
         author_name_elem = ET.SubElement(author_elem, 'author-name')
-        author_name_elem.text = self.data["author_name"]
+        author_name_elem.text = self.data["tw_author__name"]
         text_elem = ET.SubElement(speech_act_elem, 'text')
         text_elem.text = self.data["text"]
         in_response_elem = ET.SubElement(speech_act_elem, 'in-reply-to')

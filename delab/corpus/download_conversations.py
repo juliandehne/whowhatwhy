@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 
 from django.db import IntegrityError
 
@@ -16,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER):
+                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
+                           recent=True):
     """
     :param topic_string:
     :param query_string:
@@ -64,13 +66,13 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                 new_query = " ".join(hashtag_set)
                 filter_conversations(twarc, new_query, topic, simple_request, platform, language=language,
                                      fast_mode=fast_mode, conversation_filter=conversation_filter,
-                                     tweet_filter=tweet_filter)
+                                     tweet_filter=tweet_filter, recent=recent)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
-                             tweet_filter=tweet_filter)
+                             tweet_filter=tweet_filter, recent=recent)
 
 
 def filter_conversations(twarc,
@@ -84,8 +86,9 @@ def filter_conversations(twarc,
                          max_number_of_candidates=MAX_CANDIDATES,
                          fast_mode=False,
                          conversation_filter=None,
-                         tweet_filter=None):
+                         tweet_filter=None, recent=True):
     """
+    :param recent:
     :param twarc:
     :param query:
     :param topic:
@@ -105,11 +108,19 @@ def filter_conversations(twarc,
         min_conversation_length = 3
         max_conversation_length = 100
 
-    candidates = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language)
+    candidates, n_pages = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language,
+                                                                      recent=recent)
 
     downloaded_tweets = 0
     n_dismissed_candidates = 0
+    tweet_lookup_request_counter = 250
+    if recent:
+        tweet_lookup_request_counter = 400
+
     for candidate in candidates:
+        # assert that not more then tweets quota is downloaded
+        tweet_lookup_request_counter = ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter)
+        tweet_lookup_request_counter -= 1
         # assert that the conversation is long enough
         reply_count = candidate["public_metrics"]["reply_count"]
 
@@ -127,6 +138,7 @@ def filter_conversations(twarc,
                 continue
             else:
                 flat_tree_size = root_node.flat_size()
+                tweet_lookup_request_counter -= flat_tree_size
                 logger.debug("found tree with size: {}".format(flat_tree_size))
                 logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
                 downloaded_tweets += flat_tree_size
@@ -142,9 +154,20 @@ def filter_conversations(twarc,
     logger.debug("{} of {} candidates were dismissed".format(n_dismissed_candidates, len(candidates)))
 
 
+def ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter):
+    if tweet_lookup_request_counter - n_pages <= 0:
+        tweet_lookup_request_counter = 300
+        if recent:
+            tweet_lookup_request_counter = 400
+        time.sleep(300 * 60)
+        logger.error("going to sleep between processing candidates because of rate limitations")
+    return tweet_lookup_request_counter
+
+
 def download_conversation_representative_tweets(twarc, query, n_candidates,
-                                                language=LANGUAGE.ENGLISH):
+                                                language=LANGUAGE.ENGLISH, recent=True):
     """
+    :param recent:
     :param twarc:
     :param query:
     :param n_candidates:
@@ -161,8 +184,14 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
 
     twitter_accounts_query = query + " lang:" + language
     logger.debug(twitter_accounts_query)
-    candidates = twarc.search_all(query=twitter_accounts_query, tweet_fields="conversation_id,author_id,public_metrics",
-                                  max_results=page_size)
+    if recent:
+        candidates = twarc.search_all(query=twitter_accounts_query,
+                                      tweet_fields="conversation_id,author_id,public_metrics",
+                                      max_results=page_size)
+    else:
+        candidates = twarc.search_all(query=twitter_accounts_query,
+                                      tweet_fields="conversation_id,author_id,public_metrics",
+                                      max_results=page_size)
     result = []
     n_pages = 1
     for candidate in candidates:
@@ -172,7 +201,7 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
         if n_pages * page_size > n_candidates:
             break
 
-    return result
+    return result, n_pages
 
 
 def download_conversation_as_tree(twarc, conversation_id, max_replies):
@@ -269,15 +298,7 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
                   # tn_priority=priority,
                   language=root_node.data["lang"])
     try:
-        if tweet_filter is not None:
-            tweet = tweet_filter(tweet)
-            # the idea here is that the filter may have to save the tweet to create foreign keys
-            # in this case the save method will fail because of an integrity error
-            if tweet.pk is None:
-                tweet.save()
-
-        else:
-            tweet.save()
+        apply_tweet_filter(tweet, tweet_filter)
     except IntegrityError:
         pass
     # after = dt.now()
@@ -286,3 +307,15 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
     if not len(root_node.children) == 0:
         for child in root_node.children:
             store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)
+
+
+def apply_tweet_filter(tweet, tweet_filter):
+    if tweet_filter is not None:
+        tweet = tweet_filter(tweet)
+        # the idea here is that the filter may have to save the tweet to create foreign keys
+        # in this case the save method will fail because of an integrity error
+        if tweet.pk is None:
+            tweet.save()
+
+    else:
+        tweet.save()
