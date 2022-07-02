@@ -18,19 +18,8 @@
     <br>
     <a class="dynamic-topic" href="{{ request.path }}../../rest/topic/tweets_zip/all/both">all files</a>
 
-    <script type="application/javascript">
-        $(function () {
-            $("a.dynamic-topic").click(function (e) {
-                e.preventDefault();
-                original_url = e.target.href;
-                topic_entered = $('#topic-input').text();
-                log_url = original_url.replace("topic", topic_entered);
-                ajaxLogSuggestClick(log_url, original_url)
-                return;
-            });
-        });
-
-    </script>
 
 {% endblock content %}
+
+
 

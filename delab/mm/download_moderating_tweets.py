@@ -79,7 +79,8 @@ def download_mod_tweets_for_language(reader, lang):
 
 def download_mod_helper(lang, queries):
     for query in queries.split(";"):
-        moderation_tweet_filter = partial(tweet_filter, query)
-        download_conversations(topic_string=TOPIC, query_string=query, language=lang,
-                               tweet_filter=moderation_tweet_filter,
-                               recent=True)
+        if query.strip() != "":
+            moderation_tweet_filter = partial(tweet_filter, query)
+            download_conversations(topic_string=TOPIC, query_string=query, language=lang,
+                                   tweet_filter=moderation_tweet_filter,
+                                   recent=True)
