@@ -20,6 +20,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                            fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
                            recent=True):
     """
+    :param recent: use the recent api from twitter which is faster and more current
     :param topic_string:
     :param query_string:
     :param request_id:
