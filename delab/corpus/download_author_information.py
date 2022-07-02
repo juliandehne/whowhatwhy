@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def update_authors(simple_request_id=-1, topic: str = None, platform=PLATFORM.TWITTER):
     """
     downlaod detailed author information for the author's of the tweets
-    :param topic:
+    :param topic: the topic string in the twtopic table
     :param platform:
     :param simple_request_id: (int) for the web-downloader. if it is negative, all authors will be queried
     :return:
@@ -47,7 +47,6 @@ def update_authors(simple_request_id=-1, topic: str = None, platform=PLATFORM.TW
 
 
 def download_authors(author_ids):
-    # connector = TwitterConnector(1)
     twarc = DelabTwarc()
     new_authors = []
     for author_id in author_ids:
@@ -57,8 +56,6 @@ def download_authors(author_ids):
         except TweetAuthor.DoesNotExist:
             author = None
 
-        # author = get_object_or_None(TweetAuthor, twitter_id=author_id)
-        # author = TweetAuthor.objects.filter(twitter_id=author_id).
         if author:
             tweets = Tweet.objects.filter(author_id=author_id).all()
             for tweet in tweets:

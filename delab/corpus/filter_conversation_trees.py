@@ -56,7 +56,8 @@ def convert_to_conversation_trees(conversation_id=None, topic=None):
 def author_tweet_to_records(tweet):
     result = model_to_dict(tweet)
     if tweet.tw_author is not None:
-        result.update({"author_name": tweet.tw_author.name})
+        result.update({"tw_author__name": tweet.tw_author.name})
+        result.update({"tw_author__location": tweet.tw_author.location})
     else:
         result.update({"author_name": "unknown"})
     return result
