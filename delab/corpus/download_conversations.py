@@ -3,6 +3,7 @@ import re
 import time
 
 from django.db import IntegrityError
+from requests import HTTPError
 
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_exceptions import ConversationNotInRangeException
@@ -114,14 +115,14 @@ def filter_conversations(twarc,
 
     downloaded_tweets = 0
     n_dismissed_candidates = 0
-    tweet_lookup_request_counter = 250
-    if recent:
-        tweet_lookup_request_counter = 400
+    # tweet_lookup_request_counter = 250
+    # if recent:
+    #    tweet_lookup_request_counter = 400
 
     for candidate in candidates:
         # assert that not more then tweets quota is downloaded
-        tweet_lookup_request_counter = ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter)
-        tweet_lookup_request_counter -= 1
+        # tweet_lookup_request_counter = ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter)
+        # tweet_lookup_request_counter -= 1
         # assert that the conversation is long enough
         reply_count = candidate["public_metrics"]["reply_count"]
 
@@ -139,7 +140,7 @@ def filter_conversations(twarc,
                 continue
             else:
                 flat_tree_size = root_node.flat_size()
-                tweet_lookup_request_counter -= flat_tree_size
+                # tweet_lookup_request_counter -= flat_tree_size
                 logger.debug("found tree with size: {}".format(flat_tree_size))
                 logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
                 downloaded_tweets += flat_tree_size
@@ -157,11 +158,11 @@ def filter_conversations(twarc,
 
 def ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter):
     if tweet_lookup_request_counter - n_pages <= 0:
-        tweet_lookup_request_counter = 300
+        tweet_lookup_request_counter = 250
         if recent:
             tweet_lookup_request_counter = 400
-        time.sleep(300 * 60)
         logger.error("going to sleep between processing candidates because of rate limitations")
+        time.sleep(300 * 60)
     return tweet_lookup_request_counter
 
 
@@ -185,14 +186,18 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
 
     twitter_accounts_query = query + " lang:" + language
     logger.debug(twitter_accounts_query)
-    if recent:
-        candidates = twarc.search_all(query=twitter_accounts_query,
-                                      tweet_fields="conversation_id,author_id,public_metrics",
-                                      max_results=page_size)
-    else:
-        candidates = twarc.search_all(query=twitter_accounts_query,
-                                      tweet_fields="conversation_id,author_id,public_metrics",
-                                      max_results=page_size)
+    candidates = []
+    try:
+        if recent:
+            page_size = 100
+            candidates = twarc.search_recent(query=twitter_accounts_query,
+                                             tweet_fields="conversation_id,author_id,public_metrics")
+        else:
+            candidates = twarc.search_all(query=twitter_accounts_query,
+                                          tweet_fields="conversation_id,author_id,public_metrics",
+                                          max_results=page_size)
+    except HTTPError as httperror:
+        print(httperror)
     result = []
     n_pages = 1
     for candidate in candidates:

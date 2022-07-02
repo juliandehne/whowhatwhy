@@ -49,9 +49,18 @@ def tweet_filter(query: str, tweet: Tweet):
         tweet.save()
 
     try:
-        ModerationCandidate2.objects.get_or_create(
-            tweet=tweet
-        )
+        keywords = query.replace("(", "").replace(")", "").replace("-", "")
+        contained = True
+        for item in keywords.split(" "):
+            if item in tweet.text:
+                contained = contained and True
+            else:
+                contained = False
+        if contained:
+            ModerationCandidate2.objects.get_or_create(
+                tweet=tweet
+            )
+
     except Exception as ex:
         print(ex)
     return tweet
