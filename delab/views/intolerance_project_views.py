@@ -13,6 +13,11 @@ from delab.models import Tweet, TWCandidateIntolerance, \
     TWIntoleranceRating, IntoleranceAnswer, IntoleranceAnswerValidation, ModerationCandidate2
 from django_project.settings import min_intolerance_answer_coders_needed, min_intolerance_coders_needed
 
+"""
+This contains the views for the dictionary based intolerant tweet mining project: 
+Have a look here:  https://github.com/juliandehne/delab/wiki/Norm-Culture-Experiment
+"""
+
 
 class TWCandidateIntoleranceLabelView(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     """
@@ -97,9 +102,6 @@ def intolerance_answer_validation_proxy(request):
     candidate = choice(candidates)
     pk = candidate.pk
     return redirect('delab-intolerance-answer-validation', pk=pk)
-
-
-
 
 
 class IntoleranceAnswerValidationView(LoginRequiredMixin, CreateView, SuccessMessageMixin):

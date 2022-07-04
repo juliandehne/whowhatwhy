@@ -12,6 +12,10 @@ from django.views.generic import (
 from delab.models import ModerationCandidate2
 from delab.models import Tweet, ModerationRating
 
+"""
+This contains the views for the dictionary based moderation labeling project.
+"""
+
 
 class NoMoreModeratingCandidatesView2(TemplateView):
     template_name = "delab/nomore_moderations_tolabel2.html"

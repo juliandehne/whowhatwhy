@@ -10,6 +10,11 @@ from django.views.generic import (
 
 from delab.models import Tweet, TWCandidate
 
+"""
+This contains the views for the formula based moderation labeling project. 
+Have a look here: https://github.com/juliandehne/delab/wiki/moderation_mining
+"""
+
 
 class TWCandidateLabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     model = TWCandidate
