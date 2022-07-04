@@ -96,11 +96,11 @@ def get_tasks_status(simple_request_id):
 
 @background()
 def download_intolerant_tweets():
-    logger.info("CRONJOB: downloading intolerant tweets")
+    logger.debug("CRONJOB: downloading intolerant tweets")
     download_terrible_tweets(True, True)
 
 
 @background()
 def download_moderating_tweets():
-    logger.info("CRONJOB: downloading moderating tweets")
+    logger.debug("CRONJOB: downloading moderating tweets")
     download_mod_tweets(recent=True)
