@@ -4,6 +4,7 @@ from functools import partial
 from delab.corpus.download_conversations import download_conversations
 from delab.delab_enums import LANGUAGE
 from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
+import ast
 
 TOPIC = "moderationdictmining"
 
@@ -71,6 +72,8 @@ def download_mod_tweets_for_language(reader, lang, recent):
 def download_mod_helper(lang, queries, recent):
     for query in queries.split(";"):
         if query.strip() != "":
+            # query = ast.literal_eval(query)
+            query = query.replace("'", "\"")
             moderation_tweet_filter = partial(tweet_filter, query)
             download_conversations(topic_string=TOPIC, query_string=query, language=lang,
                                    tweet_filter=moderation_tweet_filter,
