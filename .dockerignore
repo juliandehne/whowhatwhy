@@ -25,4 +25,10 @@ logs/tasks/error.log
 learning/*
 documentation/reveal/**/*
 
+cc.*
+notebooks/*
+distiluse-base-multilingual-cased-v2/*
+all-mpnet-base-v2/*
+
+
 
