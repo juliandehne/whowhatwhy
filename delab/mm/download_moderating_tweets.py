@@ -5,7 +5,7 @@ from delab.corpus.download_conversations import download_conversations
 from delab.delab_enums import LANGUAGE
 from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
 
-TOPIC = "moderation_mining_2"
+TOPIC = "moderationdictmining"
 
 
 def download_mod_tweets(recent=True):

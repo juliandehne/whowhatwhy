@@ -10,14 +10,17 @@
     <a href="{{ request.path }}../../rest/moderation_mining/tweets_text/all">Get Tabbed TXTs</a>
     <br>
     <a href="{{ request.path }}../../rest/moderation_mining/tweets_zip/all/both">all files</a>
-
     <h4>Other Downloads</h4>
     Topic Name: <input id="topic-input"></input>
     <br>
     <a class="dynamic-topic" href="{{ request.path }}../../rest/topic/tweets_json">JSON all</a>
     <br>
+    <a href="{{ request.path }}../../rest/moderation_ratings">moderation_ratings</a>
+    <br>
     <a class="dynamic-topic" href="{{ request.path }}../../rest/topic/tweets_zip/all/both">all files</a>
-
+    <h5> Labeling results</h5>
+    <a href="{{ request.path }}../../rest/moderation_ratings">moderation_ratings</a>
+    <br>
 
 {% endblock content %}
 

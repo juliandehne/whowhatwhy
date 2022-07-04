@@ -10,7 +10,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import get_conversation_trees
-from delab.models import Tweet, TweetAuthor, TWCandidate
+from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 
@@ -50,6 +50,30 @@ class TweetSerializer(serializers.ModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
 
 
+class ModerationCandidateSerializer(serializers.ModelSerializer):
+    tweet = TweetSerializer()
+
+    class Meta:
+        model = ModerationCandidate2
+        fields = '__all__'
+
+
+class ModerationRatingSerializer(serializers.ModelSerializer):
+    mod_candidate = ModerationCandidateSerializer()
+
+    class Meta:
+        model = ModerationRating
+        fields = '__all__'
+
+
+class ModerationRatingTweetSet(viewsets.ModelViewSet):
+    serializer_class = ModerationRatingSerializer
+    queryset = ModerationRating.objects.none()
+
+    def get_queryset(self):
+        return ModerationRating.objects.select_related("mod_candidate").all()
+
+
 class TabbedTextRenderer(renderers.BaseRenderer):
     # here starts the wonky stuff
     media_type = 'text/plain'
@@ -68,7 +92,7 @@ class NormXMLRenderer(renderers.BaseRenderer):
         return smart_text(data, encoding=self.charset)
 
 
-def get_migration_query_set(topic):
+def get_tweet_queryset(topic):
     queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
     return queryset
 
@@ -84,7 +108,7 @@ class TweetViewSet(viewsets.ModelViewSet):
     # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     def get_queryset(self):
         topic = self.kwargs["topic"]
-        return get_migration_query_set(topic)
+        return get_tweet_queryset(topic)
 
 
 # ViewSets define the view behavior.
@@ -108,7 +132,7 @@ class TweetExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
     # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
     def get_queryset(self):
         topic = self.kwargs["topic"]
-        return get_migration_query_set(topic)
+        return get_tweet_queryset(topic)
 
 
 class TweetSingleViewSet(TweetViewSet):
