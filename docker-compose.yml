@@ -56,7 +56,7 @@ services:
     environment:
       - DJANGO_DATABASE=postgres
 
-  download_intolerant_tweets:
+  start_cron_jobs:
     image: delab-server
     command: python manage.py runscript cron_jobs
     depends_on:

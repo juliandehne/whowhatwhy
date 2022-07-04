@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
                            fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
                            recent=True):
+
+    if query_string is None or query_string.strip() == "":
+        return False
     """
     :param recent: use the recent api from twitter which is faster and more current
     :param topic_string:

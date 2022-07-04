@@ -36,28 +36,28 @@ def process_labeled_intolerant_tweets(sender, instance: TWIntoleranceRating, cre
     :param kwargs:
     :return:
     """
-
-    ratings_count = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
-                                                       u_intolerance_rating=2,
-                                                       u_clearness_rating=2,
-                                                       u_person_hate=False).count()
-    exists_previous_labeling = ratings_count >= min_intolerance_coders_needed
-    if exists_previous_labeling:
-        # filter if the candidate has already a generated answer
-        already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
-        # filter if the candidate belongs to a discussion where an intervention has taken place already
-        already_sent_answer_in_discussion = IntoleranceAnswer.objects.filter(
-            candidate__tweet__conversation_id=instance.candidate.tweet.conversation_id).filter(
-            twitter_id__isnull=False).exists()
-        if not already_exists_answer and not already_sent_answer_in_discussion:
-            answer1, answer2, answer3 = generate_answers(instance.candidate)
-            IntoleranceAnswer.objects.create(
-                answer1=answer1,
-                answer2=answer2,
-                answer3=answer3,
-                candidate=instance.candidate,
-            )
-            logger.info("answer for intolerance candidate {} was created in db".format(instance.candidate.pk))
+    if created:
+        ratings_count = TWIntoleranceRating.objects.filter(candidate=instance.candidate,
+                                                           u_intolerance_rating=2,
+                                                           u_clearness_rating=2,
+                                                           u_person_hate=False).count()
+        exists_previous_labeling = ratings_count >= min_intolerance_coders_needed
+        if exists_previous_labeling:
+            # filter if the candidate has already a generated answer
+            already_exists_answer = IntoleranceAnswer.objects.filter(candidate=instance.candidate).exists()
+            # filter if the candidate belongs to a discussion where an intervention has taken place already
+            already_sent_answer_in_discussion = IntoleranceAnswer.objects.filter(
+                candidate__tweet__conversation_id=instance.candidate.tweet.conversation_id).filter(
+                twitter_id__isnull=False).exists()
+            if not already_exists_answer and not already_sent_answer_in_discussion:
+                answer1, answer2, answer3 = generate_answers(instance.candidate)
+                IntoleranceAnswer.objects.create(
+                    answer1=answer1,
+                    answer2=answer2,
+                    answer3=answer3,
+                    candidate=instance.candidate,
+                )
+                logger.info("answer for intolerance candidate {} was created in db".format(instance.candidate.pk))
 
 
 @receiver(post_save, sender=IntoleranceAnswerValidation)
@@ -83,7 +83,8 @@ def process_simple_request(sender, instance, created, **kwargs):
     """
     logging.info("received signal from post_save {} for pk {}".format(timezone.now(), instance.pk))
 
-    if created:
+    scripted_topics = ["moderation_mining_2", "TopicNotGiven"]
+    if created and instance.topic.title not in scripted_topics:
         # cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
         download_conversations_scheduler(instance.topic.title,
                                          instance.platform,
