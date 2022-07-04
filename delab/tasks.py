@@ -10,6 +10,7 @@ from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations import download_conversations
 from delab.corpus.download_conversation_reddit import download_conversations_reddit
 from .delab_enums import PLATFORM, LANGUAGE
+from .mm.download_moderating_tweets import download_mod_tweets
 from .nce.download_intolerant_tweets import download_terrible_tweets
 
 logger = logging.getLogger(__name__)
@@ -97,3 +98,9 @@ def get_tasks_status(simple_request_id):
 def download_intolerant_tweets():
     logger.info("CRONJOB: downloading intolerant tweets")
     download_terrible_tweets(True, True)
+
+
+@background()
+def download_moderating_tweets():
+    logger.info("CRONJOB: downloading moderating tweets")
+    download_mod_tweets(recent=True)

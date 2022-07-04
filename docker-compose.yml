@@ -58,7 +58,7 @@ services:
 
   download_intolerant_tweets:
     image: delab-server
-    command: python manage.py runscript download_terrible_tweets
+    command: python manage.py runscript cron_jobs
     depends_on:
       - process_tasks
     environment:
