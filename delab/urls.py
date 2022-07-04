@@ -4,29 +4,39 @@ from delab.api.view_sets import get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
     get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view
 from .api.router import get_routes
-from .views import (
-    SimpleRequestCreateView,
-    ConversationListView, SimpleRequestListView, ConversationView, TopicCreateView, TaskStatusView,
-    simple_request_proxy, TWCandidateLabelView, ModerationCreateView, candidate_label_proxy, downloads_view,
-    TWCandidateIntoleranceLabelView, intolerance_candidate_label_proxy, intolerance_answer_validation_proxy,
-    IntoleranceAnswerValidationView, NoMoreAnswersToValidateView, NoMoreIntolerantCandidatesView,
-    NoMoreModeratingCandidatesView
-)
+from .views.moderation_project_2_views import *
+from .views.intolerance_project_views import *
+from .views.moderation_project_1_views import *
+from .views.corpus_project_views import *
 
 urlpatterns = [
-    path('moderation/label/nomore', NoMoreModeratingCandidatesView.as_view(),
-         name='delab-label-moderation-nomore'),
+    # the patterns for the moderation-labeling approach 2
+    path('moderation2/label/nomore', NoMoreModeratingCandidatesView2.as_view(),
+         name='delab-label-moderation2-nomore'),
+    path('proxy/moderation2/label', moderation2_label_proxy,
+         name='delab-label-moderation2-proxy'),
+    path('label/moderation2/<int:pk>', ModerationLabelView2.as_view(), name='delab-label-moderation2'),
+
+
+    # the patterns for the intolerance labeling
+    path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
     path('answer/nomore', NoMoreAnswersToValidateView.as_view(), name='delab-intolerance-answer-validation-nomore'),
     path('label/intolerance/nomore', NoMoreIntolerantCandidatesView.as_view(), name='delab-label-intolerance-nomore'),
     path('answer/validation/<int:pk>', IntoleranceAnswerValidationView.as_view(),
          name='delab-intolerance-answer-validation'),
     path('proxy/answer/validation', intolerance_answer_validation_proxy,
          name='delab-intolerance-answer-validation-proxy'),
-
-    path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
     path('labelproxy/intolerance', intolerance_candidate_label_proxy, name='delab-label-intolerance-proxy'),
+
+
+    # the patterns for the moderation labeling approach 1
+    path('moderation/label/nomore', NoMoreModeratingCandidatesView.as_view(),
+         name='delab-label-moderation-nomore'),
     path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),
     path('labelproxy', candidate_label_proxy, name='delab-label-proxy'),
+
+
+    # other patterns
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),
     path('moderation/new/<int:reply_to_id>', ModerationCreateView.as_view(), name='delab-moderation-create'),
     path('topic/new', TopicCreateView.as_view(), name='delab-create-topic'),

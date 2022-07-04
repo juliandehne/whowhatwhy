@@ -40,8 +40,8 @@
 <header class="site-header">
     <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
         <div class="container">
-            <a class="navbar-brand mr-4" href="{% url 'blog-home' %}">Deliberation Laboratory - Political Discussions
-                with AI</a>
+            <!-- <a class="navbar-brand mr-4" href="{% url 'blog-home' %}">Deliberation Laboratory - Political Discussions
+                with AI</a> -->
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle"
                     aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -51,29 +51,33 @@
                     <!--
                     <a class="nav-item nav-link" href="{% url 'blog-home' %}">Home</a>
                     <a class="nav-item nav-link" href="{% url 'blog-about' %}">About</a> -->
-                    <a class="nav-item nav-link" href="{% url 'delab-conversations-requests' %}">Results</a>
-                    <a class="nav-item nav-link" href="{% url 'delab-downloads' %}">Downloads</a>
-                    <a class="nav-item nav-link" href="{% url 'delab-create-simple-request' %}">Start Query</a>
-                    <a class="nav-item nav-link" href="{% url 'delab-label-proxy' %}">Labeling Moderation</a>
-                    <a class="nav-item nav-link" href="{% url 'delab-label-intolerance-proxy' %}">Labeling
-                        Intolerance</a>
-                    <a class="nav-item nav-link" href="{% url 'delab-intolerance-answer-validation-proxy' %}">Validate
-                        Answers</a>
-                    <a class="nav-item nav-link" href="{% url 'admin:index' %}">admin</a>
-                </div>
-                <!-- Navbar Right Side -->
-                <div class="navbar-nav">
-                    {% if user.is_authenticated %}
-                        <a class="nav-item nav-link" href="{% url 'institution-create' %}">New Institution</a>
-                        <a class="nav-item nav-link" href="{% url 'post-create' %}">New Post</a>
-                        <a class="nav-item nav-link" href="{% url 'profile' %}">Profile</a>
-                        <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
-                    {% else %}
-                        <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
-                        <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
-                    {% endif %}
-                </div>
+
+                <a class="nav-item nav-link" href="{% url 'delab-create-simple-request' %}">Start Query</a>
+                <a class="nav-item nav-link" href="{% url 'delab-conversations-requests' %}">Results</a>
+                <a class="nav-item nav-link" href="{% url 'delab-downloads' %}">Downloads</a>
+
+
+                <a class="nav-item nav-link" href="{% url 'delab-label-proxy' %}">Labeling Moderation</a>
+                <a class="nav-item nav-link" href="{% url 'delab-label-moderation2-proxy' %}">Labeling Moderation2</a>
+                <a class="nav-item nav-link" href="{% url 'delab-label-intolerance-proxy' %}">Labeling
+                    Intolerance</a>
+                 <a class="nav-item nav-link" href="{% url 'delab-intolerance-answer-validation-proxy' %}">Validate Intolerance
+                   Answers</a>
+                <a class="nav-item nav-link" href="{% url 'admin:index' %}">admin</a>
             </div>
+            <!-- Navbar Right Side -->
+            <div class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <a class="nav-item nav-link" href="{% url 'institution-create' %}">New Institution</a>
+                    <a class="nav-item nav-link" href="{% url 'post-create' %}">New Post</a>
+                    <a class="nav-item nav-link" href="{% url 'profile' %}">Profile</a>
+                    <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
+                    <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
         </div>
     </nav>
 

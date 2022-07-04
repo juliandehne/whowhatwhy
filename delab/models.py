@@ -395,9 +395,8 @@ class ModerationCandidate2(models.Model):
 
 class ModerationRating(models.Model):
     mod_coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    mod_candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
-    user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
-                                     help_text="the category the intolerance could best be grouped by")
+    mod_candidate = models.ForeignKey(ModerationCandidate2, on_delete=models.DO_NOTHING)
+
     u_mod_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                        help_text="Do you agree that the tweet is moderating?")
     u_sis_issues = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
@@ -415,4 +414,4 @@ class ModerationRating(models.Model):
                                          help_text="Please copy the part of the tweet that is moderating to here!")
 
     def get_absolute_url(self):
-        return reverse('delab-label-moderation-proxy')
+        return reverse('delab-label-moderation2-proxy')
