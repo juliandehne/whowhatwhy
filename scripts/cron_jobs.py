@@ -24,12 +24,12 @@ def run():
     time.sleep(2)
     start_moderating_tweet_job()
     # deleting previous daily cron jobs
-    # background_tasks = start_intolerant_tweet_job()
+    start_intolerant_tweet_job()
 
 
 def start_moderating_tweet_job():
     # adding the new task to the stack
-    download_moderating_tweets(repeat=Task.WEEKLY, recent=True)
+    download_moderating_tweets(repeat=Task.WEEKLY)
 
 
 def start_intolerant_tweet_job():
