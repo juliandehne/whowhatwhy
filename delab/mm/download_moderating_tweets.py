@@ -1,10 +1,12 @@
 import csv
 from functools import partial
 
+from requests import HTTPError
+
 from delab.corpus.download_conversations import download_conversations
 from delab.delab_enums import LANGUAGE
 from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
-import ast
+from util.abusing_lists import batch
 
 MODTOPIC2 = "moderationdictmining"
 
@@ -93,14 +95,23 @@ def download_mod_tweets_for_language(reader, lang, recent):
 
 def generate_contexts():
     # interesting poltical contexts from  https://raw.githubusercontent.com/twitterdev/twitter-context-annotations/main/files/evergreen-context-entities-20220601.csv
-    start = "(context:131.900740740468191232 OR "
+
     # political issues, political talk, politics europe, political news
-    contexts = ["131.840159122012102656", "131.1488973753274929152", "131.847878884917886977",
-                "131.1281313284952485889", "22.1281313284952485889", "3.10027336130"]
-    for elem in contexts[:-1]:
-        start = start + "context:{} OR ".format(elem)
-    start = start + "context:{})".format(contexts[-1])
-    return start
+    # contexts = ["131.840159122012102656", "131.1488973753274929152", "131.847878884917886977",
+    #             "131.1281313284952485889", "22.1281313284952485889", "3.10027336130"]
+    contexts = []
+    with open("delab/mm/evergreen-context-entities-20220601.csv") as fp:
+        reader = csv.reader(fp, delimiter=",", quotechar='"')
+        next(reader, None)  # skip the headers
+        for row in reader:
+            if "politi" in row[2] or "polic" in row[2].lower():
+                if "," in row[0]:
+                    for domain in row[0].replace("\"", "").split(","):
+                        contexts.append(domain + "." + row[1])
+                else:
+                    contexts.append(row[0] + "." + row[1])
+
+    return contexts
 
 
 def download_mod_helper(lang, queries, recent):
@@ -111,13 +122,28 @@ def download_mod_helper(lang, queries, recent):
     :param recent:
     :return:
     """
+    contexts_full = generate_contexts()
+    batch_size = 4
+    n = len(contexts_full)
+    rest = n % 4
+    contexts_full = contexts_full[:-rest]
+
     for query in queries.split(";"):
         if query.strip() != "":
             # query = ast.literal_eval(query)
-            query = query.replace("'", "\"")
-            pol_contexts = generate_contexts()
-            query = query + " is:reply " + pol_contexts
-            moderation_tweet_filter = partial(tweet_filter, query)
-            download_conversations(topic_string=MODTOPIC2, query_string=query, language=lang,
-                                   tweet_filter=moderation_tweet_filter,
-                                   recent=recent)
+            query2 = query.replace("'", "\"")
+            for contexts_batch in batch(contexts_full, batch_size):
+                if len(contexts_batch) == batch_size:
+                    pol_contexts = "(context:{} OR ".format(contexts_batch[0])
+                    for elem in contexts_batch[1:-1]:
+                        pol_contexts = pol_contexts + "context:{} OR ".format(elem)
+                    pol_contexts = pol_contexts + "context:{})".format(contexts_batch[-1])
+
+                    query_string = query2 + " is:reply " + pol_contexts
+                    moderation_tweet_filter = partial(tweet_filter, query_string)
+                    try:
+                        download_conversations(topic_string=MODTOPIC2, query_string=query_string, language=lang,
+                                               tweet_filter=moderation_tweet_filter,
+                                               recent=recent)
+                    except HTTPError as ex:
+                        print("error in query {}".format(query))

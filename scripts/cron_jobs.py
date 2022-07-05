@@ -29,7 +29,7 @@ def run():
 
 def start_moderating_tweet_job():
     # adding the new task to the stack
-    download_moderating_tweets(repeat=Task.WEEKLY)
+    download_moderating_tweets(repeat=Task.WEEKLY, recent=True)
 
 
 def start_intolerant_tweet_job():
