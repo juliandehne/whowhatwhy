@@ -1,3 +1,5 @@
+import time
+
 from background_task.models import Task
 
 from delab.tasks import download_intolerant_tweets, download_moderating_tweets
@@ -19,6 +21,7 @@ def run():
     for background_task_2 in background_tasks_2:
         background_task_2.delete()
 
+    time.sleep(2)
     start_moderating_tweet_job()
     # deleting previous daily cron jobs
     # background_tasks = start_intolerant_tweet_job()

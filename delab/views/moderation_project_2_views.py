@@ -45,7 +45,7 @@ class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
         initial = super().get_initial()
         candidate_id = self.request.resolver_match.kwargs['pk']
         candidate = ModerationCandidate2.objects.filter(id=candidate_id).get()
-        initial['u_moderating_part'] = candidate.tweet.text
+        # initial['u_moderating_part'] = candidate.tweet.text
         return initial
 
     def form_valid(self, form):

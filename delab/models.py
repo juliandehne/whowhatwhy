@@ -410,7 +410,7 @@ class ModerationRating(models.Model):
     u_clearness_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                              help_text="Do you agree that the meaning of the statement is clear from "
                                                        "the context?")
-    u_moderating_part = models.TextField(null=True,
+    u_moderating_part = models.TextField(null=True, blank=True,
                                          help_text="Please copy the part of the tweet that is moderating to here!")
 
     def get_absolute_url(self):

@@ -15,7 +15,9 @@ def run():
     # download_conversations('Klimawandel', "(climate change) OR (earth warming)",
     #                       language=LANGUAGE.ENGLISH)
 
-    download_conversations('freespech', '(#FreeSpeech OR #FreedomOfSpeech)', language=LANGUAGE.GERMAN)
+    query = "freespeech"
+    query = query + " is:reply (context:131.900740740468191232)"
+    download_conversations('freespech', query, language=LANGUAGE.ENGLISH)
     logger.info("finished downloading conversations")
 
 
