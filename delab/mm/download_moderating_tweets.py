@@ -139,7 +139,8 @@ def download_mod_helper(lang, queries, recent):
                         pol_contexts = pol_contexts + "context:{} OR ".format(elem)
                     pol_contexts = pol_contexts + "context:{})".format(contexts_batch[-1])
 
-                    query_string = query2 + " is:reply " + pol_contexts
+                    # query_string = query2 + " is:reply " + pol_contexts
+                    query_string = query2 + " is:reply "
                     moderation_tweet_filter = partial(tweet_filter, query_string)
                     try:
                         download_conversations(topic_string=MODTOPIC2, query_string=query_string, language=lang,

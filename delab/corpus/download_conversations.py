@@ -11,7 +11,7 @@ from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import DelabTwarc
-from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH
+from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
 from util.abusing_lists import powerset
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def filter_conversations(twarc,
                          simple_request,
                          platform,
                          max_conversation_length=MAX_CONVERSATION_LENGTH,
-                         min_conversation_length=10,
+                         min_conversation_length=MIN_CONVERSATION_LENGTH,
                          language=LANGUAGE.ENGLISH,
                          max_number_of_candidates=MAX_CANDIDATES,
                          fast_mode=False,

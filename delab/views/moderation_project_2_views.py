@@ -38,8 +38,11 @@ def moderation2_label_proxy(request):
 
 class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     model = ModerationRating
-    fields = ["u_mod_rating", "u_sis_issues", "u_sit_consensus", "u_mod_issues", "u_mod_consensus",
-              "u_clearness_rating", "u_moderating_part"]
+
+    fields = ["u_mod_rating", "u_moderating_part"]
+
+    # fields = ["u_mod_rating", "u_sis_issues", "u_sit_consensus", "u_mod_issues", "u_mod_consensus",
+    #          "u_clearness_rating", "u_moderating_part"]
 
     def get_initial(self):
         initial = super().get_initial()
