@@ -397,7 +397,7 @@ class ModerationRating(models.Model):
     mod_coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     mod_candidate = models.ForeignKey(ModerationCandidate2, on_delete=models.DO_NOTHING)
 
-    u_mod_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+    u_mod_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                        help_text="Do you agree that the tweet is moderating?")
     u_sis_issues = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                        help_text="Do you agree that the situation before the tweet was issue centered?")

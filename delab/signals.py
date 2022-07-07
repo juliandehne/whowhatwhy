@@ -70,7 +70,7 @@ def process_validated_answers(sender, instance: IntoleranceAnswerValidation, cre
     enough_validations = instance.answer.intoleranceanswervalidation_set.filter(
         valid=True).count() >= min_intolerance_answer_coders_needed
     if enough_validations:
-        logger.info("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
+        logger.debug("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
         send_message(instance.answer.candidate)
 
 
