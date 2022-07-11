@@ -155,9 +155,6 @@ class TweetAuthor(models.Model):
                                 help_text="the plattform used (twitter or reddit)")
     is_moderator = models.BooleanField(default=False)
 
-    class Meta:
-        unique_together = ('twitter_id', 'platform')
-
 
 class Tweet(models.Model):
     treenode_display_field = 'text'

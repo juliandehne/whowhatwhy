@@ -1,6 +1,8 @@
 import csv
 from functools import partial
+
 from requests import HTTPError
+
 from delab.corpus.download_conversations_proxy import download_conversations
 from delab.delab_enums import LANGUAGE, PLATFORM
 from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
@@ -40,15 +42,11 @@ def tweet_filter(query: str, tweet: Tweet):
     else:
         tweet.save()
 
-    try:
         contained = test_tweet_matches_dict(query, tweet)
         if contained:
             ModerationCandidate2.objects.get_or_create(
                 tweet=tweet
             )
-
-    except Exception as ex:
-        print(ex)
     return tweet
 
 
@@ -62,8 +60,9 @@ def test_tweet_matches_dict(query, tweet):
     :return:
     """
     contained = True
-    index_original_query_end = query.index("is:reply")
-    query = query[:index_original_query_end]
+    if "is:reply" in query:
+        index_original_query_end = query.index("is:reply")
+        query = query[:index_original_query_end]
     keywords = query.replace("(", "").replace(")", "").replace("-", "").replace("\"", "")
     for item in keywords.split(" "):
         if item in tweet.text:
@@ -150,7 +149,7 @@ def download_mod_helper(lang, queries, recent, platform, add_pol_contexts=False)
                                                    tweet_filter=moderation_tweet_filter,
                                                    recent=recent)
                         except HTTPError as ex:
-                            print("error in query {}".format(query))
+                            print("error in query {}".format(ex))
             else:
                 query_string = query2
                 if platform == PLATFORM.TWITTER:
@@ -161,4 +160,4 @@ def download_mod_helper(lang, queries, recent, platform, add_pol_contexts=False)
                                            tweet_filter=moderation_tweet_filter,
                                            recent=recent, platform=platform)
                 except HTTPError as ex:
-                    print("error in query {}".format(query))
+                    print("error in query {}".format(ex))

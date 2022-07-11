@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from requests import HTTPError
 
 from delab.TwConversationTree import TreeNode
-from delab.corpus.download_conversations_util import set_up_topic_and_simple_request
+from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
 
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
@@ -20,8 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations_tw(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
-                           recent=True):
+                              fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
+                              recent=True,
+                              max_conversation_length=MAX_CONVERSATION_LENGTH,
+                              min_conversation_length=MIN_CONVERSATION_LENGTH,
+                              max_number_of_candidates=MAX_CANDIDATES):
     if query_string is None or query_string.strip() == "":
         return False
     """
@@ -56,14 +59,18 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
                 new_query = " ".join(hashtag_set)
                 filter_conversations(twarc, new_query, topic, simple_request, platform, language=language,
                                      fast_mode=fast_mode, conversation_filter=conversation_filter,
-                                     tweet_filter=tweet_filter, recent=recent)
+                                     tweet_filter=tweet_filter, recent=recent,
+                                     max_conversation_length=max_conversation_length,
+                                     min_conversation_length=min_conversation_length,
+                                     max_number_of_candidates=max_number_of_candidates)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
-                             tweet_filter=tweet_filter, recent=recent)
-
+                             tweet_filter=tweet_filter, recent=recent, max_conversation_length=max_conversation_length,
+                             min_conversation_length=min_conversation_length,
+                             max_number_of_candidates=max_number_of_candidates)
 
 
 def filter_conversations(twarc,
@@ -94,10 +101,6 @@ def filter_conversations(twarc,
     :param tweet_filter:
     :return:
     """
-    if fast_mode:
-        max_number_of_candidates = 100
-        min_conversation_length = 3
-        max_conversation_length = 100
 
     candidates, n_pages = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language,
                                                                       recent=recent)
@@ -312,13 +315,4 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
             store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)
 
 
-def apply_tweet_filter(tweet, tweet_filter):
-    if tweet_filter is not None:
-        tweet = tweet_filter(tweet)
-        # the idea here is that the filter may have to save the tweet to create foreign keys
-        # in this case the save method will fail because of an integrity error
-        if tweet.pk is None:
-            tweet.save()
 
-    else:
-        tweet.save()

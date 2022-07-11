@@ -158,8 +158,8 @@ REST_FRAMEWORK = {
         'drf_renderer_xlsx.renderers.XLSXRenderer',
 
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES':[],
-    'DEFAULT_PERMISSION_CLASSES':[],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [],
 }
 #         'delab.api.TabbedTextRenderer'
 # Internationalization
@@ -262,6 +262,9 @@ LOGGING = {
         'praw': {
             'level': 'ERROR'
         },
+        'prawcore': {
+            'level': 'ERROR'
+        },
         'neo4j': {
             'level': 'ERROR'
         },
@@ -275,7 +278,7 @@ LOGGING = {
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
 MAX_CANDIDATES = 850
 MIN_CONVERSATION_LENGTH = 5
-MAX_CONVERSATION_LENGTH = 500 #  tested for 300
+MAX_CONVERSATION_LENGTH = 500  # tested for 300
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
 

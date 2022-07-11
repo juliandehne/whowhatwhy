@@ -4,7 +4,7 @@ from background_task import background
 from background_task.models import CompletedTask
 from background_task.models import Task
 from django.utils import timezone
-
+from delab.corpus.download_conversations_proxy import download_conversations
 from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations_reddit import download_subreddit
 from .delab_enums import PLATFORM, LANGUAGE
@@ -25,6 +25,8 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
             download_conversations(topic_string, query_string, simple_request_id, language=language, max_data=max_data,
                                    fast_mode=fast_mode, platform=platform)
         if platform == PLATFORM.REDDIT:
+            # TODO: eventually change this to an r/all search instead of downloading the topic with same name as
+            #  subreddit, needs to rewrite twitter requests to reddit and inversely
             download_subreddit(topic_string, simple_request_id)
 
         update_author(simple_request_id, platform, fast_mode, language,
