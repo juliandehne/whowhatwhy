@@ -36,23 +36,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     :return:
     """
 
-    # create the topic and save it to the db
-    topic, created = TwTopic.objects.get_or_create(
-        title=topic_string
-    )
-
-    # save the request to the db in order to link the results in the view to the hashtags entered
-    if request_id > 0:
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            pk=request_id,
-            topic=topic
-        )
-    else:
-        # request_string = "#" + ' #'.join(hashtags)
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            title=query_string,
-            topic=topic
-        )
+    simple_request, topic = set_up_topic_and_simple_request(query_string, request_id, topic_string)
 
     twarc = DelabTwarc()
 
@@ -77,6 +61,26 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
         filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter, recent=recent)
+
+
+def set_up_topic_and_simple_request(query_string, request_id, topic_string):
+    # create the topic and save it to the db
+    topic, created = TwTopic.objects.get_or_create(
+        title=topic_string
+    )
+    # save the request to the db in order to link the results in the view to the hashtags entered
+    if request_id > 0:
+        simple_request, created = SimpleRequest.objects.get_or_create(
+            pk=request_id,
+            topic=topic
+        )
+    else:
+        # request_string = "#" + ' #'.join(hashtags)
+        simple_request, created = SimpleRequest.objects.get_or_create(
+            title=query_string,
+            topic=topic
+        )
+    return simple_request, topic
 
 
 def filter_conversations(twarc,

@@ -5,10 +5,13 @@ import prawcore
 import pytz
 from django.db import IntegrityError
 
+from delab.corpus.download_conversations import set_up_topic_and_simple_request
 from delab.tw_connection_util import get_praw
 from delab.models import TweetAuthor, Tweet, SimpleRequest, TwTopic
 from delab.delab_enums import PLATFORM
 from util.abusing_strings import convert_to_hash
+
+from django_project.settings import MAX_CANDIDATES
 
 """
 get the moderators like this
@@ -24,13 +27,15 @@ for message in reddit.subreddit("mod").mod.inbox(limit=5):
 logger = logging.getLogger(__name__)
 
 
-def download_conversations_reddit(topic_string, simple_request_id):
+def download_conversations_reddit(sub_reddit_string, simple_request_id, topic_string=None):
+    if topic_string is None:
+        topic_string = sub_reddit_string
     # create the topic and save it to the db
     simple_request, topic = get_simple_request(simple_request_id, topic_string)
     reddit = get_praw()
 
     try:
-        for submission in reddit.subreddit(topic_string).hot(limit=10):
+        for submission in reddit.subreddit(sub_reddit_string).hot(limit=10):
             submission.comments.replace_more(limit=None)
             comments = submission.comments.list()
             if len(comments) >= 10:
@@ -42,47 +47,20 @@ def download_conversations_reddit(topic_string, simple_request_id):
         logger.error("reddit with this name does not exist")
 
 
-def save_reddit_submission(comment, simple_request, topic):
-    author_id = compute_author_id(comment)
-    created_time = datetime.datetime.fromtimestamp(comment.created_utc)
-    banned_at = None
-    # create the author
-    author, created = TweetAuthor.objects.get_or_create(
-        twitter_id=author_id,
-        name=comment.author.name,
-        screen_name=comment.author.fullname,
-        platform=PLATFORM.REDDIT
-    )
-    tweet_id = convert_to_hash(comment.selftext)
-    conversation_id = convert_to_hash(comment.id)
-    text = comment.title + "\n" + comment.selftext
-
-    language = comment.subreddit.lang
+def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str, limit=MAX_CANDIDATES):
+    simple_request, topic = set_up_topic_and_simple_request(sub_reddit_string, simple_request_id, topic_string)
+    reddit = get_praw()
     try:
-        tweet, tweet_created = Tweet.objects.get_or_create(
-            twitter_id=tweet_id,
-            text=text,
-            author_id=author_id,
-            language=language,
-            platform=PLATFORM.REDDIT,
-            created_at=created_time,
-            conversation_id=conversation_id,
-            simple_request=simple_request,
-            topic=topic,
-            tw_author=author,
-            banned_at=banned_at
-        )
-        return tweet_created
-    except IntegrityError:
-        return True
-    except pytz.exceptions.AmbiguousTimeError:
-        "something was weird with the time field"
-        return False
-
-
-def compute_author_id(comment):
-    author_id = convert_to_hash(comment.author.id)
-    return author_id
+        for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=limit):
+            submission.comments.replace_more(limit=None)
+            comments = submission.comments.list()
+            if len(comments) >= 10:
+                created = save_reddit_submission(submission, simple_request, topic)
+                if created:
+                    for comment in comments:
+                        save_reddit_entry(comment, simple_request, topic)
+    except prawcore.exceptions.Redirect:
+        logger.error("reddit with this name does not exist")
 
 
 def save_reddit_entry(comment, simple_request, topic):
@@ -148,6 +126,49 @@ def save_reddit_entry(comment, simple_request, topic):
             return tweet_created
     except prawcore.exceptions.NotFound:
         logger.error("could not find something on reddit anymore")
+
+
+def save_reddit_submission(comment, simple_request, topic):
+    author_id = compute_author_id(comment)
+    created_time = datetime.datetime.fromtimestamp(comment.created_utc)
+    banned_at = None
+    # create the author
+    author, created = TweetAuthor.objects.get_or_create(
+        twitter_id=author_id,
+        name=comment.author.name,
+        screen_name=comment.author.fullname,
+        platform=PLATFORM.REDDIT
+    )
+    tweet_id = convert_to_hash(comment.selftext)
+    conversation_id = convert_to_hash(comment.id)
+    text = comment.title + "\n" + comment.selftext
+
+    language = comment.subreddit.lang
+    try:
+        tweet, tweet_created = Tweet.objects.get_or_create(
+            twitter_id=tweet_id,
+            text=text,
+            author_id=author_id,
+            language=language,
+            platform=PLATFORM.REDDIT,
+            created_at=created_time,
+            conversation_id=conversation_id,
+            simple_request=simple_request,
+            topic=topic,
+            tw_author=author,
+            banned_at=banned_at
+        )
+        return tweet_created
+    except IntegrityError:
+        return True
+    except pytz.exceptions.AmbiguousTimeError:
+        "something was weird with the time field"
+        return False
+
+
+def compute_author_id(comment):
+    author_id = convert_to_hash(comment.author.id)
+    return author_id
 
 
 def get_simple_request(simple_request_id, topic_string):
