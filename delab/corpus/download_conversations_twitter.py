@@ -6,6 +6,8 @@ from django.db import IntegrityError
 from requests import HTTPError
 
 from delab.TwConversationTree import TreeNode
+from delab.corpus.download_conversations_util import set_up_topic_and_simple_request
+
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
@@ -17,7 +19,7 @@ from util.abusing_lists import powerset
 logger = logging.getLogger(__name__)
 
 
-def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
+def download_conversations_tw(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
                            fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
                            recent=True):
     if query_string is None or query_string.strip() == "":
@@ -62,25 +64,6 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter, recent=recent)
 
-
-def set_up_topic_and_simple_request(query_string, request_id, topic_string):
-    # create the topic and save it to the db
-    topic, created = TwTopic.objects.get_or_create(
-        title=topic_string
-    )
-    # save the request to the db in order to link the results in the view to the hashtags entered
-    if request_id > 0:
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            pk=request_id,
-            topic=topic
-        )
-    else:
-        # request_string = "#" + ' #'.join(hashtags)
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            title=query_string,
-            topic=topic
-        )
-    return simple_request, topic
 
 
 def filter_conversations(twarc,

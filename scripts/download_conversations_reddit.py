@@ -1,5 +1,5 @@
-from delab.corpus.download_conversation_reddit import download_conversations_reddit
+from delab.corpus.download_conversations_reddit import download_subreddit
 
 
 def run():
-    download_conversations_reddit("europe", -1)
+    download_subreddit("europe", -1)

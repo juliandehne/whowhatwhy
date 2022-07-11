@@ -1,22 +1,20 @@
 import csv
 from functools import partial
-
 from requests import HTTPError
-
-from delab.corpus.download_conversations import download_conversations
-from delab.delab_enums import LANGUAGE
+from delab.corpus.download_conversations_proxy import download_conversations
+from delab.delab_enums import LANGUAGE, PLATFORM
 from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
 from util.abusing_lists import batch
 
 MODTOPIC2 = "moderationdictmining"
 
 
-def download_mod_tweets(recent=True):
+def download_mod_tweets(recent=True, platform=PLATFORM.TWITTER):
     for lang in LANGUAGE:
         with open("delab/mm/FunctionPhrases.csv") as fp:
             reader = csv.reader(fp, delimiter=",", quotechar='"')
             next(reader, None)  # skip the headers
-            download_mod_tweets_for_language(reader, lang, recent)
+            download_mod_tweets_for_language(reader, lang, recent, platform)
 
 
 def tweet_filter(query: str, tweet: Tweet):
@@ -75,9 +73,10 @@ def test_tweet_matches_dict(query, tweet):
     return contained
 
 
-def download_mod_tweets_for_language(reader, lang, recent):
+def download_mod_tweets_for_language(reader, lang, recent, platform):
     """
     This function extracts the phrases from the csv sheet
+    :param platform:
     :param reader:
     :param lang:
     :param recent:
@@ -86,11 +85,11 @@ def download_mod_tweets_for_language(reader, lang, recent):
     for row in reader:
         if lang == LANGUAGE.ENGLISH:
             queries = row[8]
-            download_mod_helper(lang, queries, recent)
+            download_mod_helper(lang, queries, recent, add_pol_contexts=False, platform=platform)
         else:
             if lang == LANGUAGE.GERMAN:
                 queries = row[9]
-                download_mod_helper(lang, queries, recent)
+                download_mod_helper(lang, queries, recent, add_pol_contexts=False, platform=platform)
 
 
 def generate_contexts():
@@ -114,14 +113,17 @@ def generate_contexts():
     return contexts
 
 
-def download_mod_helper(lang, queries, recent):
+def download_mod_helper(lang, queries, recent, platform, add_pol_contexts=False):
     """
     A helper function to further extract the phrases from the csv
+    :param platform:
+    :param add_pol_contexts:
     :param lang:
     :param queries:
     :param recent:
     :return:
     """
+
     contexts_full = generate_contexts()
     batch_size = 4
     n = len(contexts_full)
@@ -132,19 +134,31 @@ def download_mod_helper(lang, queries, recent):
         if query.strip() != "":
             # query = ast.literal_eval(query)
             query2 = query.replace("'", "\"")
-            for contexts_batch in batch(contexts_full, batch_size):
-                if len(contexts_batch) == batch_size:
-                    pol_contexts = "(context:{} OR ".format(contexts_batch[0])
-                    for elem in contexts_batch[1:-1]:
-                        pol_contexts = pol_contexts + "context:{} OR ".format(elem)
-                    pol_contexts = pol_contexts + "context:{})".format(contexts_batch[-1])
 
-                    # query_string = query2 + " is:reply " + pol_contexts
+            if add_pol_contexts:
+                for contexts_batch in batch(contexts_full, batch_size):
+                    if len(contexts_batch) == batch_size:
+                        pol_contexts = "(context:{} OR ".format(contexts_batch[0])
+                        for elem in contexts_batch[1:-1]:
+                            pol_contexts = pol_contexts + "context:{} OR ".format(elem)
+                        pol_contexts = pol_contexts + "context:{})".format(contexts_batch[-1])
+
+                        query_string = query2 + " is:reply " + pol_contexts
+                        moderation_tweet_filter = partial(tweet_filter, query_string)
+                        try:
+                            download_conversations(topic_string=MODTOPIC2, query_string=query_string, language=lang,
+                                                   tweet_filter=moderation_tweet_filter,
+                                                   recent=recent)
+                        except HTTPError as ex:
+                            print("error in query {}".format(query))
+            else:
+                query_string = query2
+                if platform == PLATFORM.TWITTER:
                     query_string = query2 + " is:reply "
-                    moderation_tweet_filter = partial(tweet_filter, query_string)
-                    try:
-                        download_conversations(topic_string=MODTOPIC2, query_string=query_string, language=lang,
-                                               tweet_filter=moderation_tweet_filter,
-                                               recent=recent)
-                    except HTTPError as ex:
-                        print("error in query {}".format(query))
+                moderation_tweet_filter = partial(tweet_filter, query_string)
+                try:
+                    download_conversations(topic_string=MODTOPIC2, query_string=query_string, language=lang,
+                                           tweet_filter=moderation_tweet_filter,
+                                           recent=recent, platform=platform)
+                except HTTPError as ex:
+                    print("error in query {}".format(query))

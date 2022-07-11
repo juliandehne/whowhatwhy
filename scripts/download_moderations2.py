@@ -1,5 +1,6 @@
+from delab.delab_enums import PLATFORM
 from delab.mm.download_moderating_tweets import download_mod_tweets
 
 
 def run():
-    download_mod_tweets(recent=False)
+    download_mod_tweets(recent=False, platform=PLATFORM.REDDIT)
