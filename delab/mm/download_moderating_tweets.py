@@ -43,7 +43,7 @@ def tweet_filter(query: str, tweet: Tweet):
         tweet.save()
 
         contained = test_tweet_matches_dict(query, tweet)
-        if contained:
+        if contained and tweet.tn_parent_id is not None:
             ModerationCandidate2.objects.get_or_create(
                 tweet=tweet
             )
