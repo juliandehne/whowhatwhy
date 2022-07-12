@@ -152,7 +152,7 @@ def save_reddit_entry(comment, simple_request, topic, tweetfilter):
         if comment.banned_at_utc:
             banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
 
-        conversation_id = convert_to_hash(comment.submission.id)
+        conversation_id = convert_to_hash(comment.submission.fullname)
 
         # parent_id = comment.parent_id.split("_")[1]
         parent_id = comment.parent_id

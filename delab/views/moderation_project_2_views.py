@@ -69,7 +69,7 @@ class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
         context["text"] = tweet_text
         context["tweet_id"] = tweet_id
         context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
-            .order_by('-created_at')
+            .order_by('created_at')
 
         full_conversation = list(context_tweets.values_list("text", flat=True))
         index = full_conversation.index(tweet_text)
