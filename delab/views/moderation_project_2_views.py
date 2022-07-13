@@ -12,6 +12,7 @@ from django.views.generic import (
 from delab.corpus.filter_sequences import get_path
 from delab.models import ModerationCandidate2
 from delab.models import Tweet, ModerationRating
+from delab.views import compute_context
 
 """
 This contains the views for the dictionary based moderation labeling project.
@@ -64,22 +65,4 @@ class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
         candidate_id = self.request.resolver_match.kwargs['pk']
         candidate = ModerationCandidate2.objects.filter(id=candidate_id).get()
 
-        tweet_text = candidate.tweet.text
-        tweet_id = candidate.tweet.id
-        twitter_id = candidate.tweet.twitter_id
-        # context["text"] = clean_corpus([tweet_text])[0]
-        context["text"] = tweet_text
-        context["tweet_id"] = tweet_id
-        path = get_path(twitter_id, candidate.tweet.conversation_id)
-        if path is not None:
-            context_tweets = Tweet.objects.filter(twitter_id__in=path) \
-                .order_by('created_at')
-        else:
-            context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
-                .order_by('created_at')
-        full_conversation = list(context_tweets.values_list("text", flat=True))
-        index = full_conversation.index(tweet_text)
-
-        # full_conversation = clean_corpus(full_conversation)
-        context["conversation"] = full_conversation[index - 2:index + 3]
-        return context
+        return compute_context(candidate, context)
