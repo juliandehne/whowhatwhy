@@ -9,6 +9,7 @@ from django.views.generic import (
     TemplateView
 )
 
+from delab.corpus.filter_sequences import get_path
 from delab.models import ModerationCandidate2
 from delab.models import Tweet, ModerationRating
 
@@ -65,12 +66,17 @@ class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
 
         tweet_text = candidate.tweet.text
         tweet_id = candidate.tweet.id
+        twitter_id = candidate.tweet.twitter_id
         # context["text"] = clean_corpus([tweet_text])[0]
         context["text"] = tweet_text
         context["tweet_id"] = tweet_id
-        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
-            .order_by('created_at')
-
+        path = get_path(twitter_id, candidate.tweet.conversation_id)
+        if path is not None:
+            context_tweets = Tweet.objects.filter(twitter_id__in=path) \
+                .order_by('created_at')
+        else:
+            context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
+                .order_by('created_at')
         full_conversation = list(context_tweets.values_list("text", flat=True))
         index = full_conversation.index(tweet_text)
 
