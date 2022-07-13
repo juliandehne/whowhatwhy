@@ -56,3 +56,11 @@ class STRATEGIES(models.TextChoices):
 class NETWORKRELS(models.TextChoices):
     FOLLOWS = "follows"
     mentions = "mentions"
+
+
+class MODERATION(models.TextChoices):
+    ACADEMIC = "academic",
+    THERAPEUTIC = "therapeutic",
+    DIPLOMATIC, = "diplomatic",
+    ARBITRATION = "by arbitration"
+    NO_NEED = "no need"

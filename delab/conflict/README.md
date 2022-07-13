@@ -1,13 +1,16 @@
 # Classifier for Moderation Context and Conflict Detection
 
-The main idea is that different types of situations where moderation is needed:
+The main idea is that there are different types of situations where moderation is needed:
 - a relationship focused conflict may need mediation
-- a issue focused conflict of interest may need arbitration
+- an issue focused conflict of interest may need arbitration
+- moderation can only be found if there is a conflict (of opinion/interests/personalities/intended focus of attention)
 
 # Approach
 
 1. conflict labeling
-- present conversation triples (three subsequent replies) for labeling
+- compute conversation triples (three subsequent replies)
+- (optional) filter conversation triple by high toxicity (and low group adherence)
+- present conversation triples  for labeling
 - label if there is a conflict (between min two parties)
 - label if the participants have adversarial positions (between min two parties)
 - label if participant use arguments to support their position (between min two parties)
