@@ -137,7 +137,7 @@ def filter_conversations(twarc,
                     logger.debug("found tree with size: {}".format(flat_tree_size))
                     logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
                     downloaded_tweets += flat_tree_size
-                    if min_conversation_length < flat_tree_size:
+                    if min_conversation_length < flat_tree_size < max_conversation_length:
                         save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
                                         tweet_filter=tweet_filter)
                         logger.debug("found suitable conversation and saved to db {}".format(conversation_id))

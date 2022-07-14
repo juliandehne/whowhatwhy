@@ -3,4 +3,4 @@ from delab.mm.download_moderating_tweets import download_mod_tweets
 
 
 def run():
-    download_mod_tweets(recent=False, platform=PLATFORM.REDDIT)
+    download_mod_tweets(recent=True, platform=PLATFORM.REDDIT)

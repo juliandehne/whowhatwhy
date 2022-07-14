@@ -37,7 +37,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
         else:
             search_r_all(query_string, request_id, topic_string, min_conversation_length=min_conversation_length,
                          max_conversation_length=max_conversation_length,
-                         max_number_of_candidates=max_number_of_candidates, tweet_filter=tweet_filter)
+                         max_number_of_candidates=max_number_of_candidates, tweet_filter=tweet_filter, recent=recent)
 
     if platform == PLATFORM.TWITTER:
         download_conversations_tw(topic_string, query_string, request_id, language, max_data,

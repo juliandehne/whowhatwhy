@@ -32,13 +32,20 @@ def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: s
                  max_number_of_candidates=MAX_CANDIDATES,
                  max_conversation_length=MAX_CONVERSATION_LENGTH,
                  min_conversation_length=MIN_CONVERSATION_LENGTH,
-                 language=LANGUAGE.ENGLISH, tweet_filter=None):
+                 language=LANGUAGE.ENGLISH, tweet_filter=None, recent=True):
     simple_request, topic = set_up_topic_and_simple_request(sub_reddit_string, simple_request_id, topic_string)
     reddit = get_praw()
     try:
-        for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=max_number_of_candidates):
-            save_reddit_tree(simple_request, submission, topic, min_conversation_length=min_conversation_length,
-                             max_conversation_length=max_conversation_length, tweetfilter=tweet_filter)
+        if recent:
+            for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=max_number_of_candidates,
+                                                             sort="new"):
+                save_reddit_tree(simple_request, submission, topic, min_conversation_length=min_conversation_length,
+                                 max_conversation_length=max_conversation_length, tweetfilter=tweet_filter)
+        else:
+            for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=max_number_of_candidates):
+                save_reddit_tree(simple_request, submission, topic, min_conversation_length=min_conversation_length,
+                                 max_conversation_length=max_conversation_length, tweetfilter=tweet_filter)
+
     except prawcore.exceptions.Redirect:
         logger.error("reddit with this name does not exist")
 

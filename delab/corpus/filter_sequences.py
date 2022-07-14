@@ -6,16 +6,7 @@ from delab.models import Tweet
 
 
 def get_all_reply_paths(conversation_id, min_path_length, required_max_path_length):
-    replies = Tweet.objects.filter(conversation_id=conversation_id).only("id", "twitter_id", "tn_parent_id")
-    G = nx.DiGraph()
-    edges = []
-    nodes = []
-    for row in replies:
-        nodes.append(row.twitter_id)
-        G.add_node(row.twitter_id, id=row.id)
-        if row.tn_parent_id is not None:
-            edges.append((row.tn_parent_id, row.twitter_id))
-    G.add_edges_from(edges)
+    G = get_nx_conversation_graph(conversation_id)
     all_paths = []
     nodes_combs = itertools.combinations(G.nodes, 2)
     for source, target in nodes_combs:
@@ -25,6 +16,8 @@ def get_all_reply_paths(conversation_id, min_path_length, required_max_path_leng
             if path not in all_paths and path[::-1] not in all_paths and len(path) >= min_path_length:
                 all_paths.append(path)
     return all_paths
+
+
 
 
 def get_path(twitter_id, conversation_id, min_path_length=3, required_max_path_length=4):
