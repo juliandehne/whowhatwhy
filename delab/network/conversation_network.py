@@ -2,10 +2,10 @@ import logging
 from time import sleep
 
 import django
+import networkx as nx
 
 from delab.corpus.download_author_information import download_authors
 from delab.models import Tweet, TweetAuthor
-from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
 
@@ -86,3 +86,17 @@ def download_missing_author_data(user_ids):
         if not TweetAuthor.objects.filter(twitter_id=user_id).exists():
             missing_authors.append(user_id)
     download_authors(missing_authors)
+
+
+def get_nx_conversation_graph(conversation_id):
+    replies = Tweet.objects.filter(conversation_id=conversation_id).only("id", "twitter_id", "tn_parent_id")
+    G = nx.DiGraph()
+    edges = []
+    nodes = []
+    for row in replies:
+        nodes.append(row.twitter_id)
+        G.add_node(row.twitter_id, id=row.id)
+        if row.tn_parent_id is not None:
+            edges.append((row.tn_parent_id, row.twitter_id))
+    G.add_edges_from(edges)
+    return G

@@ -9,8 +9,10 @@ from django.views.generic import (
     TemplateView
 )
 
+from delab.corpus.filter_sequences import get_path
 from delab.models import ModerationCandidate2
 from delab.models import Tweet, ModerationRating
+from delab.views import compute_context
 
 """
 This contains the views for the dictionary based moderation labeling project.
@@ -38,14 +40,17 @@ def moderation2_label_proxy(request):
 
 class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     model = ModerationRating
-    fields = ["u_mod_rating", "u_sis_issues", "u_sit_consensus", "u_mod_issues", "u_mod_consensus",
-              "u_clearness_rating", "u_moderating_part"]
+
+    fields = ["u_mod_rating", "u_moderating_part"]
+
+    # fields = ["u_mod_rating", "u_sis_issues", "u_sit_consensus", "u_mod_issues", "u_mod_consensus",
+    #          "u_clearness_rating", "u_moderating_part"]
 
     def get_initial(self):
         initial = super().get_initial()
         candidate_id = self.request.resolver_match.kwargs['pk']
         candidate = ModerationCandidate2.objects.filter(id=candidate_id).get()
-        initial['u_moderating_part'] = candidate.tweet.text
+        # initial['u_moderating_part'] = candidate.tweet.text
         return initial
 
     def form_valid(self, form):
@@ -60,17 +65,4 @@ class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
         candidate_id = self.request.resolver_match.kwargs['pk']
         candidate = ModerationCandidate2.objects.filter(id=candidate_id).get()
 
-        tweet_text = candidate.tweet.text
-        tweet_id = candidate.tweet.id
-        # context["text"] = clean_corpus([tweet_text])[0]
-        context["text"] = tweet_text
-        context["tweet_id"] = tweet_id
-        context_tweets = Tweet.objects.filter(conversation_id=candidate.tweet.conversation_id) \
-            .order_by('-created_at')
-
-        full_conversation = list(context_tweets.values_list("text", flat=True))
-        index = full_conversation.index(tweet_text)
-
-        # full_conversation = clean_corpus(full_conversation)
-        context["conversation"] = full_conversation[index - 2:index + 3]
-        return context
+        return compute_context(candidate, context)

@@ -8,6 +8,7 @@ from django.utils import timezone
 from delab.bot.intolerance_bot import generate_answers
 from delab.bot.intolerance_bot import send_message
 from delab.bot.sender import publish_moderation
+from delab.mm.download_moderating_tweets import MODTOPIC2
 from delab.models import SimpleRequest, Tweet, TWIntoleranceRating, IntoleranceAnswer, \
     IntoleranceAnswerValidation
 from delab.delab_enums import PLATFORM
@@ -69,7 +70,7 @@ def process_validated_answers(sender, instance: IntoleranceAnswerValidation, cre
     enough_validations = instance.answer.intoleranceanswervalidation_set.filter(
         valid=True).count() >= min_intolerance_answer_coders_needed
     if enough_validations:
-        logger.info("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
+        logger.debug("sending out answer tweet with answer {} (needs implementation)".format("some strat"))
         send_message(instance.answer.candidate)
 
 
@@ -83,7 +84,7 @@ def process_simple_request(sender, instance, created, **kwargs):
     """
     logging.info("received signal from post_save {} for pk {}".format(timezone.now(), instance.pk))
 
-    scripted_topics = ["moderation_mining_2", "TopicNotGiven"]
+    scripted_topics = [MODTOPIC2, "TopicNotGiven"]
     if created and instance.topic.title not in scripted_topics:
         # cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
         download_conversations_scheduler(instance.topic.title,

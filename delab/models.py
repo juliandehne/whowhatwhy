@@ -8,7 +8,7 @@ from django.urls import reverse
 from treenode.models import TreeNodeModel
 
 from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, INTOLERANCE, STRATEGIES, NETWORKRELS, \
-    TWEET_RELATIONSHIPS
+    TWEET_RELATIONSHIPS, MODERATION
 
 
 class ConversationFlow(models.Model):
@@ -66,14 +66,13 @@ def get_sentinel_topic():
     return TwTopic.objects.get_or_create(title="TopicNotGiven")[0].id
 
 
-'''
-    the idea here is that for a given topic there 
-    needs to be a series of hashtags to get a certain part of the twitter conversations from the web.
-    The title is a string that could be used as a twitter search query
-'''
-
-
 class SimpleRequest(models.Model):
+    """
+        the idea here is that for a given topic there
+        needs to be a query to get a certain part of the twitter conversations from the web.
+        The title is a string that could be used as a twitter search query
+    """
+
     title = models.CharField(max_length=2000, validators=[validate_exists])
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING, default=get_sentinel_topic,
@@ -154,9 +153,6 @@ class TweetAuthor(models.Model):
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
     is_moderator = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('twitter_id', 'platform')
 
 
 class Tweet(models.Model):
@@ -397,7 +393,7 @@ class ModerationRating(models.Model):
     mod_coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     mod_candidate = models.ForeignKey(ModerationCandidate2, on_delete=models.DO_NOTHING)
 
-    u_mod_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+    u_mod_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                        help_text="Do you agree that the tweet is moderating?")
     u_sis_issues = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
                                        help_text="Do you agree that the situation before the tweet was issue centered?")
@@ -410,8 +406,29 @@ class ModerationRating(models.Model):
     u_clearness_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                              help_text="Do you agree that the meaning of the statement is clear from "
                                                        "the context?")
-    u_moderating_part = models.TextField(null=True,
+    u_moderating_part = models.TextField(null=True, blank=True,
                                          help_text="Please copy the part of the tweet that is moderating to here!")
 
     def get_absolute_url(self):
         return reverse('delab-label-moderation2-proxy')
+
+
+class TweetSequence(models.Model):
+    tweets = models.ManyToManyField(Tweet)
+    u_conflict_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                            help_text="Do you agree that there is a conflict in the sequence?")
+    u_conflict_type_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                                 help_text="Do you agree that the conflict is not constructive?")
+    u_adversarial_positions_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                                         help_text="Do you agree that the sequence displays opposing positions?")
+    u_arguments_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                      help_text="Do you agree that the participants offer arguments to support their positions?")
+    u_relationship_focus_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
+                                               help_text="Do you agree that sequence deals with identity,relationships, persons, groups or other non-issue-related aspects?")
+    u_relationship_comment = models.TextField(blank=True, null=True,
+                                              help_text="If the answers to u_arguments and u_relationship_focus is not agree, plz comment what the sequence is about")
+    u_echo_chamber_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                         help_text="Do you agree that sequence shows aspects of an echo chamber (repetition, exclusion of other views)?")
+    u_whataboutism_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
+                                         help_text="Do you agree that sequence shows whataboutism?")
+    u_moderation_type_rating=models.IntegerField(default=MODERATION.NO_NEED, choices=MODERATION.choices, null=True, help_text="Which type of moderation would you recommend?")

@@ -7,7 +7,7 @@ import yaml
 from django.contrib.postgres.search import SearchVector, SearchQuery
 from django.db.utils import IntegrityError
 
-from delab.corpus.download_conversations import download_conversations
+from delab.corpus.download_conversations_proxy import download_conversations
 from delab.models import Tweet, TWCandidateIntolerance
 from delab.delab_enums import LANGUAGE
 from delab.toxicity.perspectives import get_client

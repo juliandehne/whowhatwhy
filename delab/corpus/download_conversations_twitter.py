@@ -6,21 +6,25 @@ from django.db import IntegrityError
 from requests import HTTPError
 
 from delab.TwConversationTree import TreeNode
+from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
+
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
 from delab.models import Tweet, TwTopic, SimpleRequest
 from delab.tw_connection_util import DelabTwarc
-from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH
+from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
 from util.abusing_lists import powerset
 
 logger = logging.getLogger(__name__)
 
 
-def download_conversations(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                           fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
-                           recent=True):
-
+def download_conversations_tw(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
+                              fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
+                              recent=True,
+                              max_conversation_length=MAX_CONVERSATION_LENGTH,
+                              min_conversation_length=MIN_CONVERSATION_LENGTH,
+                              max_number_of_candidates=MAX_CANDIDATES):
     if query_string is None or query_string.strip() == "":
         return False
     """
@@ -37,23 +41,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     :return:
     """
 
-    # create the topic and save it to the db
-    topic, created = TwTopic.objects.get_or_create(
-        title=topic_string
-    )
-
-    # save the request to the db in order to link the results in the view to the hashtags entered
-    if request_id > 0:
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            pk=request_id,
-            topic=topic
-        )
-    else:
-        # request_string = "#" + ' #'.join(hashtags)
-        simple_request, created = SimpleRequest.objects.get_or_create(
-            title=query_string,
-            topic=topic
-        )
+    simple_request, topic = set_up_topic_and_simple_request(query_string, request_id, topic_string)
 
     twarc = DelabTwarc()
 
@@ -71,13 +59,18 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                 new_query = " ".join(hashtag_set)
                 filter_conversations(twarc, new_query, topic, simple_request, platform, language=language,
                                      fast_mode=fast_mode, conversation_filter=conversation_filter,
-                                     tweet_filter=tweet_filter, recent=recent)
+                                     tweet_filter=tweet_filter, recent=recent,
+                                     max_conversation_length=max_conversation_length,
+                                     min_conversation_length=min_conversation_length,
+                                     max_number_of_candidates=max_number_of_candidates)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
                              fast_mode=fast_mode, conversation_filter=conversation_filter,
-                             tweet_filter=tweet_filter, recent=recent)
+                             tweet_filter=tweet_filter, recent=recent, max_conversation_length=max_conversation_length,
+                             min_conversation_length=min_conversation_length,
+                             max_number_of_candidates=max_number_of_candidates)
 
 
 def filter_conversations(twarc,
@@ -86,7 +79,7 @@ def filter_conversations(twarc,
                          simple_request,
                          platform,
                          max_conversation_length=MAX_CONVERSATION_LENGTH,
-                         min_conversation_length=10,
+                         min_conversation_length=MIN_CONVERSATION_LENGTH,
                          language=LANGUAGE.ENGLISH,
                          max_number_of_candidates=MAX_CANDIDATES,
                          fast_mode=False,
@@ -108,10 +101,6 @@ def filter_conversations(twarc,
     :param tweet_filter:
     :return:
     """
-    if fast_mode:
-        max_number_of_candidates = 100
-        min_conversation_length = 3
-        max_conversation_length = 100
 
     candidates, n_pages = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language,
                                                                       recent=recent)
@@ -127,35 +116,38 @@ def filter_conversations(twarc,
         # tweet_lookup_request_counter = ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter)
         # tweet_lookup_request_counter -= 1
         # assert that the conversation is long enough
-        reply_count = candidate["public_metrics"]["reply_count"]
+        try:
+            reply_count = candidate["public_metrics"]["reply_count"]
 
-        if (min_conversation_length / 2) < reply_count < max_conversation_length:
-            logger.debug("selected candidate tweet {}".format(candidate))
-            conversation_id = candidate["conversation_id"]
+            if (min_conversation_length / 2) < reply_count < max_conversation_length:
+                logger.debug("selected candidate tweet {}".format(candidate))
+                conversation_id = candidate["conversation_id"]
 
-            root_node = download_conversation_as_tree(twarc, conversation_id, max_conversation_length)
+                root_node = download_conversation_as_tree(twarc, conversation_id, max_conversation_length)
 
-            if conversation_filter is not None:
-                root_node = conversation_filter(root_node)
+                if conversation_filter is not None:
+                    root_node = conversation_filter(root_node)
 
-            if root_node is None:
-                logger.error("found conversation_id that could not be processed")
-                continue
+                if root_node is None:
+                    logger.error("found conversation_id that could not be processed")
+                    continue
+                else:
+                    flat_tree_size = root_node.flat_size()
+                    # tweet_lookup_request_counter -= flat_tree_size
+                    logger.debug("found tree with size: {}".format(flat_tree_size))
+                    logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
+                    downloaded_tweets += flat_tree_size
+                    if min_conversation_length < flat_tree_size < max_conversation_length:
+                        save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
+                                        tweet_filter=tweet_filter)
+                        logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
+                        # for debugging you can ascii art print the downloaded conversation_tree
+                        # root_node.print_tree(0)
             else:
-                flat_tree_size = root_node.flat_size()
-                # tweet_lookup_request_counter -= flat_tree_size
-                logger.debug("found tree with size: {}".format(flat_tree_size))
-                logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
-                downloaded_tweets += flat_tree_size
-                if min_conversation_length < flat_tree_size:
-                    save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
-                                    tweet_filter=tweet_filter)
-                    logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
-                    # for debugging you can ascii art print the downloaded conversation_tree
-                    # root_node.print_tree(0)
-
-    else:
-        n_dismissed_candidates += 1
+                n_dismissed_candidates += 1
+        except ConversationNotInRangeException as ex:
+            n_dismissed_candidates += 1
+            logger.debug("conversation was dismissed because it was longer than {}".format(max_conversation_length))
     logger.debug("{} of {} candidates were dismissed".format(n_dismissed_candidates, len(candidates)))
 
 
@@ -220,38 +212,43 @@ def download_conversation_as_tree(twarc, conversation_id, max_replies):
         return None
     else:
         root_tweet = results["data"][0]
-        result = next(twarc.search_all("conversation_id:{}".format(conversation_id)))
-        tweets = result.get("data", [])
-        tweets.sort(key=lambda x: x["created_at"], reverse=False)
-        root = TreeNode(root_tweet, root_tweet["id"])
-
-        orphans = []
-
-        reply_count = 0
-        for item in tweets:
-            if reply_count == 10:
-                logger.debug("downloading bigger conversation ...")
-            if reply_count >= max_replies:
-                raise ConversationNotInRangeException(reply_count)
-            # node_id = item["author_id"]
-            # parent_id = item["in_reply_to_user_id"]
-            node_id = item["id"]
-            parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
-            # parent_id = item["referenced_tweets.id"]
-            node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
-            # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
-            if not root.find_parent_of(node):
-                orphans.append(node)
-            reply_count += 1
-
-        logger.info('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
-        orphan_added, rest_orphans = solve_orphans(orphans, root)
-
-        if len(orphans) > 0:
-            logger.error('{} orphaned tweets for conversation {}'.format(len(rest_orphans), conversation_id))
-            logger.error('{} downloaded tweets'.format(reply_count))
-
+        tweets = []
+        for result in twarc.search_all("conversation_id:{}".format(conversation_id)):
+            tweets = tweets + result.get("data", [])
+            check_conversation_max_size(max_replies, tweets)
+        root = create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets)
         return root
+
+
+def create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets):
+    # sort tweets by creation date in order to speed up the tree construction
+    tweets.sort(key=lambda x: x["created_at"], reverse=False)
+    root = TreeNode(root_tweet, root_tweet["id"])
+    orphans = []
+    for item in tweets:
+        # node_id = item["author_id"]
+        # parent_id = item["in_reply_to_user_id"]
+        node_id = item["id"]
+        parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
+        # parent_id = item["referenced_tweets.id"]
+        node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
+        # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
+        if not root.find_parent_of(node):
+            orphans.append(node)
+    logger.info('{} orphaned tweets for conversation {} before resolution'.format(len(orphans), conversation_id))
+    orphan_added = True
+    while orphan_added:
+        orphan_added, orphans = solve_orphans(orphans, root)
+    if len(orphans) > 0:
+        logger.error('{} orphaned tweets for conversation {}'.format(len(orphans), conversation_id))
+        logger.error('{} downloaded tweets'.format(len(tweets)))
+    return root
+
+
+def check_conversation_max_size(max_replies, tweets):
+    conversation_size = len(tweets)
+    if conversation_size >= max_replies:
+        raise ConversationNotInRangeException(conversation_size)
 
 
 def get_priority_parent_from_references(references):
@@ -318,13 +315,4 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
             store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)
 
 
-def apply_tweet_filter(tweet, tweet_filter):
-    if tweet_filter is not None:
-        tweet = tweet_filter(tweet)
-        # the idea here is that the filter may have to save the tweet to create foreign keys
-        # in this case the save method will fail because of an integrity error
-        if tweet.pk is None:
-            tweet.save()
 
-    else:
-        tweet.save()

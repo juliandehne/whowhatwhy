@@ -1,5 +1,10 @@
-delete from delab_tweet b where b.topic_id = 8;
+select count( distinct dt.conversation_id) from delab_tweet dt inner join delab_moderationcandidate2 m on m.tweet_id = dt.id
+select count(*) from delab_moderationcandidate2;
+select count(*) from delab_tweet;
 
-select count(distinct author_id) from delab_tweet d where d.topic_id = 8;
+delete from delab_moderationcandidate2 where tweet_id in
+                                             (select dt.id from delab_tweet dt where dt.platform = 'reddit' and dt.tn_parent_id is null)
+                                         and id not in
+                                             (select mod_candidate_id from delab_moderationrating);
 
-select * from delab_tweetauthor a join delab_tweet dt on a.id = dt.tw_author_id where dt.topic_id = 8
+delete from delab_tweet where platform = 'reddit';
