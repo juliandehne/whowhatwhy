@@ -2,7 +2,7 @@ import itertools
 
 import networkx as nx
 
-from delab.models import Tweet
+from delab.network.conversation_network import get_nx_conversation_graph
 
 
 def get_all_reply_paths(conversation_id, min_path_length, required_max_path_length):
@@ -16,8 +16,6 @@ def get_all_reply_paths(conversation_id, min_path_length, required_max_path_leng
             if path not in all_paths and path[::-1] not in all_paths and len(path) >= min_path_length:
                 all_paths.append(path)
     return all_paths
-
-
 
 
 def get_path(twitter_id, conversation_id, min_path_length=3, required_max_path_length=4):
