@@ -6,6 +6,7 @@ import networkx as nx
 
 from delab.corpus.download_author_information import download_authors
 from delab.models import Tweet, TweetAuthor
+from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
 
