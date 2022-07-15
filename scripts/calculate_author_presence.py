@@ -1,6 +1,5 @@
 import networkx as nx
 from matplotlib import pyplot as plt
-from pyvis.network import Network
 
 from delab.api.api_util import get_all_conversation_ids
 from delab.models import Tweet
@@ -34,5 +33,3 @@ def run():
             nx.draw_networkx_edge_labels(G2, pos)
             plt.show()
             break
-
-
