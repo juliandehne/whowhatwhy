@@ -14,10 +14,10 @@ def run():
                            language=LANGUAGE.GERMAN)
     download_conversations('Klimawandel', "(climate change) OR (earth warming)",
                            language=LANGUAGE.ENGLISH)
-    download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
-                           language=LANGUAGE.GERMAN, platform=PLATFORM.REDDIT)
-    download_conversations('Klimawandel', "(climate change) OR (earth warming)",
-                           language=LANGUAGE.ENGLISH, platform=PLATFORM.REDDIT)
+    # download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
+    # language=LANGUAGE.GERMAN, platform=PLATFORM.REDDIT)
+    # download_conversations('Klimawandel', "(climate change) OR (earth warming)",
+    #    language=LANGUAGE.ENGLISH, platform=PLATFORM.REDDIT)
 
 
 def delete_rules_tests():

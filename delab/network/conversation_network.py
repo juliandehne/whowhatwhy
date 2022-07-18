@@ -101,3 +101,15 @@ def get_nx_conversation_graph(conversation_id):
             edges.append((row.tn_parent_id, row.twitter_id))
     G.add_edges_from(edges)
     return G
+
+
+def compute_author_graph(conversation_id):
+    G = get_nx_conversation_graph(conversation_id)
+    author_tweet_pairs = Tweet.objects.filter(conversation_id=conversation_id).only("twitter_id", "author_id")
+    G2 = nx.MultiDiGraph()
+    G2.add_nodes_from(G.nodes(), subset="tweets")
+    G2.add_edges_from(G.edges(), label="reply_to")
+    for result_pair in author_tweet_pairs:
+        G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
+        G2.add_edge(result_pair.author_id, result_pair.twitter_id, label="author_of")
+    return G2
