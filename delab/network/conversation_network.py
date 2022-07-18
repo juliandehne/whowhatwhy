@@ -3,9 +3,11 @@ from time import sleep
 
 import django
 import networkx as nx
+from django.db.models import Exists, OuterRef
+from matplotlib import pyplot as plt
 
 from delab.corpus.download_author_information import download_authors
-from delab.models import Tweet, TweetAuthor
+from delab.models import Tweet, TweetAuthor, FollowerNetwork
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
@@ -14,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_participants(conversation_id):
+    """
+    as a side effect this would create a conversation node in neo4j
+    :param conversation_id:
+    :return:
+    """
     dao = DjangoTripleDAO()
     discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
     nodes = set()
@@ -56,9 +63,9 @@ def download_followers(user_ids, twarc, n_level=1, following=False):
             count += 1
             # try:
             if following:
-                followers = twarc.following(user=user, user_fields="id,name,location,username", max_results=500)
+                followers = twarc.following(user=user, user_fields="id,name,location,username", max_results=100)
             else:
-                followers = twarc.followers(user=user, user_fields="id,name,location,username", max_results=500)
+                followers = twarc.followers(user=user, user_fields="id,name,location,username", max_results=10)
             for follower_iter in followers:
                 # time.sleep(2)
                 if "data" in follower_iter:
@@ -71,9 +78,10 @@ def download_followers(user_ids, twarc, n_level=1, following=False):
                             dao.add_follower(user, follower)
                         else:
                             dao.add_follower(follower, user)
+                break  # we don't want users with huge follower numbers to dominate the network anyways
         # one batch finished
         logger.debug(
-            "Going to sleep after downloading following for 15 user, {}/{} user finished".format(count, len(user_ids)))
+            "Going to sleep after downloading following for max 15 user, {}/{} user finished".format(count, len(user_ids)))
         sleep(15 * 60)
 
     n_level = n_level - 1
@@ -113,3 +121,57 @@ def compute_author_graph(conversation_id):
         G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
         G2.add_edge(result_pair.author_id, result_pair.twitter_id, label="author_of")
     return G2
+
+
+def restrict_conversations_to_reasonable(unhandled_conversation_ids):
+    reasonable_small_conversations = []
+    for conversation_id in unhandled_conversation_ids:
+        if TweetAuthor.objects.filter(tweet__in=Tweet.objects.filter(conversation_id=conversation_id)).count() <= 15:
+            reasonable_small_conversations.append(conversation_id)
+    return reasonable_small_conversations
+
+
+def download_conversation_network(conversation_id, conversation_ids, count, levels):
+    user_ids = get_participants(conversation_id)
+    download_followers_recursively(user_ids, levels, following=True)
+    # this would also search the network in the other direction
+    download_followers_recursively(user_ids, levels, following=False)
+    logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
+
+
+def prevent_multiple_downloads(conversation_ids):
+    unhandled_conversation_ids = []
+    for conversation_id in conversation_ids:
+        authors_is = set(Tweet.objects.filter(conversation_id=conversation_id).values_list("author_id", flat=True))
+        author_part_of_networks = TweetAuthor.objects.filter(twitter_id__in=authors_is). \
+            filter(Exists(FollowerNetwork.objects.filter(source_id=OuterRef('pk')))
+                   | Exists(FollowerNetwork.objects.filter(target_id=OuterRef('pk')))).distinct()
+        assert len(authors_is) > 0
+        if not len(author_part_of_networks) > len(authors_is) / 2:
+            unhandled_conversation_ids.append(conversation_id)
+        else:
+            logger.debug("conversation {} has been handled before".format(conversation_id))
+    return unhandled_conversation_ids
+
+
+def draw_author_conversation_dist(conversation_id):
+    conversation_graph = compute_author_graph(conversation_id)
+
+    paint_bipartite_author_graph(conversation_graph)
+
+
+def paint_bipartite_author_graph(G2):
+    # Specify the edges you want here
+    red_edges = [(source, target, attr) for source, target, attr in G2.edges(data=True) if
+                 attr['label'] == 'author_of']
+    # edge_colours = ['black' if edge not in red_edges else 'red'
+    #                for edge in G2.edges()]
+    black_edges = [edge for edge in G2.edges(data=True) if edge not in red_edges]
+    # Need to create a layout when doing
+    # separate calls to draw nodes and edges
+    pos = nx.multipartite_layout(G2)
+    nx.draw_networkx_nodes(G2, pos, node_size=400)
+    nx.draw_networkx_labels(G2, pos)
+    nx.draw_networkx_edges(G2, pos, edgelist=red_edges, edge_color='red', arrows=True)
+    nx.draw_networkx_edges(G2, pos, edgelist=black_edges, arrows=True)
+    plt.show()
