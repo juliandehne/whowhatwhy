@@ -81,7 +81,8 @@ def download_followers(user_ids, twarc, n_level=1, following=False):
                 break  # we don't want users with huge follower numbers to dominate the network anyways
         # one batch finished
         logger.debug(
-            "Going to sleep after downloading following for max 15 user, {}/{} user finished".format(count, len(user_ids)))
+            "Going to sleep after downloading following for max 15 user, {}/{} user finished".format(count,
+                                                                                                     len(user_ids)))
         sleep(15 * 60)
 
     n_level = n_level - 1
@@ -98,25 +99,42 @@ def download_missing_author_data(user_ids):
 
 
 def get_nx_conversation_graph(conversation_id):
-    replies = Tweet.objects.filter(conversation_id=conversation_id).only("id", "twitter_id", "tn_parent_id")
+    replies = Tweet.objects.filter(conversation_id=conversation_id).only("id", "twitter_id", "tn_parent_id",
+                                                                         "created_at")
     G = nx.DiGraph()
     edges = []
     nodes = []
     for row in replies:
         nodes.append(row.twitter_id)
-        G.add_node(row.twitter_id, id=row.id)
+        G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
         if row.tn_parent_id is not None:
             edges.append((row.tn_parent_id, row.twitter_id))
     G.add_edges_from(edges)
     return G
 
 
+def get_root(conversation_graph: nx.DiGraph):  # tree rooted at 0
+    roots = [n for n, d in conversation_graph.in_degree() if d == 0]
+    return roots[0]
+
+
+def get_tweet_subgraph(conversation_graph):
+    nodes = (
+        node
+        for node, data
+        in conversation_graph.nodes(data=True)
+        if data.get("subset") == "tweets"
+    )
+    subgraph = conversation_graph.subgraph(nodes)
+    return subgraph
+
+
 def compute_author_graph(conversation_id):
     G = get_nx_conversation_graph(conversation_id)
     author_tweet_pairs = Tweet.objects.filter(conversation_id=conversation_id).only("twitter_id", "author_id")
     G2 = nx.MultiDiGraph()
-    G2.add_nodes_from(G.nodes(), subset="tweets")
-    G2.add_edges_from(G.edges(), label="reply_to")
+    G2.add_nodes_from(G.nodes(data=True), subset="tweets")
+    G2.add_edges_from(G.edges(data=True), label="parent_of")
     for result_pair in author_tweet_pairs:
         G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
         G2.add_edge(result_pair.author_id, result_pair.twitter_id, label="author_of")
@@ -174,4 +192,11 @@ def paint_bipartite_author_graph(G2):
     nx.draw_networkx_labels(G2, pos)
     nx.draw_networkx_edges(G2, pos, edgelist=red_edges, edge_color='red', arrows=True)
     nx.draw_networkx_edges(G2, pos, edgelist=black_edges, arrows=True)
+    plt.show()
+
+
+def paint_reply_graph(conversation_graph: nx.DiGraph):
+    root = get_root(conversation_graph)
+    tree = nx.bfs_tree(conversation_graph, root)
+    nx.draw(tree)
     plt.show()
