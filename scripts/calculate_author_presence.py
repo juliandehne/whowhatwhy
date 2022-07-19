@@ -35,12 +35,12 @@ def run():
         # get the reply graph from the db
         conversation_graph = compute_author_graph(conversation_id)
 
-        # paint_bipartite_author_graph(conversation_graph)
+        paint_bipartite_author_graph(conversation_graph)
 
         subgraph = get_tweet_subgraph(conversation_graph)
         root_node = get_root(subgraph)
 
-        paint_reply_graph(subgraph)
+        # paint_reply_graph(subgraph)
 
         for tweet in tweets:
             row_dict = calculate_row(tweet, follower_Graph, conversation_graph, root_node)
@@ -52,4 +52,5 @@ def run():
     df = pd.DataFrame.from_records(records)
     with pd.option_context('display.max_rows', None, 'display.max_columns',
                            None):  # more options can be specified also
-        print(df[df["root_distance_1"] == 0])
+        print(df[df["y"] == 1])
+        # print(df)

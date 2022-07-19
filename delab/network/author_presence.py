@@ -50,19 +50,22 @@ def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_gr
 
 
 def compute_root_distance_feature(conversation_graph, current_node_id, result, root_node):
-    # create generator
-
-    for i in range(1, 3):
-        paths = list(
-            nx.all_simple_paths(conversation_graph, source=root_node, target=current_node_id, cutoff=i))
-        assert len(paths) < 2  # it should be a tree so only one path should be returned
-        result["root_distance_" + str(i)] = 0
-        if root_node != current_node_id:
+    if root_node != current_node_id:
+        result["root_distance_0"] = 0
+        for i in range(1, 3):
+            paths = list(
+                nx.all_simple_paths(conversation_graph, source=root_node, target=current_node_id, cutoff=i))
+            assert len(paths) < 2  # it should be a tree so only one path should be returned
+            result["root_distance_" + str(i)] = 0
             if "root_distance_" + str(i - 1) in result:
                 if not result.get("root_distance_" + str(i - 1)) == 1:
                     result["root_distance_" + str(i)] = len(paths)
             else:
                 result["root_distance_" + str(i)] = len(paths)
+    else:
+        result["root_distance_0"] = 1
+        result["root_distance_1"] = 0
+        result["root_distance_2"] = 0
 
 
 def compute_timedelta_feature(current_node_timestamp, result, tweet):
@@ -83,13 +86,13 @@ def compute_y(conversation_graph, current_node_id, result, tweet):
     row_author_id = tweet.author_id
     out_edges = conversation_graph.out_edges(current_node_id, data=True)
     result["y"] = 0
-    for source, target, attr in out_edges:
+    for source, target, out_attr in out_edges:
         # out edges can only be replies
-        assert attr["label"] == "parent_of"
+        assert out_attr["label"] == "parent_of"
         in_edges = conversation_graph.in_edges(target, data=True)
         # since target already has a source, there can only be in-edges of type author_of
-        for author_id, target_id, attr in in_edges:
-            if attr["label"] == "parent_of":
+        for author_id, _, in_attr in in_edges:
+            if in_attr["label"] == "author_of":
                 if author_id == row_author_id:
                     result["y"] = 1
 
@@ -104,7 +107,7 @@ def compute_reply_features(conversation_graph, current_node_id, result, row_node
     :return:
     """
 
-    for i in range(1, 3):
+    for i in range(2, 4):
         paths = list(nx.all_simple_paths(conversation_graph, source=current_node_id, target=row_node_id, cutoff=i))
         assert len(paths) < 2  # it should be a tree so only one path should be returned
         result["reply_distance_" + str(i)] = 0
