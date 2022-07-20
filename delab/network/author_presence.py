@@ -15,10 +15,15 @@ The basic idea:
   Read probability and answer probability can be viewed as dependent. You can only write if you have read + some sort of interest in answering.
   P(W | R and I) = P(R) + p(I)
 """
+import logging
+
 import networkx as nx
+import networkx.exception
 
 from delab.models import Tweet
 from delab.network.conversation_network import get_root
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_graph: nx.MultiDiGraph, rootnode: int):
@@ -31,6 +36,7 @@ def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_gr
     """
     result_of_results = []
     row_node_id = tweet.twitter_id
+    row_node_author_id = tweet.author_id
     reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True) if y['subset'] == "tweets"]
     for current_node_id, current_node_attr in reply_nodes:
         result = {}
@@ -44,10 +50,32 @@ def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_gr
                 compute_y(conversation_graph, current_node_id, result, tweet)
                 result["current"] = tweet.twitter_id
                 result["beam_node"] = current_node_id
+                compute_follower_features(conversation_graph, current_node_id, follower_Graph, result,
+                                          row_node_author_id, conversation_id=tweet.conversation_id)
+
         if result:
             result_of_results.append(result)
     return result_of_results
 
+
+def compute_follower_features(conversation_graph, current_node_id, follower_Graph, result, row_node_author_id,
+                              conversation_id):
+    in_edges = conversation_graph.in_edges(current_node_id, data=True)
+    current_node_author_id = None
+    result["has_followed_path"] = 0
+    result["has_follow_path"] = 0
+    try:
+        for source, target, attr in in_edges:
+            if attr["label"] == "author_of":
+                current_node_author_id = source
+        if nx.has_path(follower_Graph, row_node_author_id, current_node_author_id):
+            result["has_follow_path"] = 1
+        if nx.has_path(follower_Graph, current_node_author_id, row_node_author_id):
+            result["has_followed_path"] = 1
+    except networkx.exception.NodeNotFound:
+        #logger.debug(
+        #    "not all nodes have been downloaded in the follower_network for conversation {}".format(conversation_id))
+        pass
 
 def compute_root_distance_feature(conversation_graph, current_node_id, result, root_node):
     if root_node != current_node_id:

@@ -19,8 +19,8 @@ def run():
     :return:
     """
     conversation_ids = get_all_conversation_ids()
-    conversation_ids_not_downloaded = prevent_multiple_downloads(conversation_ids)
-    conversation_ids = np.setdiff1d(conversation_ids, conversation_ids_not_downloaded)
+    # conversation_ids_not_downloaded = prevent_multiple_downloads(conversation_ids)
+    # conversation_ids = np.setdiff1d(conversation_ids, conversation_ids_not_downloaded)
     # conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
     count = 0
     records = []
@@ -35,7 +35,7 @@ def run():
         # get the reply graph from the db
         conversation_graph = compute_author_graph(conversation_id)
 
-        paint_bipartite_author_graph(conversation_graph)
+        # paint_bipartite_author_graph(conversation_graph)
 
         subgraph = get_tweet_subgraph(conversation_graph)
         root_node = get_root(subgraph)
@@ -47,10 +47,13 @@ def run():
             # empty dictionaries evaluate to false
             records += row_dict
 
-        break
+        # break
 
     df = pd.DataFrame.from_records(records)
     with pd.option_context('display.max_rows', None, 'display.max_columns',
                            None):  # more options can be specified also
-        print(df[df["y"] == 1])
+        # print(df[df["y"] == 1])
         # print(df)
+        # print(df[["has_followed_path", "has_follow_path"]])
+        print(df.describe())
+
