@@ -56,4 +56,5 @@ def run():
         # print(df)
         # print(df[["has_followed_path", "has_follow_path"]])
         print(df.describe())
+        df.to_pickle("notebooks/data/vision_graph_data.pkl")
 
