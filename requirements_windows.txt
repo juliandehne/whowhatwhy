@@ -1,0 +1,2 @@
+Microsoft Visual C++ 14.0
+Enable longPaths

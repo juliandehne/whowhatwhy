@@ -1,0 +1,21 @@
+---
+organisations:
+  - organisation:
+    name: Greenpeace
+    twitter_account_international: Greenpeace
+  - organisation:
+      name: Fridays for Future
+      twitter_account_international: Fridays4future
+  - organisation:
+      name: Scientists for Future
+      twitter_account_international: S4F_INTL
+
+activists:
+  - activist:
+      name: Nyombi Morris
+      twitter_account: mnyomb1
+  - activist:
+      name: Greta Thunberg
+      twitter_account: GretaThunberg
+
+...

@@ -1,0 +1,40 @@
+
+---
+
+
+activists:
+  - activist:
+      name: Luisa Neubauer
+      twitter_account: @Luisamneubauer
+organisations:
+  - organisation:
+      name: Greenpeace
+      twitter_account_ger: greenpeace_de
+  - organisation:
+      name: Fridays for Future
+      twitter_account_ger: FridayForFuture
+  - organisation:
+      name: Scientists for Future
+      twitter_account_ger: sciforfuture
+journalists:
+  - journalist:
+      name: Kurt Stukenberg
+      twitter_account: k_stukenberg
+politicians:
+  - politician:
+      name: Lisa Badum
+      twitter_account: badulrichmartha
+  - politician:
+      name: Dr. Julia Verlinden
+      twitter_account: julia_verlinden
+scientists:
+  - scientist:
+      name: Volker Quaschning
+      twitter_account: VQuaschning
+  - scientist:
+      name: Stefan Rahmstorf
+      twitter_account: rahmstorf
+  - scientist:
+      name: Özden Terli
+      twitter_account: TerliWetter
+...
