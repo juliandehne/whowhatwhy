@@ -103,7 +103,7 @@ class DjangoTripleDAO(NetworkDAO):
         g = nx.DiGraph()
         if lvl1_network.count() > 0:
             lvl1_tuples = [(rel.source_id, rel.relationship, rel.target_id) for rel in lvl1_network]
-            network_tuples = set(get_network_recursively_helper_backwards(lvl1_tuples, recursion_levels))
+            # network_tuples = set(get_network_recursively_helper_backwards(lvl1_tuples, recursion_levels))
             network_tuples = set(get_network_recursively_helper_forward(lvl1_tuples, recursion_levels))
             follow_pais = [(triple[0], triple[2]) for triple in network_tuples if triple[1] == NETWORKRELS.FOLLOWS]
             g.add_edges_from(follow_pais, name=NETWORKRELS.FOLLOWS)
