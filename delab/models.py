@@ -186,7 +186,7 @@ class Tweet(models.Model):
     topic_bert_visual = models.TextField(null=True, blank=True,
                                          help_text="the bertopic represantation given by running a delab topic based bertopic model")
 
-    tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.DO_NOTHING,
+    tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.CASCADE,
                                   help_text="This holds the twitter_id (!) of the tweet that was responded to")
     tn_parent_type = models.TextField(choices=TWEET_RELATIONSHIPS.choices,
                                       help_text="replied_to, retweeted or quoted", null=True, blank=True)
