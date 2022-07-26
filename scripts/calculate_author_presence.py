@@ -9,8 +9,10 @@ from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.network.author_presence import calculate_row
 from delab.network.conversation_network import compute_author_graph, download_followers, get_participants, \
     download_followers_recursively, prevent_multiple_downloads, restrict_conversations_to_reasonable, get_root, \
-    get_tweet_subgraph, paint_reply_graph
+    get_tweet_subgraph, paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
+
+debug = True
 
 
 def run():
@@ -29,25 +31,35 @@ def run():
         print("processed {}/{} conversations".format(count, len(conversation_ids)))
         tweets = Tweet.objects.filter(conversation_id=conversation_id)
 
+        # for debug
+        if (tweets.count() > 20 and debug) or tweets.count() < 5:
+            continue
+
         # get the follower graph from the db
         networkDAO = DjangoTripleDAO()
         follower_Graph = networkDAO.get_discussion_graph(conversation_id)
         # get the reply graph from the db
-        conversation_graph = compute_author_graph(conversation_id)
+        reply_graph = get_nx_conversation_graph(conversation_id)
+        if debug:
+            for node in reply_graph.nodes(data=True):
+                print(node)
 
-        # paint_bipartite_author_graph(conversation_graph)
+        root_node = get_root(reply_graph)
+        conversation_graph = compute_author_graph_helper(reply_graph, conversation_id)
 
-        subgraph = get_tweet_subgraph(conversation_graph)
-        root_node = get_root(subgraph)
-
-        # paint_reply_graph(subgraph)
+        if debug:
+            for node in conversation_graph.nodes(data=True):
+                print(node)
+            paint_bipartite_author_graph(conversation_graph, root_node)
+            paint_reply_graph(reply_graph)
 
         for tweet in tweets:
-            row_dict = calculate_row(tweet, follower_Graph, conversation_graph, root_node)
+            row_dict = calculate_row(tweet, reply_graph, follower_Graph, conversation_graph, root_node)
             # empty dictionaries evaluate to false
             records += row_dict
-
-        # break
+        # print(records)
+        if debug:
+            break
 
     df = pd.DataFrame.from_records(records)
     with pd.option_context('display.max_rows', None, 'display.max_columns',
@@ -56,5 +68,5 @@ def run():
         # print(df)
         # print(df[["has_followed_path", "has_follow_path"]])
         print(df.describe())
-        df.to_pickle("notebooks/data/vision_graph_data.pkl")
-
+        if not debug:
+            df.to_pickle("notebooks/data/vision_graph_data.pkl")

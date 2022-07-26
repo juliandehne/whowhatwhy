@@ -7,17 +7,22 @@ from django.db.models import Exists, OuterRef
 from matplotlib import pyplot as plt
 
 from delab.corpus.download_author_information import download_authors
+from delab.delab_enums import PLATFORM
 from delab.models import Tweet, TweetAuthor, FollowerNetwork
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
+import matplotlib.pyplot as plt
+import networkx as nx
+import pydot
+from networkx.drawing.nx_pydot import graphviz_layout
 
 logger = logging.getLogger(__name__)
 
 
 def download_twitter_follower(levels, n_conversations=-1):
     count = 0
-    conversation_ids = set(Tweet.objects.values_list('conversation_id', flat=True))
+    conversation_ids = set(Tweet.objects.filter(platform=PLATFORM.TWITTER).values_list('conversation_id', flat=True))
     conversation_ids = prevent_multiple_downloads(conversation_ids)
     conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
     if len(conversation_ids) > n_conversations > 0:
@@ -120,18 +125,22 @@ def download_missing_author_data(user_ids):
     download_authors(missing_authors)
 
 
+class FaultyGraphException(Exception):
+    pass
+
+
 def get_nx_conversation_graph(conversation_id):
-    replies = Tweet.objects.filter(conversation_id=conversation_id).only("id", "twitter_id", "tn_parent_id",
-                                                                         "created_at")
+    replies = Tweet.objects.filter(conversation_id=conversation_id)
+    # .only("id", "twitter_id", "tn_parent_id", "created_at")
+
     G = nx.DiGraph()
     edges = []
-    nodes = []
+    nodes = [reply.twitter_id for reply in replies]
     for row in replies:
-        if row.created_at is None:
-            print("hello")
         nodes.append(row.twitter_id)
         G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
         if row.tn_parent_id is not None:
+            assert row.tn_parent_id in nodes
             edges.append((row.tn_parent_id, row.twitter_id))
     G.add_edges_from(edges)
     return G
@@ -153,8 +162,13 @@ def get_tweet_subgraph(conversation_graph):
     return subgraph
 
 
-def compute_author_graph(conversation_id):
+def compute_author_graph(conversation_id: int):
     G = get_nx_conversation_graph(conversation_id)
+    G2 = compute_author_graph_helper(G, conversation_id)
+    return G2
+
+
+def compute_author_graph_helper(G, conversation_id):
     author_tweet_pairs = Tweet.objects.filter(conversation_id=conversation_id).only("twitter_id", "author_id")
     G2 = nx.MultiDiGraph()
     G2.add_nodes_from(G.nodes(data=True), subset="tweets")
@@ -197,12 +211,13 @@ def prevent_multiple_downloads(conversation_ids):
 
 
 def draw_author_conversation_dist(conversation_id):
+    reply_graph = get_nx_conversation_graph(conversation_id)
     conversation_graph = compute_author_graph(conversation_id)
+    root_node = get_root(reply_graph)
+    paint_bipartite_author_graph(conversation_graph, root_node=root_node)
 
-    paint_bipartite_author_graph(conversation_graph)
 
-
-def paint_bipartite_author_graph(G2):
+def paint_bipartite_author_graph(G2, root_node):
     # Specify the edges you want here
     red_edges = [(source, target, attr) for source, target, attr in G2.edges(data=True) if
                  attr['label'] == 'author_of']
@@ -211,7 +226,13 @@ def paint_bipartite_author_graph(G2):
     black_edges = [edge for edge in G2.edges(data=True) if edge not in red_edges]
     # Need to create a layout when doing
     # separate calls to draw nodes and edges
-    pos = nx.multipartite_layout(G2)
+    paint_bipartite(G2, black_edges, red_edges, root_node=root_node)
+
+
+def paint_bipartite(G2, black_edges, red_edges, root_node):
+    # pos = nx.multipartite_layout(G2)
+
+    pos = graphviz_layout(G2, prog="twopi", root=root_node)
     nx.draw_networkx_nodes(G2, pos, node_size=400)
     nx.draw_networkx_labels(G2, pos)
     nx.draw_networkx_edges(G2, pos, edgelist=red_edges, edge_color='red', arrows=True)
@@ -220,7 +241,19 @@ def paint_bipartite_author_graph(G2):
 
 
 def paint_reply_graph(conversation_graph: nx.DiGraph):
+    assert nx.is_tree(conversation_graph)
     root = get_root(conversation_graph)
     tree = nx.bfs_tree(conversation_graph, root)
-    nx.draw(tree)
+    pos = graphviz_layout(tree, prog="twopi")
+    # add_attributes_to_plot(conversation_graph, pos, tree)
+    nx.draw_networkx_labels(tree, pos)
+    nx.draw(tree, pos)
     plt.show()
+
+
+def add_attributes_to_plot(conversation_graph, pos, tree):
+    labels = dict()
+    names = nx.get_node_attributes(conversation_graph, 'created_at')
+    for node in conversation_graph.nodes:
+        labels[node] = f"{names[node]}\n{node}"
+    nx.draw_networkx_labels(tree, labels=labels, pos=pos)

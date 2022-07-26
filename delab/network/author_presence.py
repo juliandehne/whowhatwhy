@@ -26,39 +26,62 @@ from delab.network.conversation_network import get_root
 logger = logging.getLogger(__name__)
 
 
-def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_graph: nx.MultiDiGraph, rootnode: int):
+def calculate_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.MultiDiGraph,
+                  conversation_graph: nx.MultiDiGraph, root_node: int):
     """
 
+    :param root_node: 
+    :param reply_graph:
     :param conversation_graph: directed graph that represents the conversation tree, node ids are twitter ids
-    :param follower_Graph: directed graph that represents the follower structures, node ids are the author ids
+    :param follower_graph: directed graph that represents the follower structures, node ids are the author ids
     :param tweet:
     :return: a dictionary of the tweet history containing the column names as keys and the features as values
     """
+
     result_of_results = []
     row_node_id = tweet.twitter_id
     row_node_author_id = tweet.author_id
-    reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True) if y['subset'] == "tweets"]
+    # we are only looking at the picture before the current tweet
+    reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True) if
+                   y['subset'] == "tweets" and y['created_at'] < tweet.created_at]
+    # call the all simple graphs is too slow
+    path_dict = compute_all_path_length_dict(reply_graph, reply_nodes, row_node_id)
+
     for current_node_id, current_node_attr in reply_nodes:
         result = {}
-        if "created_at" not in current_node_attr:
-            continue
         current_node_timestamp = current_node_attr["created_at"]
-        if tweet.created_at > current_node_timestamp:
-            # we are only looking at the picture before the current tweet
-            if row_node_id != current_node_id:
-                compute_reply_features(conversation_graph, current_node_id, result, row_node_id)
-                compute_timedelta_feature(current_node_timestamp, result, tweet)
-                compute_root_distance_feature(conversation_graph, current_node_id, result, rootnode)
-                compute_y(conversation_graph, current_node_id, result, tweet)
-                result["current"] = tweet.twitter_id
-                result["beam_node"] = current_node_id
-                compute_follower_features(conversation_graph, current_node_id, follower_Graph, result,
-                                          row_node_author_id, conversation_id=tweet.conversation_id)
-                result["platform"] = tweet.platform
+
+        if row_node_id != current_node_id:
+            compute_reply_features(path_dict, current_node_id, result)
+            compute_timedelta_feature(current_node_timestamp, result, tweet)
+            compute_root_distance_feature(path_dict, current_node_id, result, root_node)
+            compute_y(conversation_graph, current_node_id, result, tweet)
+            result["current"] = tweet.twitter_id
+            result["beam_node"] = current_node_id
+            compute_follower_features(conversation_graph, current_node_id, follower_graph, result,
+                                      row_node_author_id, conversation_id=tweet.conversation_id)
+            result["platform"] = tweet.platform
 
         if result:
             result_of_results.append(result)
+
     return result_of_results
+
+
+def compute_all_path_length_dict(reply_graph, reply_nodes, row_node_id):
+    """
+
+    :param reply_graph:
+    :param reply_nodes:
+    :param row_node_id:
+    :return: a dict of (node_id, path_length) -> path
+    """
+    paths = [(x, nx.all_simple_paths(reply_graph, x, row_node_id)) for x, y in reply_nodes]
+    path_dict = {}
+    for x, path in paths:
+        for single_path in path:
+            path_dict[(x, len(single_path))] = single_path
+    return path_dict
 
 
 def compute_follower_features(conversation_graph, current_node_id, follower_Graph, result, row_node_author_id,
@@ -81,19 +104,18 @@ def compute_follower_features(conversation_graph, current_node_id, follower_Grap
         pass
 
 
-def compute_root_distance_feature(conversation_graph, current_node_id, result, root_node):
+def compute_root_distance_feature(path_dict, current_node_id, result, root_node):
     if root_node != current_node_id:
         result["root_distance_0"] = 0
         for i in range(1, 3):
-            paths = list(
-                nx.all_simple_paths(conversation_graph, source=root_node, target=current_node_id, cutoff=i))
-            assert len(paths) < 2  # it should be a tree so only one path should be returned
+            path_exists = (root_node, i) in path_dict
+            result_value = int(path_exists == 'true')
             result["root_distance_" + str(i)] = 0
             if "root_distance_" + str(i - 1) in result:
                 if not result.get("root_distance_" + str(i - 1)) == 1:
-                    result["root_distance_" + str(i)] = len(paths)
+                    result["root_distance_" + str(i)] = result_value
             else:
-                result["root_distance_" + str(i)] = len(paths)
+                result["root_distance_" + str(i)] = result_value
     else:
         result["root_distance_0"] = 1
         result["root_distance_1"] = 0
@@ -129,22 +151,21 @@ def compute_y(conversation_graph, current_node_id, result, tweet):
                     result["y"] = 1
 
 
-def compute_reply_features(conversation_graph, current_node_id, result, row_node_id):
+def compute_reply_features(path_dict, current_node_id, result):
     """
     this computes the distance of the two tweets based on how many replies stand between them in the tree
-    :param conversation_graph:
+    :param path_dict:
     :param current_node_id:
     :param result:
-    :param row_node_id:
     :return:
     """
 
     for i in range(2, 4):
-        paths = list(nx.all_simple_paths(conversation_graph, source=current_node_id, target=row_node_id, cutoff=i))
-        assert len(paths) < 2  # it should be a tree so only one path should be returned
+        path_exists = (current_node_id, i) in path_dict
+        result_value = int(path_exists == 'true')
         result["reply_distance_" + str(i)] = 0
         if "reply_distance_" + str(i - 1) in result:
             if not result.get("reply_distance_" + str(i - 1)) == 1:
-                result["reply_distance_" + str(i)] = len(paths)
+                result["reply_distance_" + str(i)] = result_value
         else:
-            result["reply_distance_" + str(i)] = len(paths)
+            result["reply_distance_" + str(i)] = result_value
