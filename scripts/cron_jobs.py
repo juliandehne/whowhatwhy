@@ -33,6 +33,10 @@ def start_download_network_job():
     download_network_structures(repeat=Task.WEEKLY)
 
 
+def start_download_network_job():
+    download_network_structures(repeat=Task.WEEKLY)
+
+
 def start_moderating_tweet_job():
     # adding the new task to the stack
     download_moderating_tweets(repeat=Task.WEEKLY)
