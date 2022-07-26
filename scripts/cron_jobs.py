@@ -2,7 +2,7 @@ import time
 
 from background_task.models import Task
 
-from delab.tasks import download_intolerant_tweets, download_moderating_tweets
+from delab.tasks import download_intolerant_tweets, download_moderating_tweets, download_network_structures
 
 
 def run():
@@ -25,6 +25,10 @@ def run():
     # start_moderating_tweet_job()
     # deleting previous daily cron jobs
     start_intolerant_tweet_job()
+
+
+def start_download_network_job():
+    download_network_structures(repeat=Task.WEEKLY)
 
 
 def start_moderating_tweet_job():

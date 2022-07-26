@@ -40,6 +40,8 @@ def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_gr
     reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True) if y['subset'] == "tweets"]
     for current_node_id, current_node_attr in reply_nodes:
         result = {}
+        if "created_at" not in current_node_attr:
+            continue
         current_node_timestamp = current_node_attr["created_at"]
         if tweet.created_at > current_node_timestamp:
             # we are only looking at the picture before the current tweet
@@ -52,6 +54,7 @@ def calculate_row(tweet: Tweet, follower_Graph: nx.MultiDiGraph, conversation_gr
                 result["beam_node"] = current_node_id
                 compute_follower_features(conversation_graph, current_node_id, follower_Graph, result,
                                           row_node_author_id, conversation_id=tweet.conversation_id)
+                result["platform"] = tweet.platform
 
         if result:
             result_of_results.append(result)
@@ -73,9 +76,10 @@ def compute_follower_features(conversation_graph, current_node_id, follower_Grap
         if nx.has_path(follower_Graph, current_node_author_id, row_node_author_id):
             result["has_followed_path"] = 1
     except networkx.exception.NodeNotFound:
-        #logger.debug(
+        # logger.debug(
         #    "not all nodes have been downloaded in the follower_network for conversation {}".format(conversation_id))
         pass
+
 
 def compute_root_distance_feature(conversation_graph, current_node_id, result, root_node):
     if root_node != current_node_id:

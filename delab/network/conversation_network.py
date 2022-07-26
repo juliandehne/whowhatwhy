@@ -15,6 +15,28 @@ from util.abusing_lists import batch
 logger = logging.getLogger(__name__)
 
 
+def download_twitter_follower(levels, n_conversations=-1):
+    count = 0
+    conversation_ids = set(Tweet.objects.values_list('conversation_id', flat=True))
+    conversation_ids = prevent_multiple_downloads(conversation_ids)
+    conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
+    if len(conversation_ids) > n_conversations > 0:
+        conversation_ids = list(conversation_ids)[:n_conversations]
+        for conversation_id in conversation_ids:
+            count += 1
+            download_conversation_network(conversation_id, conversation_ids, count, levels)
+    else:
+        if len(conversation_ids) < n_conversations > 0:
+            for conversation_id in conversation_ids:
+                count += 1
+                download_conversation_network(conversation_id, conversation_ids, count, levels)
+        else:
+            for conversation_id in conversation_ids:
+                count += 1
+                download_conversation_network(conversation_id, conversation_ids, count, levels)
+    logger.info("finished downloading networks")
+
+
 def get_participants(conversation_id):
     """
     as a side effect this would create a conversation node in neo4j
@@ -105,6 +127,8 @@ def get_nx_conversation_graph(conversation_id):
     edges = []
     nodes = []
     for row in replies:
+        if row.created_at is None:
+            print("hello")
         nodes.append(row.twitter_id)
         G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
         if row.tn_parent_id is not None:
