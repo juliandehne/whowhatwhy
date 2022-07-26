@@ -12,7 +12,7 @@ from delab.network.conversation_network import compute_author_graph, download_fo
     get_tweet_subgraph, paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
 
-debug = True
+debug = False
 
 
 def run():
