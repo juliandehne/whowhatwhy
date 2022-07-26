@@ -41,8 +41,9 @@ def run():
         # get the reply graph from the db
         reply_graph = get_nx_conversation_graph(conversation_id)
         if debug:
-            for node in reply_graph.nodes(data=True):
-                print(node)
+            path = nx.dag_longest_path(reply_graph)
+            if len(path) < 4:
+                continue
 
         root_node = get_root(reply_graph)
         conversation_graph = compute_author_graph_helper(reply_graph, conversation_id)
