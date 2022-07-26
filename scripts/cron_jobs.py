@@ -24,9 +24,9 @@ def run():
     # time.sleep(2)
     # start_moderating_tweet_job()
     # deleting previous daily cron jobs
-    start_intolerant_tweet_job()
 
-    start_download_network_job()
+    # start_intolerant_tweet_job()
+    # start_download_network_job()
 
 
 def start_download_network_job():
