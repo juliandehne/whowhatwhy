@@ -140,6 +140,8 @@ def get_nx_conversation_graph(conversation_id):
         nodes.append(row.twitter_id)
         G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
         if row.tn_parent_id is not None:
+            if row.tn_parent_id not in nodes:
+                print(conversation_id)
             assert row.tn_parent_id in nodes
             edges.append((row.tn_parent_id, row.twitter_id))
     G.add_edges_from(edges)

@@ -245,7 +245,7 @@ class TWCandidate(models.Model):
     represents the tweets for which a moderation index could be computed.
     This table is also the selector for the manual labeling at the web-interface localhost:8000/delab/label
     """
-    tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the algorithm is used")
     c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
     sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
@@ -297,7 +297,7 @@ class TWCandidateIntolerance(models.Model):
     The idea is here to verify the "badness" of dictionary based terrible tweets and validate the categories
     """
     first_bad_word = models.TextField(null=True)
-    tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
+    tweet = models.OneToOneField(Tweet, on_delete=models.CASCADE)
     dict_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the bad word is grouped under in the dictionary")
     political_correct_word = models.TextField(null=True)
@@ -305,7 +305,7 @@ class TWCandidateIntolerance(models.Model):
 
 class TWIntoleranceRating(models.Model):
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
+    candidate = models.ForeignKey(TWCandidateIntolerance, on_delete=models.CASCADE)
     user_category = models.TextField(default=INTOLERANCE.NONE, choices=INTOLERANCE.choices, null=True,
                                      help_text="the category the intolerance could best be grouped by")
     u_intolerance_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
@@ -330,7 +330,7 @@ class IntoleranceAnswer(models.Model):
     This persist the answers based on the strategies and if it was sent to twitter the
     strategy chosen and the timestamp, when the answer was sent
     """
-    candidate = models.OneToOneField(TWCandidateIntolerance, on_delete=models.DO_NOTHING)
+    candidate = models.OneToOneField(TWCandidateIntolerance, on_delete=models.CASCADE)
     answer1 = models.CharField(max_length=250)
     answer2 = models.CharField(max_length=250)
     answer3 = models.CharField(max_length=250)
@@ -343,7 +343,7 @@ class IntoleranceAnswerValidation(models.Model):
     """
     This is a utility table to hold the validation decisions of the users
     """
-    answer = models.ForeignKey(IntoleranceAnswer, on_delete=models.DO_NOTHING)
+    answer = models.ForeignKey(IntoleranceAnswer, on_delete=models.CASCADE)
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     valid = models.BooleanField(help_text="Should this answer be sent to social media for the experiment?")
@@ -370,7 +370,7 @@ class ModerationCandidate2(models.Model):
     represents the tweets which where selected using a dictionary approach.
     This table is also the selector for the manual labeling at the web-interface
     """
-    tweet = models.OneToOneField(Tweet, on_delete=models.DO_NOTHING)
+    tweet = models.OneToOneField(Tweet, on_delete=models.CASCADE)
     exp_id = models.TextField(default="v0.0.1", help_text="This shows which version of the ditionary was used")
     c_sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
     sentiment_value_norm = models.FloatField(null=True, help_text="the normalized sentiment measure ")
@@ -390,7 +390,7 @@ class ModerationCandidate2(models.Model):
 
 
 class ModerationRating(models.Model):
-    mod_coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    mod_coder = models.ForeignKey(User, on_delete=models.CASCADE)
     mod_candidate = models.ForeignKey(ModerationCandidate2, on_delete=models.DO_NOTHING)
 
     u_mod_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
