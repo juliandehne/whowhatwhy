@@ -74,21 +74,22 @@ def save_reddit_tree(simple_request, submission, topic, max_conversation_length=
         tree_size = root.flat_size()
         if min_conversation_length < tree_size < max_conversation_length:
             logger.debug("found suitable conversation in reddit with length {}".format(tree_size))
-            created = save_reddit_submission(submission, simple_request, topic, tweetfilter)
+            conversation_id = convert_to_hash(submission.fullname)
+            created = save_reddit_submission(submission, simple_request, topic, tweetfilter, conversation_id)
             if created:
                 children = [child for child in root.children]
                 for child in children:
-                    save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter)
+                    save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter, conversation_id)
     else:
         logger.error("could not compute reddit_tree for conversation {}".format(submission))
 
 
-def save_reddit_node(node: TreeNode, comment_dict, simple_request, topic, tweetfilter):
+def save_reddit_node(node: TreeNode, comment_dict, simple_request, topic, tweetfilter, conversation_id_check):
     comment = comment_dict[node.tree_id]
-    created = save_reddit_entry(comment, simple_request, topic, tweetfilter)
+    created = save_reddit_entry(comment, simple_request, topic, tweetfilter, conversation_id_check)
     if created:
         for child in node.children:
-            save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter)
+            save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter, conversation_id_check)
     else:
         # TODO: check if maybe a faulty comment can be skipped and attach all the children to the parent of the
         #  skipped comment
@@ -136,7 +137,7 @@ def sort_comments_for_db(submission):
     return comments
 
 
-def save_reddit_entry(comment, simple_request, topic, tweetfilter):
+def save_reddit_entry(comment, simple_request, topic, tweetfilter, conversation_id_check):
     try:
 
         created_time = convert_time_stamp_to_django(comment)
@@ -160,6 +161,7 @@ def save_reddit_entry(comment, simple_request, topic, tweetfilter):
             banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
 
         conversation_id = convert_to_hash(comment.submission.fullname)
+        assert conversation_id_check == conversation_id
 
         # parent_id = comment.parent_id.split("_")[1]
         parent_id = comment.parent_id
@@ -212,7 +214,7 @@ def convert_time_stamp_to_django(comment):
     return created_time
 
 
-def save_reddit_submission(comment, simple_request, topic, tweetfilter):
+def save_reddit_submission(comment, simple_request, topic, tweetfilter, conversation_id_check):
     author_id, name = compute_author_id(comment)
     created_time = convert_time_stamp_to_django(comment)
     banned_at = None
@@ -230,6 +232,8 @@ def save_reddit_submission(comment, simple_request, topic, tweetfilter):
     tweet_id = convert_to_hash(comment.fullname)
     # conversation_id = convert_to_hash(comment.id)
     conversation_id = convert_to_hash(comment.fullname)
+    assert conversation_id_check == conversation_id
+
     text = comment.title + "\n" + comment.selftext
 
     language = comment.subreddit.lang

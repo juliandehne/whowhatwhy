@@ -1,3 +1,5 @@
+import random
+
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
@@ -11,6 +13,7 @@ from delab.network.conversation_network import compute_author_graph, download_fo
     download_followers_recursively, prevent_multiple_downloads, restrict_conversations_to_reasonable, get_root, \
     get_tweet_subgraph, paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
+from django_project.settings import performance_conversation_max_size
 
 debug = False
 
@@ -24,18 +27,20 @@ def run():
     # conversation_ids_not_downloaded = prevent_multiple_downloads(conversation_ids)
     # conversation_ids = np.setdiff1d(conversation_ids, conversation_ids_not_downloaded)
     # conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
+    random.shuffle(conversation_ids)
     count = 0
     records = []
     for conversation_id in conversation_ids:
-        count += 1
         print("processed {}/{} conversations".format(count, len(conversation_ids)))
-        tweets = Tweet.objects.filter(conversation_id=conversation_id)
+        tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
 
         # for debug
-        if (tweets.count() > 20 and debug) or tweets.count() < 5:
+        if (tweets.count() > 20 and debug) or tweets.count() < 5 or tweets.count() > performance_conversation_max_size:
             continue
 
-        # get the follower graph from the db
+        count += 1
+
+        # get the follower graph from the
         networkDAO = DjangoTripleDAO()
         follower_Graph = networkDAO.get_discussion_graph(conversation_id)
         # get the reply graph from the db

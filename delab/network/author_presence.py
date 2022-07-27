@@ -167,7 +167,7 @@ def compute_reply_features(path_dict, current_node_id, result, row_node_id):
 
 
 def compute_root_distance_feature(path_dict, current_node_id, result, root_node, row_node_id):
-    result["root_distance_0"] = 1
+    result["root_distance_0"] = 0
     if root_node == current_node_id:
         result["root_distance_0"] = 1
 

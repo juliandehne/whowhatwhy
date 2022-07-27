@@ -153,6 +153,8 @@ class TweetAuthor(models.Model):
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
     is_moderator = models.BooleanField(default=False)
+    follower_downloaded = models.BooleanField(default=False)
+    following_downloaded = models.BooleanField(default=False)
 
 
 class Tweet(models.Model):

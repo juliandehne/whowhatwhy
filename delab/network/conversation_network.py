@@ -11,6 +11,7 @@ from delab.delab_enums import PLATFORM
 from delab.models import Tweet, TweetAuthor, FollowerNetwork
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
+from django_project.settings import performance_conversation_max_size
 from util.abusing_lists import batch
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 def download_twitter_follower(levels, n_conversations=-1):
     count = 0
     conversation_ids = set(Tweet.objects.filter(platform=PLATFORM.TWITTER).values_list('conversation_id', flat=True))
-    conversation_ids = prevent_multiple_downloads(conversation_ids)
+    # conversation_ids = prevent_multiple_downloads(conversation_ids)
     conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
     if len(conversation_ids) > n_conversations > 0:
         conversation_ids = list(conversation_ids)[:n_conversations]
@@ -42,14 +43,23 @@ def download_twitter_follower(levels, n_conversations=-1):
     logger.info("finished downloading networks")
 
 
-def get_participants(conversation_id):
+def get_participants(conversation_id, filter_follower_not_downloaded=False, filter_following_not_downloaded=False):
     """
     as a side effect this would create a conversation node in neo4j
     :param conversation_id:
     :return:
     """
     dao = DjangoTripleDAO()
-    discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
+    if filter_following_not_downloaded:
+        discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id,
+                                                 tw_author__following_downloaded=False).all()
+    else:
+        if filter_follower_not_downloaded:
+            discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id,
+                                                     tw_author__follower_downloaded=False).all()
+        else:
+            discussion_tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
+
     nodes = set()
     for discussion_tweet in discussion_tweets:
         # time.sleep(15)
@@ -59,8 +69,7 @@ def get_participants(conversation_id):
     return nodes
 
 
-def download_followers_recursively(user_ids, n_level=1, following=False):
-    twarc = DelabTwarc()
+def download_followers_recursively(user_ids, twarc, n_level=1, following=False):
     download_followers(user_ids, twarc, n_level, following)
 
 
@@ -111,6 +120,12 @@ def download_followers(user_ids, twarc, n_level=1, following=False):
             "Going to sleep after downloading following for max 15 user, {}/{} user finished".format(count,
                                                                                                      len(user_ids)))
         sleep(15 * 60)
+
+    # update author fields
+    if following:
+        TweetAuthor.objects.filter(twitter_id__in=user_ids).update(following_downloaded=True)
+    else:
+        TweetAuthor.objects.filter(twitter_id__in=user_ids).update(follower_downloaded=True)
 
     n_level = n_level - 1
     if n_level > 0:
@@ -184,16 +199,19 @@ def compute_author_graph_helper(G, conversation_id):
 def restrict_conversations_to_reasonable(unhandled_conversation_ids):
     reasonable_small_conversations = []
     for conversation_id in unhandled_conversation_ids:
-        if TweetAuthor.objects.filter(tweet__in=Tweet.objects.filter(conversation_id=conversation_id)).count() <= 15:
+        if TweetAuthor.objects.filter(tweet__in=Tweet.objects.filter(conversation_id=conversation_id)).count() \
+                <= performance_conversation_max_size:
             reasonable_small_conversations.append(conversation_id)
     return reasonable_small_conversations
 
 
 def download_conversation_network(conversation_id, conversation_ids, count, levels):
-    user_ids = get_participants(conversation_id)
-    download_followers_recursively(user_ids, levels, following=True)
+    twarc = DelabTwarc()
+    user_ids = get_participants(conversation_id, filter_following_not_downloaded=True)
+    download_followers_recursively(user_ids, twarc, levels, following=True)
     # this would also search the network in the other direction
-    download_followers_recursively(user_ids, levels, following=False)
+    user_ids = get_participants(conversation_id, filter_follower_not_downloaded=True)
+    download_followers_recursively(user_ids, twarc, levels, following=False)
     logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
 
 

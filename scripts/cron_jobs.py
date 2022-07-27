@@ -21,6 +21,10 @@ def run():
     for background_task_2 in background_tasks_2:
         background_task_2.delete()
 
+    background_tasks_3 = Task.objects.filter(task_name='delab.tasks.download_network_structures')
+    for background_task_3 in background_tasks_3:
+        background_task_3.delete()
+
     # time.sleep(2)
     # start_moderating_tweet_job()
     # deleting previous daily cron jobs
