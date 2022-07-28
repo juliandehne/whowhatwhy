@@ -39,6 +39,9 @@ def run():
             continue
 
         count += 1
+        # debugging different sizes records
+        # if count > 30:
+        #     break
 
         # get the follower graph from the
         networkDAO = DjangoTripleDAO()
@@ -68,11 +71,13 @@ def run():
             break
 
     df = pd.DataFrame.from_records(records)
+    df.fillna(0, inplace=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns',
                            None):  # more options can be specified also
         # print(df[df["y"] == 1])
         # print(df)
         # print(df[["has_followed_path", "has_follow_path"]])
+
         print(df.describe())
         if not debug:
             df.to_pickle("notebooks/data/vision_graph_data.pkl")
