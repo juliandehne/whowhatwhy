@@ -12,18 +12,21 @@ def run():
 
       :return:
       """
-    background_tasks = Task.objects.filter(task_name='delab.tasks.download_moderating_tweets')
-    # deleting previous daily cron jobs
-    for background_task in background_tasks:
-        background_task.delete()
+    if Task.objects.filter(task_name='delab.tasks.download_moderating_tweets').exists():
+        background_tasks = Task.objects.filter(task_name='delab.tasks.download_moderating_tweets')
+        # deleting previous daily cron jobs
+        for background_task in background_tasks:
+            background_task.delete()
 
-    background_tasks_2 = Task.objects.filter(task_name='delab.tasks.download_intolerant_tweets')
-    for background_task_2 in background_tasks_2:
-        background_task_2.delete()
+    if Task.objects.filter(task_name='delab.tasks.download_intolerant_tweets').exists():
+        background_tasks_2 = Task.objects.filter(task_name='delab.tasks.download_intolerant_tweets')
+        for background_task_2 in background_tasks_2:
+            background_task_2.delete()
 
-    background_tasks_3 = Task.objects.filter(task_name='delab.tasks.download_network_structures')
-    for background_task_3 in background_tasks_3:
-        background_task_3.delete()
+    if Task.objects.filter(task_name='delab.tasks.download_network_structures').exists():
+        background_tasks_3 = Task.objects.filter(task_name='delab.tasks.download_network_structures')
+        for background_task_3 in background_tasks_3:
+            background_task_3.delete()
 
     time.sleep(2)
 
