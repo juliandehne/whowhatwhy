@@ -25,27 +25,11 @@ def run():
     for background_task_3 in background_tasks_3:
         background_task_3.delete()
 
-    # time.sleep(2)
-    # start_moderating_tweet_job()
-    # deleting previous daily cron jobs
+    time.sleep(2)
 
-    start_intolerant_tweet_job()
-    start_download_network_job()
-
-
-def start_download_network_job():
     download_network_structures(repeat=Task.WEEKLY)
+    # download_moderating_tweets(repeat=Task.WEEKLY)
+    # download_intolerant_tweets(repeat=Task.WEEKLY)
 
 
-def start_download_network_job():
-    download_network_structures(repeat=Task.WEEKLY)
 
-
-def start_moderating_tweet_job():
-    # adding the new task to the stack
-    download_moderating_tweets(repeat=Task.WEEKLY)
-
-
-def start_intolerant_tweet_job():
-    # adding the new task to the stack
-    download_intolerant_tweets(repeat=Task.WEEKLY)
