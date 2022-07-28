@@ -9,7 +9,7 @@ from django.db.utils import IntegrityError
 
 from delab.corpus.download_conversations_proxy import download_conversations
 from delab.models import Tweet, TWCandidateIntolerance
-from delab.delab_enums import LANGUAGE
+from delab.delab_enums import LANGUAGE, PLATFORM
 from delab.toxicity.perspectives import get_client
 from util.abusing_lists import batch
 
@@ -93,6 +93,7 @@ def find_and_link_bad_tweets(data_read, lang):
 
         found_tweets = Tweet.objects.filter(twcandidateintolerance=None) \
             .filter(language=lang) \
+            .filter(platform=PLATFORM.TWITTER) \
             .annotate(search=vector) \
             .filter(search=search_query)
 
