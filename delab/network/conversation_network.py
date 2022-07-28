@@ -46,6 +46,8 @@ def download_twitter_follower(levels, n_conversations=-1):
 def get_participants(conversation_id, filter_follower_not_downloaded=False, filter_following_not_downloaded=False):
     """
     as a side effect this would create a conversation node in neo4j
+    :param filter_following_not_downloaded:
+    :param filter_follower_not_downloaded:
     :param conversation_id:
     :return:
     """
