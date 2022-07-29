@@ -1,21 +1,16 @@
 import random
 
 import networkx as nx
-import numpy as np
-from matplotlib import pyplot as plt
 import pandas as pd
 
 from delab.api.api_util import get_all_conversation_ids
 from delab.models import Tweet
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
-from delab.network.author_presence import calculate_row
-from delab.network.conversation_network import compute_author_graph, download_followers, get_participants, \
-    download_followers_recursively, prevent_multiple_downloads, restrict_conversations_to_reasonable, get_root, \
-    get_tweet_subgraph, paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
+from delab.network.conversation_network import get_root, \
+    paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
 from django_project.settings import performance_conversation_max_size
-
-debug = False
+from delab.network.author_presence_baseline import calculate_baseline_row
 
 
 def run():
@@ -23,7 +18,17 @@ def run():
     This assumes that the follower networks have previously been downloaded
     :return:
     """
+    debug = True
+
+    # row_function = calculate_row # this would do the author has replied predictions
+    row_function = calculate_baseline_row
+    # out_put_file = "notebooks/data/vision_graph_data.pkl"
+    out_put_file = "notebooks/data/vision_baseline_graph_data.pkl"
     conversation_ids = get_all_conversation_ids()
+    calculate_conversation_dataframe(conversation_ids, debug, out_put_file, row_function)
+
+
+def calculate_conversation_dataframe(conversation_ids, debug, out_put_file, row_function):
     # conversation_ids_not_downloaded = prevent_multiple_downloads(conversation_ids)
     # conversation_ids = np.setdiff1d(conversation_ids, conversation_ids_not_downloaded)
     # conversation_ids = restrict_conversations_to_reasonable(conversation_ids)
@@ -63,13 +68,12 @@ def run():
             paint_reply_graph(reply_graph)
 
         for tweet in tweets:
-            row_dict = calculate_row(tweet, reply_graph, follower_Graph, conversation_graph, root_node)
+            row_dict = row_function(tweet, reply_graph, follower_Graph, conversation_graph, root_node)
             # empty dictionaries evaluate to false
             records += row_dict
         # print(records)
         if debug:
             break
-
     df = pd.DataFrame.from_records(records)
     df.fillna(0, inplace=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns',
@@ -80,4 +84,4 @@ def run():
 
         print(df.describe())
         if not debug:
-            df.to_pickle("notebooks/data/vision_graph_data.pkl")
+            df.to_pickle(out_put_file)

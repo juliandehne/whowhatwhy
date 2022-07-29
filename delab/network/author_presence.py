@@ -38,17 +38,8 @@ def calculate_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.Mult
     :return: a dictionary of the tweet history containing the column names as keys and the features as values
     """
 
-    result_of_results = []
-    row_node_id = tweet.twitter_id
-    row_node_author_id = tweet.author_id
-    # we are only looking at the picture before the current tweet
-    reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True)
-                   if y['subset'] == "tweets" and y['created_at'] < tweet.created_at]
-    conversation_depth = nx.dag_longest_path_length(reply_graph)
-
-    # call the all simple graphs is too slow
-    path_dict = compute_all_path_length_dict(reply_graph, reply_nodes, row_node_id)
-    root_path_dict = compute_all_root_path_length_dict(reply_graph, reply_nodes, root_node)
+    conversation_depth, path_dict, reply_nodes, result_of_results, root_path_dict, row_node_author_id, row_node_id = \
+        prepare_row_analysis(conversation_graph, reply_graph, root_node, tweet)
 
     for current_node_id, current_node_attr in reply_nodes:
         result = {}
@@ -70,6 +61,20 @@ def calculate_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.Mult
             result_of_results.append(result)
 
     return result_of_results
+
+
+def prepare_row_analysis(conversation_graph, reply_graph, root_node, tweet):
+    result_of_results = []
+    row_node_id = tweet.twitter_id
+    row_node_author_id = tweet.author_id
+    # we are only looking at the picture before the current tweet
+    reply_nodes = [(x, y) for x, y in conversation_graph.nodes(data=True)
+                   if y['subset'] == "tweets" and y['created_at'] < tweet.created_at]
+    conversation_depth = nx.dag_longest_path_length(reply_graph)
+    # call the all simple graphs is too slow
+    path_dict = compute_all_path_length_dict(reply_graph, reply_nodes, row_node_id)
+    root_path_dict = compute_all_root_path_length_dict(reply_graph, reply_nodes, root_node)
+    return conversation_depth, path_dict, reply_nodes, result_of_results, root_path_dict, row_node_author_id, row_node_id
 
 
 def compute_all_path_length_dict(reply_graph, reply_nodes, row_node_id):
