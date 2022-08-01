@@ -56,6 +56,7 @@ def calculate_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.Mult
             compute_follower_features(conversation_graph, current_node_id, follower_graph, result,
                                       row_node_author_id, conversation_id=tweet.conversation_id)
             result["platform"] = tweet.platform
+            result["conversation_id"] = tweet.conversation_id
 
         if result:
             result_of_results.append(result)
