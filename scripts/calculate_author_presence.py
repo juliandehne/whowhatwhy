@@ -7,6 +7,7 @@ from delab.api.api_util import get_all_conversation_ids
 from delab.models import Tweet
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.network.author_presence import calculate_row
+from delab.network.author_presence_forward import calculate_forward_row
 from delab.network.conversation_network import get_root, \
     paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
@@ -21,9 +22,11 @@ def run():
     """
     debug = False
 
-    row_function = calculate_row # this would do the author has replied predictions
+    row_function = calculate_forward_row
+    # row_function = calculate_row # this would do the author has replied predictions
     # row_function = calculate_baseline_row
-    out_put_file = "notebooks/data/vision_graph_data.pkl"
+    # out_put_file = "notebooks/data/vision_graph_data.pkl"
+    out_put_file = "notebooks/data/vision_forward_graph_data_server.pkl"
     # out_put_file = "notebooks/data/vision_baseline_graph_data.pkl"
     conversation_ids = get_all_conversation_ids()
     calculate_conversation_dataframe(conversation_ids, debug, out_put_file, row_function)
