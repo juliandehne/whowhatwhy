@@ -111,6 +111,16 @@ def compute_all_root_path_length_dict(reply_graph, reply_nodes, root_node):
 
 def compute_follower_features(conversation_graph, current_node_id, follower_Graph, result, row_node_author_id,
                               conversation_id):
+    """
+    This not only computes the follower feature but also adds the beam_node_author to the mix
+    :param conversation_graph:
+    :param current_node_id:
+    :param follower_Graph:
+    :param result:
+    :param row_node_author_id:
+    :param conversation_id:
+    :return:
+    """
     in_edges = conversation_graph.in_edges(current_node_id, data=True)
     current_node_author_id = None
     result["has_followed_path"] = 0
@@ -119,6 +129,7 @@ def compute_follower_features(conversation_graph, current_node_id, follower_Grap
         for source, target, attr in in_edges:
             if attr["label"] == "author_of":
                 current_node_author_id = source
+                result["beam_node_author"] = current_node_author_id
         if nx.has_path(follower_Graph, row_node_author_id, current_node_author_id):
             result["has_follow_path"] = 1
         if nx.has_path(follower_Graph, current_node_author_id, row_node_author_id):
