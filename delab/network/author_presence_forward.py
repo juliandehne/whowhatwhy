@@ -54,6 +54,8 @@ def calculate_forward_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph:
             result["platform"] = tweet.platform
             result["conversation_id"] = tweet.conversation_id
             result["author"] = tweet.author_id
+            result["current_time"] = tweet.created_at
+            result["beam_node_time"] = current_node_timestamp
 
         if result:
             result_of_results.append(result)
