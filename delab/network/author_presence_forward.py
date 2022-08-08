@@ -23,7 +23,7 @@ def compute_forward_y(conversation_graph, current_node_id, result, tweet):
 
 
 def calculate_forward_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.MultiDiGraph,
-                  conversation_graph: nx.MultiDiGraph, root_node: int):
+                          conversation_graph: nx.MultiDiGraph, root_node: int):
     """
 
     :param root_node:
@@ -56,8 +56,19 @@ def calculate_forward_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph:
             result["author"] = tweet.author_id
             result["current_time"] = tweet.created_at
             result["beam_node_time"] = current_node_timestamp
+            compute_previous_posts_feature(conversation_graph, current_node_id, result, tweet)
 
         if result:
             result_of_results.append(result)
 
     return result_of_results
+
+
+def compute_previous_posts_feature(conversation_graph, current_node_id, result, tweet):
+    in_edges = conversation_graph.in_edges(current_node_id)
+    for source, target in in_edges:
+        if source == tweet.author_id:
+            all_path = nx.all_simple_paths(conversation_graph, current_node_id, tweet.twitter_id)
+            for path in all_path:
+                result["same_author_path_{}".format(len(path) - 1)] = 1
+
