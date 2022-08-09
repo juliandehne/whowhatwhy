@@ -417,6 +417,7 @@ class ModerationRating(models.Model):
 
 class TweetSequence(models.Model):
     tweets = models.ManyToManyField(Tweet)
+    name = models.TextField(blank=True, null=True)
     u_conflict_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                             help_text="Do you agree that there is a conflict in the sequence?")
     u_conflict_type_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
@@ -433,4 +434,6 @@ class TweetSequence(models.Model):
                                          help_text="Do you agree that sequence shows aspects of an echo chamber (repetition, exclusion of other views)?")
     u_whataboutism_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                          help_text="Do you agree that sequence shows whataboutism?")
-    u_moderation_type_rating=models.IntegerField(default=MODERATION.NO_NEED, choices=MODERATION.choices, null=True, help_text="Which type of moderation would you recommend?")
+    u_moderation_type_rating=models.TextField(default=MODERATION.NO_NEED, choices=MODERATION.choices, null=True, help_text="Which type of moderation would you recommend?")
+
+
