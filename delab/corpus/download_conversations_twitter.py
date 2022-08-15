@@ -7,7 +7,6 @@ from requests import HTTPError
 
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
-
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
@@ -206,6 +205,14 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
 
 
 def download_conversation_as_tree(twarc, conversation_id, max_replies, root_data=None):
+    """
+    this downloads a candidate tweet from the conversation and uses its conversation id for the conversation_download
+    :param twarc:
+    :param conversation_id:
+    :param max_replies:
+    :param root_data:
+    :return:
+    """
     if root_data is None:
         results = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))
         root_data = results["data"][0]
@@ -213,6 +220,14 @@ def download_conversation_as_tree(twarc, conversation_id, max_replies, root_data
 
 
 def create_tree_from_raw_tweet_stream(conversation_id, max_replies, root_data, twarc):
+    """
+    this uses the conversation_id to download the whole conversation from twitter as far as available
+    :param conversation_id:
+    :param max_replies:
+    :param root_data:
+    :param twarc:
+    :return:
+    """
     tweets = []
     for result in twarc.search_all("conversation_id:{}".format(conversation_id)):
         tweets = tweets + result.get("data", [])
@@ -284,7 +299,7 @@ def save_tree_to_db(root_node: TreeNode,
 
     """
     store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
-    # run some tree validations
+    # TODO run some tree validations
 
 
 def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
@@ -293,14 +308,14 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],
                   simple_request=simple_request,
-                  twitter_id=root_node.data["id"],
-                  author_id=root_node.data["author_id"],
-                  conversation_id=conversation_id,
+                  twitter_id=int(root_node.data["id"]),
+                  author_id=int(root_node.data["author_id"]),
+                  conversation_id=int(conversation_id),
                   created_at=root_node.data["created_at"],
                   in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                   in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
                   platform=platform,
-                  tn_parent_id=root_node.parent_id,
+                  tn_parent_id=int(root_node.parent_id),
                   tn_parent_type=root_node.parent_type,
                   # tn_priority=priority,
                   language=root_node.data["lang"])

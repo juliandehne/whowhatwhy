@@ -19,6 +19,8 @@ simple_request, tw_topic = set_up_topic_and_simple_request("john twitter corpus 
 
 logger = logging.getLogger(__name__)
 
+debug = True
+
 
 def run():
     group_dict = read_in_john_urls()
@@ -26,7 +28,8 @@ def run():
     twarc = DelabTwarc()
     # key is the grouping for the partial conversation, value ist the list or twitter urls for the tweets
     for key, value in group_dict.items():
-        # select the id at the end of the url
+        # select the id at the end of the url using the first url as candidate
+        # TODO possibly iterate through the candidates until one is found that exists
         candidate_id = value[0].split("/")[-1]
         # download the conversation tweet
         tweet = next(twarc.tweet_lookup([candidate_id]))
@@ -46,10 +49,13 @@ def run():
             MissingTweets.objects.create(
                 twitter_id=candidate_id,
                 platform=PLATFORM.TWITTER,
-                error_message=tweet.get("error", "custom message: conversation id not found during lookup"),
+                error_message=tweet.get("error", "custom message: conversation id not found using candidate during "
+                                                 "lookup"),
                 simple_request=simple_request,
                 topic=tw_topic
             )
+        # if debug:
+        #    break
 
 
 def read_in_john_urls():
@@ -94,42 +100,49 @@ def check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_fil
         downloaded_ids = set(downloaded_tweets.values_list("twitter_id", flat=True))
         assert len(sequence_ids_set) > len(downloaded_ids)
         missing_sequence = sequence_ids_set - downloaded_ids
-        logger.debug("only {}/{} of sequence are downloaded".format(downloaded_count, len(sequence_ids)))
+        logger.debug("only {}/{} of sequence are downloaded".format(downloaded_count, len(sequence_ids_set)))
         assert len(missing_sequence) > 0
         # download the missing elements
         missing_tweets_data = next(twarc.tweet_lookup(missing_sequence))
         if "data" in missing_tweets_data:
             missing_tweets = missing_tweets_data["data"]
-            not_found_tweets = process_not_found_tweets(missing_sequence, missing_tweets)
-            logger.debug(
-                "only {}/{} of missing_tweets could be found and the rest will be stored in missing tweets table".format(
-                    len(missing_sequence) - len(not_found_tweets), len(missing_sequence)))
-            # restore the tree structure in the database with the newly downloaded elements
-            solve_missing_tweets(missing_tweets=missing_tweets,
-                                 sequence_ids=sequence_ids,
-                                 conversation_id=conversation_id,
-                                 sequence_tweet_filter=sequence_tweet_filter,
-                                 twarc=twarc)
+            not_found_tweets_ids = process_not_found_tweets(missing_sequence, missing_tweets, conversation_id)
+            found_sequence_ids = sequence_ids_set - not_found_tweets_ids
+            if conversation_id in not_found_tweets_ids:
+                logger.debug("could not find the root of the conversation {}".format(conversation_id))
+            else:
+                # restore the tree structure in the database with the newly downloaded elements
+                sequence_ids_count, sequence_members_in_db_count, fake_sequence_members_in_db_count = \
+                    solve_missing_tweets(
+                        missing_tweets=missing_tweets,
+                        sequence_ids=found_sequence_ids,
+                        conversation_id=conversation_id,
+                        sequence_tweet_filter=sequence_tweet_filter,
+                        twarc=twarc)
+                if debug and sequence_members_in_db_count < sequence_ids_count:
+                    print("not all downloaded")
 
 
-def process_not_found_tweets(missing_sequence, missing_tweets):
-    not_found_tweets = []
-    if len(missing_tweets) != len(missing_sequence):
+def process_not_found_tweets(missing_sequence, missing_tweets, conversation_id):
+    not_found_in_sequence = set()
+    if len(missing_tweets) < len(missing_sequence):
         found_online = set([int(tweet_data["id"]) for tweet_data in missing_tweets])
         not_found_in_sequence = missing_sequence - found_online
-        print("missing from the sequence are: {}".format(not_found_in_sequence))
-        for missing_tweet in missing_tweets:
-            tweet_id = missing_tweet["id"]
-            if tweet_id in not_found_in_sequence:
+        logger.debug("missing from the sequence are: {}".format(not_found_in_sequence))
+        for tweet_id in not_found_in_sequence:
+            if not MissingTweets.objects.filter(twitter_id=tweet_id).exists():
                 MissingTweets.objects.create(
                     twitter_id=tweet_id,
                     platform=PLATFORM.TWITTER,
-                    error_message="custom message: not found with lookup"
+                    conversation_id=conversation_id,
+                    error_message="custom message: not found with lookup",
+                    simple_request=simple_request,
+                    topic=tw_topic
                 )
-                not_found_tweets.append(missing_tweet)
-                logger.debug("stored tweet with id as missing {}".format(tweet_id))
-
-    return not_found_tweets
+            # logger.debug("stored tweet with id as missing {}".format(tweet_id))
+    logger.debug("of {} tweets, only {} could be found online "
+                 "and the rest is stored as missing".format(len(missing_sequence), len(missing_tweets)))
+    return not_found_in_sequence
 
 
 def solve_missing_tweets(missing_tweets: List,
@@ -153,27 +166,47 @@ def solve_missing_tweets(missing_tweets: List,
         - case a or case b should have stored the parent
         - if the parent is in the current sequence, the sorting should work as replies are always after the parent  
     """
-    missing_tweets_ids = [tweet["id"] for tweet in missing_tweets]
-    assert conversation_id not in missing_tweets_ids
+
     downloaded_twitter_ids = list(
         Tweet.objects.filter(conversation_id=conversation_id).values_list("twitter_id", flat=True))
+    assert conversation_id in downloaded_twitter_ids, "conversation root has not been downloaded with tree downloader"
     orphans = []
     for missing_tweet in missing_tweets:
-        assert int(missing_tweet["conversation_id"]) == conversation_id
+        assert int(missing_tweet["conversation_id"]) == conversation_id, "conversation id should be the same in the " \
+                                                                         "sequence for tweet with id {}".format(
+            missing_tweet["id"])
+        assert int(missing_tweet["id"]) != conversation_id, "missing tweet is root tweet conversation_id {}".\
+            format(conversation_id)
         if "referenced_tweets" not in missing_tweet:
-            print(conversation_id)
+            logger.error("tweet with id {} has no parents".format(conversation_id))
         assert "referenced_tweets" in missing_tweet, missing_tweet
         parent_id, parent_type = get_priority_parent_from_references(missing_tweet["referenced_tweets"])
         missing_node = TreeNode(missing_tweet, missing_tweet["id"], parent_id)
         if parent_id in downloaded_twitter_ids:
+            # stores the conversation tree (or single roots) in the db
             store_tree_data(conversation_id, PLATFORM.TWITTER, missing_node, simple_request,
                             tw_topic, sequence_tweet_filter)
         else:
+            # if the parent is in the current sequence the tree needs to be solved in memory first
             if parent_id in sequence_ids:
                 orphans.append(missing_tweet)
             else:
+                # if the parent is missing (not in downloaded tree nor in the sequence, the tweet will be
+                # artificially linked to the root post
                 store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_filter)
+    # store the sequence by assuming they all have a parent within the sequence or within the downloaded
+    # case a: parent has been stored as the parent is already in db
+    # case b: parent has been stored as a fake root descendant
+    # case c: parent has been stored as a member of the sequence because of sorting in the upcoming function
     store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter)
+    # evaluate the result of the algorithm
+    sequence_members_in_db_count = Tweet.objects.filter(twitter_id__in=sequence_ids).count()
+    fake_sequence_members_in_db_count = Tweet.objects.filter(twitter_id__in=sequence_ids,
+                                                             tn_original_parent__isnull=False).count()
+    logger.debug(
+        "of {} sequence members {} have been downloaded, but {} have been given the root as an artificial parent".format(
+            len(sequence_ids), sequence_members_in_db_count, fake_sequence_members_in_db_count))
+    return len(sequence_ids), sequence_members_in_db_count, fake_sequence_members_in_db_count
 
 
 def store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter):
@@ -199,14 +232,12 @@ def store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_
     :param conversation_id:
     :param missing_node:
     :param sequence_tweet_filter:
-    :param simple_request:
-    :param tw_topic:
     :return:
     """
     tweet = Tweet(topic=tw_topic,
                   text=missing_node.data["text"],
                   simple_request=simple_request,
-                  twitter_id=missing_node.data["id"],
+                  twitter_id=int(missing_node.data["id"]),
                   author_id=missing_node.data["author_id"],
                   conversation_id=conversation_id,
                   created_at=missing_node.data["created_at"],
@@ -258,7 +289,7 @@ def tweet_filter(sequence_ids, sequence_name, tweet):
     else:
         tweet.save()
 
-    if tweet.twitter_id in sequence_ids:
+    if int(tweet.twitter_id) in sequence_ids:
         if TweetSequence.objects.filter(name=sequence_name).exists():
             sequence = TweetSequence.objects.filter(name=sequence_name).get()
         else:
