@@ -297,5 +297,6 @@ class MissingTweets(models.Model):
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the platform used (twitter or reddit)")
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
-    conversation_id = models.BigIntegerField()
+    conversation_id = models.BigIntegerField(null=True, blank=True)
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
+    url = models.TextField(blank=True, null=True)

@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import List
 
@@ -5,21 +6,25 @@ from django.db import IntegrityError
 
 from delab.TwConversationTree import TreeNode
 from delab.corpus.download_conversations_twitter import download_conversation_as_tree, save_tree_to_db, \
-    get_priority_parent_from_references, create_tree_from_raw_tweet_stream, create_conversation_tree_from_tweet_data, \
-    store_tree_data
+    get_priority_parent_from_references, store_tree_data
 from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
-from delab.corpus.filter_conversation_trees import get_conversation_root_as_data, get_conversation_trees, solve_orphans
 from delab.delab_enums import PLATFORM
-from delab.models import TweetSequence, Tweet
+from delab.models import TweetSequence, Tweet, MissingTweets
 from delab.tw_connection_util import DelabTwarc
 
 topic = "culturalscripts"
+
+# create an artificial topic and query
+simple_request, tw_topic = set_up_topic_and_simple_request("john twitter corpus 09_08_22", -1, topic)
+
+logger = logging.getLogger(__name__)
 
 
 def run():
     group_dict = read_in_john_urls()
 
     twarc = DelabTwarc()
+    # key is the grouping for the partial conversation, value ist the list or twitter urls for the tweets
     for key, value in group_dict.items():
         # select the id at the end of the url
         candidate_id = value[0].split("/")[-1]
@@ -37,22 +42,14 @@ def run():
                 sequence_ids.append(sequence_id)
             download_conversation_of_interest(conversation_id, key, sequence_ids, twarc)
         else:
-            print(tweet)
-
-
-def download_conversation_of_interest(conversation_id, key, sequence_ids, twarc):
-    # create an artificial topic and query
-    simple_request, tw_topic = set_up_topic_and_simple_request("john twitter corpus 09_08_22", -1, topic)
-    # create a tweet filter that adds the tweets to a common sequence
-    sequence_tweet_filter = partial(tweet_filter, sequence_ids, str(key) + "_twitter_09_08_22")
-    # only download the conversation if it does not already exist
-    if not Tweet.objects.filter(conversation_id=conversation_id).exists():
-        downloaded_tree = download_conversation_as_tree(twarc, conversation_id, -1)
-        save_tree_to_db(downloaded_tree, tw_topic, simple_request, conversation_id, PLATFORM.TWITTER,
-                        tweet_filter=sequence_tweet_filter)
-    # in any case check if all the elements of the sequence where downloaded or correct it
-    check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, simple_request, twarc,
-                               tw_topic)
+            logger.debug("could not find conversation for tweet with url {}. Storing in missing_tweets".format(value))
+            MissingTweets.objects.create(
+                twitter_id=candidate_id,
+                platform=PLATFORM.TWITTER,
+                error_message=tweet.get("error", "custom message: conversation id not found during lookup"),
+                simple_request=simple_request,
+                topic=tw_topic
+            )
 
 
 def read_in_john_urls():
@@ -73,47 +70,75 @@ def read_in_john_urls():
     return group_dict
 
 
-def check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, simple_request, twarc, twtopic):
+def download_conversation_of_interest(conversation_id, key, sequence_ids, twarc):
+    # create a tweet filter that adds the tweets to a common sequence
+    sequence_tweet_filter = partial(tweet_filter, sequence_ids, str(key) + "_twitter_09_08_22")
+    # only download the conversation if it does not already exist
+    if not Tweet.objects.filter(conversation_id=conversation_id).exists():
+        # attempt the basic conversation download
+        downloaded_tree = download_conversation_as_tree(twarc, conversation_id, -1)
+        save_tree_to_db(downloaded_tree, tw_topic, simple_request, conversation_id, PLATFORM.TWITTER,
+                        tweet_filter=sequence_tweet_filter)
+    # in any case check if all the elements of the sequence where downloaded or correct it
+    check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, twarc)
+
+
+def check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, twarc):
     downloaded_tweets = Tweet.objects.filter(twitter_id__in=sequence_ids)
     downloaded_count = downloaded_tweets.count()
     sequence_ids_set = set(sequence_ids)
     # assert that all the elements of the sequence where downloaded previously
     assertion = downloaded_count == len(sequence_ids_set)
     if not assertion:
+        # if the assertion does not hold, we assume there a members of the sequence set that are not in the downloaded
         downloaded_ids = set(downloaded_tweets.values_list("twitter_id", flat=True))
+        assert len(sequence_ids_set) > len(downloaded_ids)
         missing_sequence = sequence_ids_set - downloaded_ids
-        print("only {}/{} of sequence are downloaded".format(downloaded_count, len(sequence_ids)))
+        logger.debug("only {}/{} of sequence are downloaded".format(downloaded_count, len(sequence_ids)))
         assert len(missing_sequence) > 0
         # download the missing elements
         missing_tweets_data = next(twarc.tweet_lookup(missing_sequence))
         if "data" in missing_tweets_data:
             missing_tweets = missing_tweets_data["data"]
-            if len(missing_tweets) != len(missing_sequence):
-                found_online = set([int(tweet_data["id"]) for tweet_data in missing_tweets])
-                not_found_in_sequence = missing_sequence - found_online
-                print("missing from the sequence are: {}".format(not_found_in_sequence))
+            not_found_tweets = process_not_found_tweets(missing_sequence, missing_tweets)
+            logger.debug(
+                "only {}/{} of missing_tweets could be found and the rest will be stored in missing tweets table".format(
+                    len(missing_sequence) - len(not_found_tweets), len(missing_sequence)))
             # restore the tree structure in the database with the newly downloaded elements
             solve_missing_tweets(missing_tweets=missing_tweets,
                                  sequence_ids=sequence_ids,
                                  conversation_id=conversation_id,
-                                 simple_request=simple_request,
-                                 tw_topic=twtopic,
                                  sequence_tweet_filter=sequence_tweet_filter,
                                  twarc=twarc)
 
 
-def solve_missing_tweets(missing_tweets,
-                         sequence_ids,
-                         conversation_id,
-                         simple_request,
-                         tw_topic,
+def process_not_found_tweets(missing_sequence, missing_tweets):
+    not_found_tweets = []
+    if len(missing_tweets) != len(missing_sequence):
+        found_online = set([int(tweet_data["id"]) for tweet_data in missing_tweets])
+        not_found_in_sequence = missing_sequence - found_online
+        print("missing from the sequence are: {}".format(not_found_in_sequence))
+        for missing_tweet in missing_tweets:
+            tweet_id = missing_tweet["id"]
+            if tweet_id in not_found_in_sequence:
+                MissingTweets.objects.create(
+                    twitter_id=tweet_id,
+                    platform=PLATFORM.TWITTER,
+                    error_message="custom message: not found with lookup"
+                )
+                not_found_tweets.append(missing_tweet)
+                logger.debug("stored tweet with id as missing {}".format(tweet_id))
+
+    return not_found_tweets
+
+
+def solve_missing_tweets(missing_tweets: List,
+                         sequence_ids: List,
+                         conversation_id: int,
                          sequence_tweet_filter,
                          twarc):
     """
     :param sequence_tweet_filter:
-    :param tw_topic:
-    :param simple_request:
-    :param tw_topic:
     :param missing_tweets:
     :param sequence_ids:
     :param conversation_id:
@@ -128,7 +153,8 @@ def solve_missing_tweets(missing_tweets,
         - case a or case b should have stored the parent
         - if the parent is in the current sequence, the sorting should work as replies are always after the parent  
     """
-
+    missing_tweets_ids = [tweet["id"] for tweet in missing_tweets]
+    assert conversation_id not in missing_tweets_ids
     downloaded_twitter_ids = list(
         Tweet.objects.filter(conversation_id=conversation_id).values_list("twitter_id", flat=True))
     orphans = []
@@ -146,20 +172,17 @@ def solve_missing_tweets(missing_tweets,
             if parent_id in sequence_ids:
                 orphans.append(missing_tweet)
             else:
-                store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_filter, simple_request,
-                                              tw_topic)
-    store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter, simple_request, tw_topic)
+                store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_filter)
+    store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter)
 
 
-def store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter, simple_request, tw_topic):
+def store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter):
     """
     Sorts the missing in-sequence elements and stores them one after another in order to assert the correct structure in
     the db
     :param conversation_id:
     :param orphans:
     :param sequence_tweet_filter:
-    :param simple_request:
-    :param tw_topic:
     :return:
     """
     orphans.sort(key=lambda x: x["created_at"], reverse=False)
@@ -170,7 +193,7 @@ def store_in_sequence_orphans(conversation_id, orphans, sequence_tweet_filter, s
                         tw_topic, sequence_tweet_filter)
 
 
-def store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_filter, simple_request, tw_topic):
+def store_node_as_fake_root_child(conversation_id, missing_node, sequence_tweet_filter):
     """
     create an artificial parent relationship with the root of the conversation
     :param conversation_id:
