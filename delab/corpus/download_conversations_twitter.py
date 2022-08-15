@@ -205,19 +205,20 @@ def download_conversation_representative_tweets(twarc, query, n_candidates,
     return result, n_pages
 
 
-def download_conversation_as_tree(twarc, conversation_id, max_replies):
-    results = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))
-    if "data" not in results:
-        logger.error(results["errors"])
-        return None
-    else:
-        root_tweet = results["data"][0]
-        tweets = []
-        for result in twarc.search_all("conversation_id:{}".format(conversation_id)):
-            tweets = tweets + result.get("data", [])
-            check_conversation_max_size(max_replies, tweets)
-        root = create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets)
-        return root
+def download_conversation_as_tree(twarc, conversation_id, max_replies, root_data=None):
+    if root_data is None:
+        results = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))
+        root_data = results["data"][0]
+    return create_tree_from_raw_tweet_stream(conversation_id, max_replies, root_data, twarc)
+
+
+def create_tree_from_raw_tweet_stream(conversation_id, max_replies, root_data, twarc):
+    tweets = []
+    for result in twarc.search_all("conversation_id:{}".format(conversation_id)):
+        tweets = tweets + result.get("data", [])
+        check_conversation_max_size(max_replies, tweets)
+    root, orphans = create_conversation_tree_from_tweet_data(conversation_id, root_data, tweets)
+    return root
 
 
 def create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets):
@@ -228,7 +229,7 @@ def create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets
     for item in tweets:
         # node_id = item["author_id"]
         # parent_id = item["in_reply_to_user_id"]
-        node_id = item["id"]
+        node_id = int(item["id"])
         parent_id, parent_type = get_priority_parent_from_references(item["referenced_tweets"])
         # parent_id = item["referenced_tweets.id"]
         node = TreeNode(item, node_id, parent_id, parent_type=parent_type)
@@ -242,20 +243,20 @@ def create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets
     if len(orphans) > 0:
         logger.error('{} orphaned tweets for conversation {}'.format(len(orphans), conversation_id))
         logger.error('{} downloaded tweets'.format(len(tweets)))
-    return root
+    return root, orphans
 
 
 def check_conversation_max_size(max_replies, tweets):
     conversation_size = len(tweets)
-    if conversation_size >= max_replies:
+    if conversation_size >= max_replies > 0:
         raise ConversationNotInRangeException(conversation_size)
 
 
 def get_priority_parent_from_references(references):
     reference_types = [ref["type"] for ref in references]
-    replied_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.REPLIED_TO]
-    retweeted_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.RETWEETED]
-    quoted_tos = [ref["id"] for ref in references if ref["type"] == TWEET_RELATIONSHIPS.QUOTED]
+    replied_tos = [int(ref["id"]) for ref in references if ref["type"] == TWEET_RELATIONSHIPS.REPLIED_TO]
+    retweeted_tos = [int(ref["id"]) for ref in references if ref["type"] == TWEET_RELATIONSHIPS.RETWEETED]
+    quoted_tos = [int(ref["id"]) for ref in references if ref["type"] == TWEET_RELATIONSHIPS.QUOTED]
     if TWEET_RELATIONSHIPS.REPLIED_TO in reference_types:
         return replied_tos[0], TWEET_RELATIONSHIPS.REPLIED_TO
     if TWEET_RELATIONSHIPS.QUOTED in reference_types:
@@ -313,6 +314,3 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
     if not len(root_node.children) == 0:
         for child in root_node.children:
             store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)
-
-
-

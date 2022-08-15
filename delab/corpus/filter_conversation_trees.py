@@ -1,3 +1,5 @@
+from typing import List
+
 from django.db.models import F
 from django.forms.models import model_to_dict
 
@@ -6,8 +8,7 @@ from delab.api.api_util import ConversationFilter
 from delab.models import Tweet
 
 
-def get_conversation_trees(topic, conversation_id=None, conversation_filter: ConversationFilter = None) -> \
-        [TreeNode]:
+def get_conversation_trees(topic: str, conversation_id=None, conversation_filter: ConversationFilter = None):
     """
     :param topic: the topic string
     :param conversation_id:  the conversation id
@@ -109,7 +110,14 @@ def solve_orphans(orphans, tree_node):
             orphan_added = True
     if len(orphans) == len(rest_orphans):
         # print(f"could not reconstruct faulty tree for conversation_id {orphans[0].data['conversation_id']}")
-        print("could not reconstruct faulty tree")
+        # print("could not reconstruct faulty tree with {} orphans ".format(rest_orphans))
         return False, rest_orphans
     assert len(orphans) != len(rest_orphans)
     return orphan_added, rest_orphans
+
+
+def get_conversation_root_as_data(conversation_id):
+    tweet = Tweet.objects.filter(conversation_id=conversation_id, tn_parent__isnull=True).get()
+    result = {"text": tweet.text, "created_at": tweet.created_at, "id": tweet.twitter_id, "author_id": tweet.author_id,
+              "conversation_id": tweet.conversation_id, "lang": tweet.language}
+    return result
