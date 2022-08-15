@@ -215,7 +215,10 @@ def download_conversation_as_tree(twarc, conversation_id, max_replies, root_data
     """
     if root_data is None:
         results = next(twarc.tweet_lookup(tweet_ids=[conversation_id]))
-        root_data = results["data"][0]
+        if "data" in results:
+            root_data = results["data"][0]
+        else:
+            return None
     return create_tree_from_raw_tweet_stream(conversation_id, max_replies, root_data, twarc)
 
 
@@ -315,7 +318,7 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
                   in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
                   in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
                   platform=platform,
-                  tn_parent_id=int(root_node.parent_id),
+                  tn_parent_id=root_node.parent_id,
                   tn_parent_type=root_node.parent_type,
                   # tn_priority=priority,
                   language=root_node.data["lang"])

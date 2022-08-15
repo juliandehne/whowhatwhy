@@ -10,7 +10,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import get_conversation_trees
-from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating, SimpleRequest
+from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating, SimpleRequest, \
+    TweetSequence
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 
@@ -20,8 +21,8 @@ LOOK at the README to see all the different endpoints implemented as a way to ge
 """
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
-                     'in_reply_to_user_id',
-                     'sentiment_value', 'language', 'simple_request']
+                     'tn_parent_id',
+                     'sentiment_value', 'language', 'tn_original_parent']
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -42,16 +43,23 @@ class SimpleRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class TweetSequenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TweetSequence
+        fields = ["name"]
+
+
 class TweetSerializer(serializers.ModelSerializer):
     tw_author = AuthorSerializer()
     simple_request = SimpleRequestSerializer()
+    tweetsequence_set = TweetSequenceSerializer(many=True, read_only=True)
 
     # tw_author__name = serializers.StringRelatedField()
     # tw_author__location = serializers.StringRelatedField()
 
     class Meta:
         model = Tweet
-        fields = tweet_fields_used + ["tw_author"]
+        fields = tweet_fields_used + ["tw_author", "simple_request", "tweetsequence_set"]
         # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
 
     # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
@@ -100,7 +108,7 @@ class NormXMLRenderer(renderers.BaseRenderer):
 
 
 def get_tweet_queryset(topic):
-    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
+    queryset = Tweet.objects.select_related("tw_author").prefetch_related("tweetsequence_set").filter(simple_request__topic__title=topic)
     return queryset
 
 
