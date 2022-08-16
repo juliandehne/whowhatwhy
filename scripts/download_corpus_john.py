@@ -78,6 +78,7 @@ def read_in_john_urls():
 
 
 def download_conversation_of_interest(conversation_id, key, sequence_ids, twarc):
+    root_downloaded = True
     # create a tweet filter that adds the tweets to a common sequence
     sequence_tweet_filter = partial(tweet_filter, sequence_ids, str(key) + "_twitter_09_08_22")
     # only download the conversation if it does not already exist
@@ -87,8 +88,11 @@ def download_conversation_of_interest(conversation_id, key, sequence_ids, twarc)
         if downloaded_tree is not None:
             save_tree_to_db(downloaded_tree, tw_topic, simple_request, conversation_id, PLATFORM.TWITTER,
                             tweet_filter=sequence_tweet_filter)
+        else:
+            root_downloaded = False
     # in any case check if all the elements of the sequence where downloaded or correct it
-    check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, twarc)
+    if root_downloaded:
+        check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, twarc)
 
 
 def check_downloaded_sequences(conversation_id, sequence_ids, sequence_tweet_filter, twarc):
