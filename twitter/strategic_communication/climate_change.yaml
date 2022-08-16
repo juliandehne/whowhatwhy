@@ -1,11 +1,7 @@
-
----
-
-
 activists:
   - activist:
       name: Luisa Neubauer
-      twitter_account: @Luisamneubauer
+      twitter_account: Luisamneubauer
 organisations:
   - organisation:
       name: Greenpeace
@@ -37,4 +33,3 @@ scientists:
   - scientist:
       name: Özden Terli
       twitter_account: TerliWetter
-...

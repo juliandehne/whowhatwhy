@@ -1,15 +1,3 @@
----
-organisations:
-  - organisation:
-    name: Greenpeace
-    twitter_account_international: Greenpeace
-  - organisation:
-      name: Fridays for Future
-      twitter_account_international: Fridays4future
-  - organisation:
-      name: Scientists for Future
-      twitter_account_international: S4F_INTL
-
 activists:
   - activist:
       name: Nyombi Morris
@@ -17,5 +5,14 @@ activists:
   - activist:
       name: Greta Thunberg
       twitter_account: GretaThunberg
+organisations:
+  - organisation:
+      name: Greenpeace
+      twitter_account: Greenpeace
+  - organisation:
+      name: Fridays for Future
+      twitter_account: Fridays4future
+  - organisation:
+      name: Scientists for Future
+      twitter_account: S4F_INTL
 
-...

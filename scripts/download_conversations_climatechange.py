@@ -13,17 +13,10 @@ from delab.tw_connection_util import TwitterStreamConnector
 
 
 def run():
-    download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
-                           language=LANGUAGE.GERMAN)
-    download_conversations('Klimawandel', "(climate change) OR (earth warming)",
-                           language=LANGUAGE.ENGLISH)
-    download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
-                           language=LANGUAGE.GERMAN, platform=PLATFORM.REDDIT)
-    download_conversations('Klimawandel', "(climate change) OR (earth warming)",
-                           language=LANGUAGE.ENGLISH, platform=PLATFORM.REDDIT),
-    download_conversations('Klimawandel',read_yaml('ger'),
-                           language=LANGUAGE.GERMAN, platform= PLATFORM.TWITTER)
-    download_conversations('KLimawandel', read_yaml('en'),
+
+    #download_conversations('Klimawandel',read_yaml('ger'),
+     #                      language=LANGUAGE.GERMAN, platform= PLATFORM.TWITTER)
+    download_conversations('Klimawandel', read_yaml('en'),
                            language=LANGUAGE.ENGLISH, platform=PLATFORM.TWITTER)
 
 
@@ -32,21 +25,23 @@ def delete_rules_tests():
     existing_rules = connector.get_rules()
     connector.delete_all_rules(existing_rules)
 
+
 def read_yaml(lang):
-    if lang=='ger':
+    if lang == 'ger':
         with open('twitter/strategic_communication/climate_change.yaml') as file:
             data = yaml.load(file, Loader=SafeLoader)
+            accounts = "Klimawandel ("
     else:
         with open('twitter/strategic_communication/climate_change_en.yaml') as file:
             data = yaml.load(file, Loader=SafeLoader)
-    accounts= ""
+            accounts = "\"climate change\" ("
     for key in data:
         data2=data[key]
         for key2 in data2:
             for key3 in key2:
                 values=list(key2[key3].values())
                 accounts+="from:"+ (values[1])+ " OR "
-    return accounts[:-4]
+    return accounts[:-4] + ")"
 
 
 def pretty_print_stream(json_response):
