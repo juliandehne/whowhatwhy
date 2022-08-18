@@ -14,7 +14,7 @@ simple_request, tw_topic = set_up_topic_and_simple_request("john reddit corpus 0
 
 logger = logging.getLogger(__name__)
 
-debug = True
+debug = False
 
 
 def run():
@@ -22,7 +22,6 @@ def run():
         reader = csv.reader(fp, delimiter=",", quotechar='"')
         reddit = get_praw()
 
-        group_dict = {}
         submission_dict = {}
         readable_group_dict = {}
         for row in reader:
@@ -32,10 +31,8 @@ def run():
             if len(reddit_url_fields) > 2:
                 sub_reddit_string = reddit_url_fields[0]
                 submission_id = reddit_url_fields[2]
-                submission_id_hash = convert_to_hash(submission_id)
             if len(reddit_url_fields) >= 4:
                 post_id = reddit_url_fields[4]
-                post_id_hashed = convert_to_hash(post_id)
                 key = sub_reddit_string + "_" + row[1]
                 submission_dict[key] = submission_id
                 readable_group_dict_ids = readable_group_dict.get(key, [])
@@ -43,22 +40,18 @@ def run():
                 if submission_id not in readable_group_dict_ids:
                     readable_group_dict_ids.append(submission_id)
                 readable_group_dict[key] = readable_group_dict_ids
-                # sequence_ids = group_dict.get(key, [])
-                # sequence_ids.append(post_id_hashed)
-                # if submission_id_hash not in sequence_ids:
-                #    sequence_ids.append(submission_id_hash)
-                # group_dict[key] = sequence_ids
 
-            # reddit.subreddit(sub_reddit_string).search()
         for key, value in readable_group_dict.items():
             if debug and len(value) > 10:
                 continue
-            print(readable_group_dict[key])
-            sequence_tweet_filter = partial(tweet_filter_reddit, value, str(key) + "_reddit_18_08_22")
+            sequence_name = str(key) + "_reddit_18_08_22"
+            sequence_tweet_filter = partial(tweet_filter_reddit, value, sequence_name)
             submission_id_string = submission_dict[key]
             submission = reddit.submission(id=submission_id_string)
             save_reddit_tree(simple_request, submission, tw_topic, max_conversation_length=100000,
                              min_conversation_length=3, tweetfilter=sequence_tweet_filter)
+            logger.debug("downloaded {} reddit posts:".format(
+                TweetSequence.objects.filter(name=sequence_name).first().tweets.count()))
             if debug:
                 break
 

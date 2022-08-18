@@ -265,7 +265,7 @@ class FollowerNetwork(models.Model):
 
 class TweetSequence(models.Model):
     tweets = models.ManyToManyField(Tweet)
-    name = models.TextField(blank=True, null=True)
+    name = models.TextField(blank=True, null=True, unique=True)
     u_conflict_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
                                             help_text="Do you agree that there is a conflict in the sequence?")
     u_conflict_type_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,

@@ -80,6 +80,8 @@ def save_reddit_tree(simple_request, submission, topic, max_conversation_length=
                 children = [child for child in root.children]
                 for child in children:
                     save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter, conversation_id)
+            logger.debug(
+                "saved {} reddit posts to db".format(Tweet.objects.filter(conversation_id=conversation_id).count()))
     else:
         logger.error("could not compute reddit_tree for conversation {}".format(submission))
 
