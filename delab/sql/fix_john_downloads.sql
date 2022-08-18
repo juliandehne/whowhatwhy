@@ -1,4 +1,1 @@
-from delab_tweetsequence_tweets;
-
-
-delete from delab_tweet where topic_id = 12;
+delete from delab_tweet where topic_id = 12 and platform = 'reddit';

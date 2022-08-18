@@ -27,6 +27,10 @@ tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id',
 
 
 class TweetSequenceStatSerializer(serializers.ModelSerializer):
+    found_tweets = serializers.IntegerField()
+    not_found_tweets = serializers.IntegerField()
+    full_conversation_size = serializers.IntegerField()
+
     class Meta:
         model = TweetSequence
         fields = ["name", "found_tweets", "not_found_tweets", "full_conversation_size"]
@@ -51,16 +55,18 @@ def get_tweet_sequence_stats(topic):
 class TweetSequenceStatViewSet(viewsets.ModelViewSet):
     queryset = TweetSequence.objects.none()
     serializer_class = TweetSequenceStatSerializer
+    renderer_classes = (XLSXRenderer,)
+    filename = 'partial_conversations_stats.xlsx'
 
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
-    # filterset_fields = tweet_fields_used
-
-    # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     def get_queryset(self):
         topic = self.kwargs["topic"]
         tweet_sequences = get_tweet_sequence_stats(topic)
         return tweet_sequences
+
+    def get_filename(self):
+        topic = self.kwargs["topic"]
+        filename = '{}_partial_conversations_stats.xlsx'.format(topic)
+        return filename
 
 
 class AuthorSerializer(serializers.ModelSerializer):

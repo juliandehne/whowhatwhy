@@ -193,7 +193,8 @@ def save_reddit_entry(comment, simple_request, topic, tweetfilter, conversation_
                 simple_request=simple_request,
                 topic=topic,
                 tw_author=author,
-                banned_at=banned_at
+                banned_at=banned_at,
+                reddit_id=comment.fullname
             )
             apply_tweet_filter(tweet, tweetfilter)
             return True
@@ -249,7 +250,8 @@ def save_reddit_submission(comment, simple_request, topic, tweetfilter, conversa
             simple_request=simple_request,
             topic=topic,
             tw_author=author,
-            banned_at=banned_at
+            banned_at=banned_at,
+            reddit_id=comment.fullname
         )
         apply_tweet_filter(tweet, tweetfilter)
         return True

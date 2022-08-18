@@ -22,11 +22,13 @@ def run():
     """
     debug = False
 
-    row_function = calculate_forward_row
-    # row_function = calculate_row # this would do the author has replied predictions
+    # row_function = calculate_forward_row
+    row_function = calculate_row # this would do the author has replied predictions
     # row_function = calculate_baseline_row
+
     # out_put_file = "notebooks/data/vision_graph_data.pkl"
-    out_put_file = "notebooks/data/vision_forward_graph_data_08_09_22.pkl"
+    out_put_file = "notebooks/data/vision_graph_data_local_16_09_22.pkl"
+    # out_put_file = "notebooks/data/vision_forward_graph_data_08_09_22.pkl"
     # out_put_file = "notebooks/data/vision_baseline_graph_data.pkl"
     conversation_ids = get_all_conversation_ids()
     calculate_conversation_dataframe(conversation_ids, debug, out_put_file, row_function)

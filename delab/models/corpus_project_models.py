@@ -160,6 +160,7 @@ class TweetAuthor(models.Model):
 
 class Tweet(models.Model):
     twitter_id = models.BigIntegerField(unique=True)
+    reddit_id = models.TextField(unique=True, blank=True, null=True)
     text = models.TextField()
     tw_author = models.ForeignKey(TweetAuthor, on_delete=models.DO_NOTHING, null=True)
     author_id = models.BigIntegerField(null=True)
