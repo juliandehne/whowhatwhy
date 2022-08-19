@@ -50,8 +50,8 @@ def run():
             submission = reddit.submission(id=submission_id_string)
             save_reddit_tree(simple_request, submission, tw_topic, max_conversation_length=100000,
                              min_conversation_length=3, tweetfilter=sequence_tweet_filter)
-            logger.debug("downloaded {} reddit posts:".format(
-                TweetSequence.objects.filter(name=sequence_name).first().tweets.count()))
+            logger.debug("downloaded {} reddit posts for sequence {}:".format(
+                TweetSequence.objects.filter(name=sequence_name).first().tweets.count(), sequence_name))
             if debug:
                 break
 
