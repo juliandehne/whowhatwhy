@@ -46,4 +46,5 @@ def run():
     # for node, (x, y) in pos.items():
     #     text(x, y, node, fontsize=d[node] * 5, ha='center', va='center')
     # nx.draw_networkx_nodes(tree, pos=pos)
-    plt.show()
+    plt.show(block=False)
+    plt.savefig("/home/dehne/ownCloud/julian/paper/author_vision_draft_example.png", format="PNG")

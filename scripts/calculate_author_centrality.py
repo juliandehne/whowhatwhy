@@ -13,7 +13,7 @@ debug = False
 
 
 def run():
-    out_put_file = "notebooks/data/author_centrality_local.pkl"
+    out_put_file = "notebooks/data/author_centrality_remote.pkl"
 
     randomizer = Random()
     conversation_ids = get_all_conversation_ids()
