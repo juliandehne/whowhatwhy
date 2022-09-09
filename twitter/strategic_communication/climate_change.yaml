@@ -2,13 +2,93 @@ activists:
   - activist:
       name: Luisa Neubauer
       twitter_account: Luisamneubauer
+  - activist:
+      name: Sina Reisch
+      twitter_account: SinaChom
+  - activist:
+      name: Assaad Razzouk
+      twitter_account: AssaadRazzouk
+  - activist:
+      name: Carla Reemtsma
+      twitter_account: carla_reemtsma
+  - activist:
+      name: Katharina Rogenhofer
+      twitter_account: KRogenhofer
+  - activist:
+      name: Ingwar Pero
+      twitter_account: Perowinger94
+  - activist:
+      name: Georg Kurz
+      twitter_account: oekofuzzi
+  - activist:
+      name: Jakob Blasel
+      twitter_account: jakobblasel
+  - activist:
+      name: Ronja Weil
+      twitter_account: RonjaWeil
+  - activist:
+      name:
+      twitter_account:
 organisations:
   - organisation:
       name: Greenpeace
-      twitter_account_ger: greenpeace_de
+      twitter_account: greenpeace_de
   - organisation:
       name: Fridays for Future
-      twitter_account_ger: FridayForFuture
+      twitter_account: FridayForFuture
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name: treibhauspost
+      twitter_account: treibhauspost
+      gouvernemental: 'false'
+  - organisation:
+      name: Deutsche Umwelthilfe
+      twitter_account: Umwelthilfe
+      gouvernemental: 'false'
+  - organisation:
+      name: Bundesumweltministerium
+      twitter_account: BMUV
+      gouvernemental: 'true'
+  - organisation:
+      name: Bundesministerium für Wirtschaft und Klimaschutz
+      twitter_account: BMWK
+      gouvernemental: 'true'
+  - organisation:
+      name: Expertenrat für Klimafragen
+      twitter_account: ERK_Klima
+      gouvernemental: 'false'
+  - organisation:
+      name: Parents For Future
+      twitter_account: parents4future
+      gouvernemental: 'false'
+  - organisation:
+      name: KLIMA° vor acht e.V.
+      twitter_account: KlimaVorAcht
+      gouvernemental: 'false'
+  - organisation:
+      name: Ende Gelände
+      twitter_account: Ende__Gelaende
+      gouvernemental: 'false'
+  - organisation:
+      name: Extinction Rebellion Deutschland
+      twitter_account: ExtinctionR_DE
+      gouvernemental: 'false'
+  - organisation:
+      name: Students For Future Germany
+      twitter_account: Studis4FutureDE
+      gouvernemental: 'false'
+  - organisation:
+      name: UN-Klimasekretariat
+      twitter_account: UNKlima
+      gouvernemental: 'true'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
   - organisation:
       name: Scientists for Future
       twitter_account_ger: sciforfuture
@@ -16,13 +96,116 @@ journalists:
   - journalist:
       name: Kurt Stukenberg
       twitter_account: k_stukenberg
+      medium: Der Spiegel
+  - journalist:
+      name: Jonas Schaible
+      twitter_account: beimwort
+      medium: Der Spiegel
+  - journalist:
+      name: Malte Kreutzfeldt
+      twitter_account: MKreutzfeldt
+      medium: taz
+  - journalist:
+      name: Bernd Ulrich
+      twitter_account: berndulrich
+      medium: Die Zeit
+  - journalist:
+      name: Annika Joeres
+      twitter_account: AnnikaJoeres
+      medium: Freelance
+  - journalist:
+      name: Sara Schurmann
+      twitter_account: SaraSchurmann
+      medium: Freelance (?)
+  - journalist:
+      name: Jakob Schlandt
+      twitter_account: JakobSchlandt
+      medium: Tagesspiegel
+  - journalist:
+      name: Jürgen Döschner
+      twitter_account: jdoeschner
+      medium: WDR
+  - journalist:
+      name: Erik Peter
+      twitter_account: retep_kire
+      medium: taz
+  - journalist:
+      name: Katharina Mau
+      twitter_account: katharina_mau
+      medium: Freelance
+  - journalist:
+      name: alexandra endres
+      twitter_account: alexandraendres
+      medium: freelance
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
 politicians:
   - politician:
       name: Lisa Badum
       twitter_account: badulrichmartha
+      party:
   - politician:
       name: Dr. Julia Verlinden
       twitter_account: julia_verlinden
+      party:
+  - politician:
+      name: Britta Haßelmann
+      twitter_account: BriHasselmann
+      party: Bündnis 90/ Die Grünen
+  - politician:
+      name: Oliver Krischer
+      twitter_account: Oliver_Krischer
+      party: Bündnis 90/ Die Grünen
+  - politician:
+      name: Sven Giegold
+      twitter_account: sven_giegold
+      party: Bündnis 90/ Die Grünen
+  - politician:
+      name: Simone Peter
+      twitter_account: peter_simone
+      party: Bündnis 90/ Die Grünen
+  - politician:
+      name: Michael Bloss
+      twitter_account: micha_bloss
+      party: Greens/EFA
+  - politician:
+      name: Kathrin Henneberger
+      twitter_account: KathrinAnna
+      party: Bündnis 90/ Die Grünen
+  - politician:
+      name: Lorenz Gösta Beutin
+      twitter_account: lgbeutin
+      party: Die Linke
+  - politician:
+      name:
+      twitter_account:
+      party:
+  - politician:
+      name:
+      twitter_account:
+      party:
+  - politician:
+      name:
+      twitter_account:
+      party:
+  - politician:
+      name:
+      twitter_account:
+      party:
+  - politician:
+      name:
+      twitter_account:
+      party:
+  - politician:
+      name:
+      twitter_account:
+      party:
 scientists:
   - scientist:
       name: Volker Quaschning
@@ -33,3 +216,66 @@ scientists:
   - scientist:
       name: Özden Terli
       twitter_account: TerliWetter
+  - scientist:
+      name: Jens Clausen
+      twitter_account: borderclausen
+  - scientist:
+      name: Reinhard Steurer
+      twitter_account: ReiSteurer
+  - scientist:
+      name: Christoph Dolna-Gruber
+      twitter_account: chri_gru
+  - scientist:
+      name: Claudia Kemfert
+      twitter_account: CKemfert
+  - scientist:
+      name: S Mueller-Kraenner
+      twitter_account: sascha_m_k
+  - scientist:
+      name: Brigitte Knopf
+      twitter_account: BrigitteKnopf
+  - scientist:
+      name: Paul Lehmann
+      twitter_account: pleh_mann
+  - scientist:
+      name: Bruno Burger
+      twitter_account: energy_charts_d
+  - scientist:
+      name: Constantin Zerger
+      twitter_account: ConstZerger
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:

@@ -5,6 +5,22 @@ activists:
   - activist:
       name: Greta Thunberg
       twitter_account: GretaThunberg
+  - activist:
+      name: Nigel Topping
+      twitter_account: topnigel
+  - activist:
+      name: Mikaela Loach
+      twitter_account: mikaelaloach
+
+journalists:
+  - journalist:
+      name: Somini Sengupta
+      twitter_account: SominiSengupta
+      medium: The New york Times
+  - journalist:
+      name: Richard Black
+      twitter_account: _richardblack
+      medium: freelance
 organisations:
   - organisation:
       name: Greenpeace
@@ -15,4 +31,30 @@ organisations:
   - organisation:
       name: Scientists for Future
       twitter_account: S4F_INTL
+  - organisation:
+      name: UN Climate Change
+      twitter_account: UNFCCC
+      gouvernmental: 'true'
+politicians:
+  - politician:
+      name: Patricia Espinosa C.
+      twitter_account: PEspinosaC
+scientists:
+  - scientist:
+      name: Prof Michael E. Mann
+      twitter_account: MichaelEMann
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+
+
 
