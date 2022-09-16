@@ -11,6 +11,15 @@ activists:
   - activist:
       name: Mikaela Loach
       twitter_account: mikaelaloach
+  - activist:
+      name: Kristy Drutman
+      twitter_account: BrownGirl_Green
+  - activist:
+      name: Xiye Bastida
+      twitter_account: xiyebastida
+  - activist:
+      name: Rebecca Solnit
+      twitter_account: RebeccaSolnit
 
 journalists:
   - journalist:
@@ -39,13 +48,19 @@ politicians:
   - politician:
       name: Patricia Espinosa C.
       twitter_account: PEspinosaC
+  - politician:
+      name: Rasmus Andresen
+      twitter_account: RasmusAndresen
+  - politician:
+      name: Wolfgang Ischinger
+      twitter_account: ischinger
 scientists:
   - scientist:
       name: Prof Michael E. Mann
       twitter_account: MichaelEMann
   - scientist:
-      name:
-      twitter_account:
+      name: Ulf Moslener
+      twitter_account: UlfMoslener
   - scientist:
       name:
       twitter_account:

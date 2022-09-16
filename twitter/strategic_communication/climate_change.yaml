@@ -27,6 +27,36 @@ activists:
       name: Ronja Weil
       twitter_account: RonjaWeil
   - activist:
+      name: Annika Rittmann
+      twitter_account: AnnikaRittmann
+  - activist:
+      name: Nurder Koch
+      twitter_account: NurderK
+  - activist:
+      name: Jan Hegenberg
+      twitter_account: DerGraslutscher
+  - activist:
+      name: Kaffeecup
+      twitter_account: kaffeecup
+  - activist:
+      name:
+      twitter_account:
+  - activist:
+      name:
+      twitter_account:
+  - activist:
+      name:
+      twitter_account:
+  - activist:
+      name:
+      twitter_account:
+  - activist:
+      name:
+      twitter_account:
+  - activist:
+      name:
+      twitter_account:
+  - activist:
       name:
       twitter_account:
 organisations:
@@ -86,12 +116,188 @@ organisations:
       twitter_account: UNKlima
       gouvernemental: 'true'
   - organisation:
+      name: SRU
+      twitter_account: Umweltrat
+      gouvernemental: 'true'
+  - organisation:
+      name: Scientists for Future
+      twitter_account_ger: sciforfuture
+  - organisation:
+      name: Fridays For Future Baden-Württemberg
+      twitter_account: fff_bw
+  - organisation:
+      name: Fridays For Future Backnang
+      twitter_account: FridaysForBK
+  - organisation:
+      name: FFF Freiburg - 23.09. globaler Klimastreik!
+      twitter_account: F4F_Freiburg
+  - organisation:
+      name: Fridays For Future Bodensee
+      twitter_account: fff_bodensee
+  - organisation:
+      name: Fridays For Future Karlsruhe
+      twitter_account: FFF_Karlsruhe
+  - organisation:
+      name: Fridays For Future Konstanz #KlimaVor8
+      twitter_account: knforfuture
+  - organisation:
+      name: Fridays for Future Stuttgart
+      twitter_account: fffstuttgart
+  - organisation:
+      name: Fridays for Future Tübingen
+      twitter_account: fff_tuebingen
+  - organisation:
+      name: Fridays For Future Bayern
+      twitter_account: fff_bayern
+  - organisation:
+      name: FridaysForFuture Amberg
+      twitter_account: fffamberg
+  - organisation:
+      name: Fridays for Future Dachau
+      twitter_account: FFF_Dachau
+  - organisation:
+      name: Fridays For Future Lindau
+      twitter_account: FffLindau
+  - organisation:
+      name: FridaysForFuture München
+      twitter_account: fff_muc
+  - organisation:
+      name: Fridays For Future Nürnberg
+      twitter_account: FFFNuernberg
+  - organisation:
+      name: FfF Regensburg - Alle nach Lützerath!
+      twitter_account: fff_regensburg
+  - organisation:
+      name: Fridays For Future Berlin
+      twitter_account: FFF_Berlin
+  - organisation:
+      name: Fridays For Future Potsdam
+      twitter_account: FFFPotsdam
+  - organisation:
+      name: Fridays for Future Hamburg ⚓️
+      twitter_account: fff_hamburg
+  - organisation:
+      name: Fridays for Future Frankfurt am Main
+      twitter_account: FFF_Frankfurt
+  - organisation:
+      name: Fridays for Future Kassel
+      twitter_account: fff_kassel
+  - organisation:
+      name: Scientists for Future Leipzig
+      twitter_account: S4F_Leipzig
+      gouvernemental: 'false'
+  - organisation:
+      name: Volksverpetzer
+      twitter_account: Volksverpetzer
+      gouvernemental: 'false'
+  - organisation:
+      name: Germanwatch
+      twitter_account: Germanwatch
+      gouvernemental: 'false'
+  - organisation:
+      name: Umweltbundesamt
+      twitter_account: Umweltbundesamt
+      gouvernemental: 'true'
+  - organisation:
+      name: NABU
+      twitter_account: NABU_de
+      gouvernemental: 'false'
+  - organisation:
+      name: BUND
+      twitter_account: bund_net
+      gouvernemental: 'false'
+  - organisation:
+      name: campact
+      twitter_account: campact
+      gouve rnemental: 'false'
+  - organisation:
+      name: taz Klima
+      twitter_account: tazKlima
+      gouvernemental: 'false'
+  - organisation:
+      name: Alle Dörfer Bleiben
+      twitter_account: AlleDoerfer
+      gouvernemental: 'false'
+  - organisation:
       name:
       twitter_account:
       gouvernemental: 'false'
   - organisation:
-      name: Scientists for Future
-      twitter_account_ger: sciforfuture
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
+  - organisation:
+      name:
+      twitter_account:
+      gouvernemental: 'false'
 journalists:
   - journalist:
       name: Kurt Stukenberg
@@ -138,6 +344,58 @@ journalists:
       twitter_account: alexandraendres
       medium: freelance
   - journalist:
+      name: Susanne Schwarz
+      twitter_account: Sanne_Schwarz
+      medium: taz
+  - journalist:
+      name: Tilo Jung
+      twitter_account: TiloJung
+      medium: freelance
+  - journalist:
+      name: Marie von den Benken
+      twitter_account: Regendelfin
+      medium: FAZ
+  - journalist:
+      name: Aline Pabst
+      twitter_account: AlinePabst
+      medium: Saarbrücker Zeitung
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
+      name:
+      twitter_account:
+      medium:
+  - journalist:
       name:
       twitter_account:
       medium:
@@ -183,25 +441,25 @@ politicians:
       twitter_account: lgbeutin
       party: Die Linke
   - politician:
-      name:
-      twitter_account:
-      party:
+      name: Ricarda Lang
+      twitter_account: Ricarda_Lang
+      party: Bündnis 90/Die Grünen
   - politician:
-      name:
-      twitter_account:
-      party:
+      name: Cem Özdemir
+      twitter_account: cem_oezdemir
+      party: Bündnis 90/Die Grünen
   - politician:
-      name:
-      twitter_account:
-      party:
+      name: Katrin Göring-Eckardt
+      twitter_account: GoeringEckardt
+      party: Bündnis 90/Die Grünen
   - politician:
-      name:
-      twitter_account:
-      party:
+      name: Sebastian Hornschild
+      twitter_account: Hornschild
+      party: Klimaliste Erlangen
   - politician:
-      name:
-      twitter_account:
-      party:
+      name: Klaus Müller
+      twitter_account: Klaus_Mueller
+      party: Bündnis 90/Die Grünen
   - politician:
       name:
       twitter_account:
@@ -244,26 +502,26 @@ scientists:
       name: Constantin Zerger
       twitter_account: ConstZerger
   - scientist:
-      name:
-      twitter_account:
+      name: Katja Diehl
+      twitter_account: _Katja_Diehl_
   - scientist:
-      name:
-      twitter_account:
+      name: Prof. Niklas Höhne
+      twitter_account: niklashoehne
   - scientist:
-      name:
-      twitter_account:
+      name: Maren Urner
+      twitter_account: PositiveMaren
   - scientist:
-      name:
-      twitter_account:
+      name: Kira Vinke
+      twitter_account: KiraVinke
   - scientist:
-      name:
-      twitter_account:
+      name: Matthias Huber
+      twitter_account: EnergyHuber
   - scientist:
-      name:
-      twitter_account:
+      name: Cornelia Quaschning
+      twitter_account: cQuaschning
   - scientist:
-      name:
-      twitter_account:
+      name: Prof. Sebastian Seiffert
+      twitter_account: sci_ffert
   - scientist:
       name:
       twitter_account:
