@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 
 class TreeNode:
-    def __init__(self, data, tree_id, parent_id=None, parent_type=TWEET_RELATIONSHIPS.REPLIED_TO):
+    def __init__(self, data, tree_id: int, parent_id: int = None, parent_type=TWEET_RELATIONSHIPS.REPLIED_TO):
         """data is a tweet's json object
            tree_id is the logical id of the treenode (either author id when downloading, or twitter id in db)
            parent references the tree_id of the parent

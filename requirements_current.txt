@@ -5,3 +5,5 @@ germansentiment
 neo4j
 django-model-utils
 tweepy
+matplotlib
+pydot

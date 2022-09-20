@@ -1,0 +1,1 @@
+delete from delab_tweet where topic_id = 12 and platform = 'reddit';

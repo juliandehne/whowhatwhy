@@ -10,6 +10,7 @@ from delab.corpus.download_conversations_reddit import download_subreddit
 from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets
 from .nce.download_intolerant_tweets import download_terrible_tweets
+from .network.conversation_network import download_twitter_follower
 
 logger = logging.getLogger(__name__)
 
@@ -104,3 +105,12 @@ def download_intolerant_tweets():
 def download_moderating_tweets():
     logger.debug("CRONJOB: downloading moderating tweets")
     download_mod_tweets(recent=True)
+
+
+@background()
+def download_network_structures():
+    logger.debug("CRONJOB: downloading networks!")
+    levels = 1
+    n_conversations = -1
+    download_twitter_follower(levels, n_conversations)
+

@@ -1,3 +1,4 @@
+from django.db.models import Count, OuterRef, Subquery, Func, F
 from django.utils.encoding import smart_text
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_renderer_xlsx.mixins import XLSXFileMixin
@@ -10,7 +11,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import get_conversation_trees
-from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating
+from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating, SimpleRequest, \
+    TweetSequence, MissingTweets
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 
@@ -20,8 +22,51 @@ LOOK at the README to see all the different endpoints implemented as a way to ge
 """
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
-                     'in_reply_to_user_id',
-                     'sentiment_value', 'language']
+                     'tn_parent_id',
+                     'sentiment_value', 'language', 'tn_original_parent']
+
+
+class TweetSequenceStatSerializer(serializers.ModelSerializer):
+    found_tweets = serializers.IntegerField()
+    not_found_tweets = serializers.IntegerField()
+    full_conversation_size = serializers.IntegerField()
+
+    class Meta:
+        model = TweetSequence
+        fields = ["name", "found_tweets", "not_found_tweets", "full_conversation_size"]
+
+
+def get_tweet_sequence_stats(topic):
+    not_found_tweets = Subquery(
+        MissingTweets.objects.filter(conversation_id__in=OuterRef("conversation_id")).order_by().annotate(
+            count=Func(F('id'), function='Count')
+        ).values('count'))
+    conversation_size = Subquery(
+        Tweet.objects.filter(conversation_id__in=OuterRef("conversation_id")).order_by().annotate(
+            count=Func(F('id'), function='Count')
+        ).values('count'))
+    tweet_sequences = TweetSequence.objects.filter(tweets__topic__title=topic).annotate(
+        found_tweets=Count('tweets')).annotate(
+        conversation_id=Tweet.objects.filter(tweetsequence=OuterRef('id'))[:1].values("conversation_id")).annotate(
+        full_conversation_size=conversation_size).annotate(not_found_tweets=not_found_tweets)
+    return tweet_sequences
+
+
+class TweetSequenceStatViewSet(viewsets.ModelViewSet):
+    queryset = TweetSequence.objects.none()
+    serializer_class = TweetSequenceStatSerializer
+    renderer_classes = (XLSXRenderer,)
+    filename = 'partial_conversations_stats.xlsx'
+
+    def get_queryset(self):
+        topic = self.kwargs["topic"]
+        tweet_sequences = get_tweet_sequence_stats(topic)
+        return tweet_sequences
+
+    def get_filename(self):
+        topic = self.kwargs["topic"]
+        filename = '{}_partial_conversations_stats.xlsx'.format(topic)
+        return filename
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -36,15 +81,29 @@ class CandidateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class SimpleRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SimpleRequest
+        fields = '__all__'
+
+
+class TweetSequenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TweetSequence
+        fields = ["name"]
+
+
 class TweetSerializer(serializers.ModelSerializer):
     tw_author = AuthorSerializer()
+    simple_request = SimpleRequestSerializer()
+    tweetsequence_set = TweetSequenceSerializer(many=True, read_only=True)
 
     # tw_author__name = serializers.StringRelatedField()
     # tw_author__location = serializers.StringRelatedField()
 
     class Meta:
         model = Tweet
-        fields = tweet_fields_used + ["tw_author"]
+        fields = tweet_fields_used + ["tw_author", "simple_request", "tweetsequence_set"]
         # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
 
     # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
@@ -93,7 +152,8 @@ class NormXMLRenderer(renderers.BaseRenderer):
 
 
 def get_tweet_queryset(topic):
-    queryset = Tweet.objects.select_related("tw_author").filter(simple_request__topic__title=topic)
+    queryset = Tweet.objects.select_related("tw_author").prefetch_related("tweetsequence_set").filter(
+        simple_request__topic__title=topic)
     return queryset
 
 

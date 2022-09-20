@@ -10,10 +10,13 @@ from util.abusing_lists import batch
 
 MODTOPIC2 = "moderationdictmining"
 
+query_token_file = "delab/mm/FunctionPhrasesPartial.csv"
+
 
 def download_mod_tweets(recent=True, platform=PLATFORM.TWITTER):
     for lang in LANGUAGE:
-        with open("delab/mm/FunctionPhrases.csv") as fp:
+        with open(query_token_file) as fp:
+        # with open("delab/mm/FunctionPhrases.csv") as fp:
             reader = csv.reader(fp, delimiter=",", quotechar='"')
             next(reader, None)  # skip the headers
             download_mod_tweets_for_language(reader, lang, recent, platform)
@@ -95,7 +98,8 @@ def download_mod_tweets_for_language(reader, lang, recent, platform):
 
 
 def generate_contexts():
-    # interesting poltical contexts from  https://raw.githubusercontent.com/twitterdev/twitter-context-annotations/main/files/evergreen-context-entities-20220601.csv
+    # interesting poltical contexts from
+    # https://raw.githubusercontent.com/twitterdev/twitter-context-annotations/main/files/evergreen-context-entities-20220601.csv
 
     # political issues, political talk, politics europe, political news
     # contexts = ["131.840159122012102656", "131.1488973753274929152", "131.847878884917886977",
@@ -132,11 +136,13 @@ def download_mod_helper(lang, queries, recent, platform, add_pol_contexts=False)
     rest = n % 4
     contexts_full = contexts_full[:-rest]
 
+    # the queries are expected to be in a semicolon seperated list
     for query in queries.split(";"):
         if query.strip() != "":
             # query = ast.literal_eval(query)
             query2 = query.replace("'", "\"")
 
+            # if pol_context flags is true add contexts (only do that for twitter please!)
             if add_pol_contexts:
                 for contexts_batch in batch(contexts_full, batch_size):
                     if len(contexts_batch) == batch_size:
@@ -155,6 +161,7 @@ def download_mod_helper(lang, queries, recent, platform, add_pol_contexts=False)
                             print("error in query {}".format(ex))
             else:
                 query_string = query2
+                # in twitter you can filter results based on whether they are a reply
                 if platform == PLATFORM.TWITTER:
                     query_string = query2 + " is:reply "
                 moderation_tweet_filter = partial(tweet_filter, query_string)
