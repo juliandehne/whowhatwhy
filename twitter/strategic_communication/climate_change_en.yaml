@@ -1,15 +1,3 @@
----
-organisations:
-  - organisation:
-    name: Greenpeace
-    twitter_account_international: Greenpeace
-  - organisation:
-      name: Fridays for Future
-      twitter_account_international: Fridays4future
-  - organisation:
-      name: Scientists for Future
-      twitter_account_international: S4F_INTL
-
 activists:
   - activist:
       name: Nyombi Morris
@@ -17,5 +5,71 @@ activists:
   - activist:
       name: Greta Thunberg
       twitter_account: GretaThunberg
+  - activist:
+      name: Nigel Topping
+      twitter_account: topnigel
+  - activist:
+      name: Mikaela Loach
+      twitter_account: mikaelaloach
+  - activist:
+      name: Kristy Drutman
+      twitter_account: BrownGirl_Green
+  - activist:
+      name: Xiye Bastida
+      twitter_account: xiyebastida
+  - activist:
+      name: Rebecca Solnit
+      twitter_account: RebeccaSolnit
 
-...
+journalists:
+  - journalist:
+      name: Somini Sengupta
+      twitter_account: SominiSengupta
+      medium: The New york Times
+  - journalist:
+      name: Richard Black
+      twitter_account: _richardblack
+      medium: freelance
+organisations:
+  - organisation:
+      name: Greenpeace
+      twitter_account: Greenpeace
+  - organisation:
+      name: Fridays for Future
+      twitter_account: Fridays4future
+  - organisation:
+      name: Scientists for Future
+      twitter_account: S4F_INTL
+  - organisation:
+      name: UN Climate Change
+      twitter_account: UNFCCC
+      gouvernmental: 'true'
+politicians:
+  - politician:
+      name: Patricia Espinosa C.
+      twitter_account: PEspinosaC
+  - politician:
+      name: Rasmus Andresen
+      twitter_account: RasmusAndresen
+  - politician:
+      name: Wolfgang Ischinger
+      twitter_account: ischinger
+scientists:
+  - scientist:
+      name: Prof Michael E. Mann
+      twitter_account: MichaelEMann
+  - scientist:
+      name: Ulf Moslener
+      twitter_account: UlfMoslener
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+  - scientist:
+      name:
+      twitter_account:
+
+
+
