@@ -1,12 +1,10 @@
 import logging
 
 import networkx as nx
-import networkx.exception
 
 from delab.models import Tweet
-from delab.network.author_presence import prepare_row_analysis, compute_reply_features, compute_timedelta_feature, \
+from delab.analytics.author_presence import prepare_row_analysis, compute_reply_features, compute_timedelta_feature, \
     compute_root_distance_feature, compute_follower_features
-from delab.network.conversation_network import get_root
 
 logger = logging.getLogger(__name__)
 

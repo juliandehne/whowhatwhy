@@ -6,13 +6,11 @@ import pandas as pd
 from delab.api.api_util import get_all_conversation_ids
 from delab.models import Tweet
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
-from delab.network.author_presence import calculate_row
-from delab.network.author_presence_forward import calculate_forward_row
+from delab.analytics.author_presence import calculate_row
 from delab.network.conversation_network import get_root, \
     paint_reply_graph, get_nx_conversation_graph, compute_author_graph_helper
 from delab.network.conversation_network import paint_bipartite_author_graph
 from django_project.settings import performance_conversation_max_size
-from delab.network.author_presence_baseline import calculate_baseline_row
 
 
 def run():

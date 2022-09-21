@@ -301,3 +301,14 @@ class MissingTweets(models.Model):
     conversation_id = models.BigIntegerField(null=True, blank=True)
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     url = models.TextField(blank=True, null=True)
+
+
+class ConversationAuthorMetrics(models.Model):
+    conversation_id = models.BigIntegerField()
+    author = models.ForeignKey(to=TweetAuthor, on_delete=models.DO_NOTHING)
+    centrality = models.FloatField(null=True)
+    rb_vision = models.FloatField(null=True)
+    baseline_vision = models.FloatField(null=True)
+    pb_vision = models.FloatField(null=True)
+    n_posts = models.IntegerField()
+    is_root_author = models.BooleanField()

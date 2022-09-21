@@ -10,7 +10,7 @@ the idea here is to establish a baseline what to measure the author presence mea
 import networkx as nx
 
 from delab.models import Tweet
-from delab.network.author_presence import prepare_row_analysis, compute_timedelta_feature, compute_follower_features
+from delab.analytics.author_presence import prepare_row_analysis, compute_timedelta_feature, compute_follower_features
 
 
 def calculate_baseline_row(tweet: Tweet, reply_graph: nx.DiGraph, follower_graph: nx.MultiDiGraph,
