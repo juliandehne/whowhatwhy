@@ -1,10 +1,14 @@
 import math
 
+import django.db.utils
 import networkx as nx
+import yaml
+from yaml import SafeLoader
 
 from delab.analytics.author_centrality import author_centrality
 from delab.api.api_util import get_all_conversation_ids, get_author_tweet_map
-from delab.models.corpus_project_models import ConversationAuthorMetrics, Tweet
+from delab.delab_enums import LANGUAGE
+from delab.models.corpus_project_models import ConversationAuthorMetrics, Tweet, TweetAuthor
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
 
 """
@@ -39,16 +43,21 @@ def run():
                                               conversation_id)
             baseline_vision = baseline_visions[author]
 
-            ConversationAuthorMetrics.objects.create(
-                author_id=author,
-                conversation_id=conversation_id,
-                centrality=centrality_score,
-                n_posts=n_posts,
-                is_root_author=is_root_author_v,
-                baseline_vision=baseline_vision
-            )
-
-
+            try:
+                tw_author = TweetAuthor.objects.filter(twitter_id=author).get()
+                ConversationAuthorMetrics.objects.create(
+                    author=tw_author,
+                    conversation_id=conversation_id,
+                    centrality=centrality_score,
+                    n_posts=n_posts,
+                    is_root_author=is_root_author_v,
+                    baseline_vision=baseline_vision
+                )
+            except django.db.utils.IntegrityError as saving_metric_exception:
+                # print(saving_metric_exception)
+                pass
+            except django.db.utils.DataError as date_error:
+                print(date_error)
 
 
 def calculate_n_posts(author_id, conversation_id):
@@ -110,3 +119,4 @@ def calculate_author_baseline_visions(conversation_id):
         baseline = author2baseline[author]
         assert 0 <= baseline <= 1
     return author2baseline
+
