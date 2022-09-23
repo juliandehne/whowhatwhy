@@ -28,6 +28,20 @@ def get_all_conversation_ids(topic=None):
     return result
 
 
+def get_author_tweet_map(conversation_id):
+    tweets = Tweet.objects.filter(conversation_id=conversation_id).only("author_id", "twitter_id")
+    tweet2author = {}
+    author2tweets = {}
+    for tweet in tweets:
+        tweet2author[tweet.twitter_id] = tweet.author_id
+        if tweet.author_id in author2tweets:
+            author_tweets = author2tweets.get(tweet.author_id)
+            author_tweets.append(tweet.twitter_id)
+        else:
+            author2tweets[tweet.author_id] = [tweet.twitter_id]
+    return tweet2author, author2tweets
+
+
 def get_conversation_dataframe(topic_string: str, conversation_id: int = None):
     if conversation_id is not None:
         qs = Tweet.objects.filter(conversation_id=conversation_id, topic__title=topic_string).all()

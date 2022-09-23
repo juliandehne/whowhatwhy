@@ -161,6 +161,7 @@ def get_nx_conversation_graph(conversation_id):
                 print(conversation_id)
             assert row.tn_parent_id in nodes
             edges.append((row.tn_parent_id, row.twitter_id))
+    assert len(edges) > 0
     G.add_edges_from(edges)
     return G
 

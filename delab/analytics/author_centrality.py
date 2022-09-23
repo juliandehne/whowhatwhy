@@ -14,6 +14,7 @@ def author_centrality(conversation_id):
     the key "root_distance_avg" holds the average distance to the root node for the given author
     """
     tweets = Tweet.objects.filter(conversation_id=conversation_id)
+
     reply_graph = get_nx_conversation_graph(conversation_id)
     # longest_path = nx.dag_longest_path(reply_graph)
     root_node = get_root(reply_graph)
