@@ -16,7 +16,7 @@ query_token_file = "delab/mm/FunctionPhrasesPartial.csv"
 def download_mod_tweets(recent=True, platform=PLATFORM.TWITTER):
     for lang in LANGUAGE:
         with open(query_token_file) as fp:
-        # with open("delab/mm/FunctionPhrases.csv") as fp:
+            # with open("delab/mm/FunctionPhrases.csv") as fp:
             reader = csv.reader(fp, delimiter=",", quotechar='"')
             next(reader, None)  # skip the headers
             download_mod_tweets_for_language(reader, lang, recent, platform)
@@ -89,8 +89,9 @@ def download_mod_tweets_for_language(reader, lang, recent, platform):
     """
     for row in reader:
         if lang == LANGUAGE.ENGLISH:
-            queries = row[8]
-            download_mod_helper(lang, queries, recent, add_pol_contexts=False, platform=platform)
+            # queries = row[8]
+            # download_mod_helper(lang, queries, recent, add_pol_contexts=False, platform=platform)
+            pass
         else:
             if lang == LANGUAGE.GERMAN:
                 queries = row[9]

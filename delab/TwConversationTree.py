@@ -37,6 +37,10 @@ class TreeNode:
         self.parent_type = parent_type
 
     def find_parent_of(self, node):
+        if type(self.tree_id) is not type(node.parent_id):
+            self.tree_id = int(self.tree_id)
+            node.parent_id = int(node.parent_id)
+        assert type(self.tree_id) is type(node.parent_id)
         if node.parent_id == self.tree_id:
             self.children.append(node)
             return True
