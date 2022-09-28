@@ -13,8 +13,8 @@ def run(*args):
     # print("STEP 1: FINISHED training classifier")
 
     """
-    This pipeline computes the full analysis of the downloaded tweets
-    1. download the missing authordata and timelines (if that has not happened)
+    This pipeline computes the full analysis of the downloaded tweets for the moderation 1 approach
+    1. download the missing author data and timelines (if that has not happened)
     2. analyse the sentiments of the tweets
     3. compute data for the candidate table
 

@@ -312,3 +312,16 @@ class ConversationAuthorMetrics(models.Model):
     pb_vision = models.FloatField(null=True)
     n_posts = models.IntegerField()
     is_root_author = models.BooleanField()
+
+
+class ConversationFlowMetrics(models.Model):
+    conversation_id = models.BigIntegerField()
+    parent = models.ForeignKey(Tweet, related_name="flow_parent", on_delete=models.DO_NOTHING)
+    child = models.ForeignKey(Tweet, related_name="flow_child", on_delete=models.DO_NOTHING)
+    sentiment_delta = models.FloatField(null=True)
+    topic_delta = models.FloatField(null=True)
+    author_changed = models.BooleanField(null=True)
+    author_timeline_delta = models.FloatField(null=True)
+    is_ethos_attack = models.BooleanField(null=True)
+    stance = models.FloatField(null=True, help_text="is in opposition -1 or in total agreement with the previous tweet")
+
