@@ -156,6 +156,7 @@ class TweetAuthor(models.Model):
     is_moderator = models.BooleanField(default=False)
     follower_downloaded = models.BooleanField(default=False)
     following_downloaded = models.BooleanField(default=False)
+    is_organisation = models.BooleanField(null=True, default=False)
 
 
 class Tweet(models.Model):

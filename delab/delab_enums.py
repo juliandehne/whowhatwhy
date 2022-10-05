@@ -7,6 +7,7 @@ class VERSION(models.TextChoices):
     v003 = "v0.0.3"  # current
     v004 = "v0.0.4"
     v005 = "v0.0.5"
+    v006 = "v0.0.6"
 
 
 class PLATFORM(models.TextChoices):
