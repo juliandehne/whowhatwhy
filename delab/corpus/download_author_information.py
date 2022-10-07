@@ -131,3 +131,8 @@ def download_user_batch(author_batch, twarc):
                             tweet.save(update_fields=["tw_author"])
                 if len(author_batch) < author_batch_size:
                     download_user_batch(author_batch, twarc)
+
+
+def download_author_ids(names):
+    twarc = DelabTwarc()
+    ids = twarc.user_lookup(names, usernames=True)
