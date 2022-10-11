@@ -22,7 +22,8 @@ def get_embedding_model(language):
     """
     if language == LANGUAGE.GERMAN:
         # return "sentence-transformers/distiluse-base-multilingual-cased-v2"
-        return "distiluse-base-multilingual-cased-v2"
+        # return "distiluse-base-multilingual-cased-v2"
+        return "german-roberta-sentence-transformer-v2"
     return "all-mpnet-base-v2"
 
     # comment these in for downloading the embeddings dynamically

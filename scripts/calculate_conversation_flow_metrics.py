@@ -30,24 +30,24 @@ def run():
         print("STEP 3: FINISHED updating author timelines")
         # 1. Trains the bertopic model on the timelines and the tweets and stores the trained bertopic model in "BERTopic"
         # 2. loads fasttextvectors for all bertopic models and stores them in topicdictionary
-        train_topic_model_from_db(version=analysis_version,
-                                  train=train_update_topics,
-                                  store_vectors=train_update_topics,
-                                  number_of_batches=1000,
-                                  platform=PLATFORM.TWITTER,
-                                  language=LANGUAGE.ENGLISH)
-        train_topic_model_from_db(version=analysis_version,
-                                  train=train_update_topics,
-                                  store_vectors=train_update_topics,
-                                  number_of_batches=1000,
-                                  platform=PLATFORM.TWITTER,
-                                  language=LANGUAGE.GERMAN)
-        train_topic_model_from_db(version=analysis_version,
-                                  train=train_update_topics,
-                                  store_vectors=train_update_topics,
-                                  number_of_batches=1000,
-                                  platform=PLATFORM.REDDIT,
-                                  language=LANGUAGE.ENGLISH)
+    train_topic_model_from_db(version=analysis_version,
+                              train=train_update_topics,
+                              store_vectors=train_update_topics,
+                              number_of_batches=1000,
+                              platform=PLATFORM.TWITTER,
+                              language=LANGUAGE.ENGLISH)
+    train_topic_model_from_db(version=analysis_version,
+                              train=train_update_topics,
+                              store_vectors=train_update_topics,
+                              number_of_batches=1000,
+                              platform=PLATFORM.TWITTER,
+                              language=LANGUAGE.GERMAN)
+    train_topic_model_from_db(version=analysis_version,
+                              train=train_update_topics,
+                              store_vectors=train_update_topics,
+                              number_of_batches=1000,
+                              platform=PLATFORM.REDDIT,
+                              language=LANGUAGE.ENGLISH)
     train_topic_model_from_db(version=analysis_version,
                               train=train_update_topics,
                               store_vectors=train_update_topics,

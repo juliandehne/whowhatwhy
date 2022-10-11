@@ -59,13 +59,16 @@ def train_topic_model_from_db(version, train=True, platform=PLATFORM.TWITTER, la
             train_bert(corpus_for_fitting_sentences, language, version, topic)
 
         if store_vectors:
-            vocab = create_vocabulary(corpus_for_fitting_sentences)
-            store_embedding_vectors(vocab, language, version, topic)
+            # vocab = create_vocabulary(corpus_for_fitting_sentences)
+            store_embedding_vectors(language, version, topic)
 
         logger.debug("finished training the topic model")
 
 
 def train_bert(corpus_for_fitting_sentences, language, version, topic=None):
+    """
+    fit a bertopic model for the given language, the corpus and the topic
+    """
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     # for trainings_batch in batch(corpus_for_fitting_sentences, 1000):
@@ -95,11 +98,10 @@ def filter_bad_topics(bertopic_model, vocab):
     return topic_info
 
 
-def store_embedding_vectors(vocab, lang, version, topic=None):
+def store_embedding_vectors(lang, version, topic=None):
     """
     This calculates the words that are in the topics, finds fasttext vectors for these words
     and stores them in the database for the distance measuring later on.
-    :param vocab:
     :param lang:
     :return:
     """
