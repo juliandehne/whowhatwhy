@@ -6,7 +6,6 @@ from delab.api.view_sets import get_tabbed_conversation_view, \
 from .api.router import get_routes
 from .views.moderation_project_2_views import *
 from .views.intolerance_project_views import *
-from .views.moderation_project_1_views import *
 from .views.corpus_project_views import *
 
 urlpatterns = [
@@ -27,14 +26,6 @@ urlpatterns = [
     path('proxy/answer/validation', intolerance_answer_validation_proxy,
          name='delab-intolerance-answer-validation-proxy'),
     path('labelproxy/intolerance', intolerance_candidate_label_proxy, name='delab-label-intolerance-proxy'),
-
-
-    # the patterns for the moderation labeling approach 1
-    path('moderation/label/nomore', NoMoreModeratingCandidatesView.as_view(),
-         name='delab-label-moderation-nomore'),
-    path('label/<int:pk>', TWCandidateLabelView.as_view(), name='delab-label'),
-    path('labelproxy', candidate_label_proxy, name='delab-label-proxy'),
-
 
     # other patterns
     path('request/new', SimpleRequestCreateView.as_view(), name='delab-create-simple-request'),

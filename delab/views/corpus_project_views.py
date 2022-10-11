@@ -1,26 +1,20 @@
 import datetime
-from random import choice
 
 from background_task.models import Task
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Q, Count
-from django.http import Http404
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
     ListView,
-    CreateView,
-    UpdateView, TemplateView
+    CreateView
 )
 
 from delab.delab_enums import PLATFORM
-from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, TweetAuthor, TWCandidateIntolerance, \
-    TWIntoleranceRating, IntoleranceAnswer, IntoleranceAnswerValidation, ModerationCandidate2, ModerationRating
+from delab.models import SimpleRequest, Tweet, TwTopic, TweetAuthor
 from delab.tasks import get_tasks_status
-
-from django_project.settings import min_intolerance_answer_coders_needed, min_intolerance_coders_needed
 from util.abusing_strings import convert_to_hash
 
 
@@ -185,7 +179,6 @@ class TaskStatusView(ListView):
             return redirect("delab-conversations-for-request", pk=pk)
         else:
             return super(TaskStatusView, self).dispatch(request, *args, **kwargs)
-
 
 
 def downloads_view(request):
