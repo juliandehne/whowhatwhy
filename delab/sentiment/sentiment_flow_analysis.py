@@ -53,5 +53,6 @@ def compute_sentiment_flow_for_conversation(conversation_id, df):
     flow = ConversationFlow.create(image_path)
     flow.save()
 
+    # TODO update to new flow definition
     tweets = Tweet.objects.filter(conversation_id=conversation_id).all()
     tweets.update(conversation_flow=flow)

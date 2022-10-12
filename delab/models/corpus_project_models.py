@@ -5,19 +5,8 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.urls import reverse
 
-from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, NETWORKRELS, \
-    TWEET_RELATIONSHIPS, MODERATION
-
-
-class ConversationFlow(models.Model):
-    image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
-
-    @classmethod
-    def create(cls, image):
-        conversation_flow = cls(image=image)
-        # do something with the book
-        return conversation_flow
-
+from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, NETWORKRELS, \
+    TWEET_RELATIONSHIPS
 
 SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-ZÖÄÜ]+)*$)",
                                           'Please enter hashtags seperated by spaces!')
@@ -136,7 +125,6 @@ class Tweet(models.Model):
     sentiment = models.TextField(null=True)  # a shortcut, true is very positive, false is very negative
     conversation_id = models.BigIntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
-    conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
                                 help_text="the language we are querying")
 
@@ -232,3 +220,17 @@ class ConversationFlowMetrics(models.Model):
     author_timeline_delta = models.FloatField(null=True)
     is_ethos_attack = models.BooleanField(null=True)
     stance = models.FloatField(null=True, help_text="is in opposition -1 or in total agreement with the previous tweet")
+
+
+class ConversationFlow(models.Model):
+    image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
+    tweets = models.ManyToManyField(Tweet)
+    flow_name = models.TextField(null=True, unique=True)
+    conversation_id = models.BigIntegerField(null=True)
+
+    @classmethod
+    def create(cls, image, flow_name):
+        conversation_flow = cls(image=image, flow_name=flow_name)
+        # do something with the book
+        return conversation_flow
+

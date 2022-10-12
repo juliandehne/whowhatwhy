@@ -12,9 +12,10 @@ from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import get_conversation_trees
 from delab.models import Tweet, TweetAuthor, ModerationCandidate2, ModerationRating, SimpleRequest, \
-    TweetSequence, MissingTweets
+    TweetSequence, MissingTweets, ConversationFlow
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
+from ..corpus.filter_sequences import get_conversation_flows
 
 """
 
@@ -24,6 +25,30 @@ LOOK at the README to see all the different endpoints implemented as a way to ge
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
                      'tn_parent_id',
                      'sentiment_value', 'language', 'tn_original_parent']
+
+
+class TweetTextSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tweet
+        fields = ['text']
+
+
+class ConversationFlowSerializer(serializers.ModelSerializer):
+    tweets = TweetTextSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ConversationFlow
+        fields = ['id', 'flow_name', 'conversation_id', 'tweets']
+
+
+# ViewSets define the view behavior.
+class ConversationFlowViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ConversationFlowSerializer
+
+    # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    def get_queryset(self):
+        conversation_id = self.kwargs["conversation_id"]
+        return ConversationFlow.objects.filter(conversation_id=conversation_id).all()
 
 
 class TweetSequenceStatSerializer(serializers.ModelSerializer):
