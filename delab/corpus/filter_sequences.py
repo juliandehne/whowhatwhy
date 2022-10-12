@@ -59,4 +59,16 @@ def get_conversation_flows(conversation_id, only_text=False):
     return flow_dict
 
 
+def compute_conversation_flow(conversation_id):
+    if not ConversationFlow.objects.filter(conversation_id=conversation_id).exists():
+        try:
+            flows = get_conversation_flows(conversation_id)
+            for name, tweets in flows.items():
+                flow, created = ConversationFlow.objects.get_or_create(
+                    flow_name=name,
+                    conversation_id=conversation_id
+                )
+                flow.tweets.add(*tweets)
+        except AssertionError as ae:
+            pass
 
