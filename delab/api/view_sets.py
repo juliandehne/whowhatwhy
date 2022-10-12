@@ -15,10 +15,8 @@ from delab.models import Tweet, TweetAuthor, ModerationCandidate2, ModerationRat
     TweetSequence, MissingTweets, ConversationFlow
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
-from ..corpus.filter_sequences import get_conversation_flows
 
 """
-
 LOOK at the README to see all the different endpoints implemented as a way to get the downloaded tweets
 """
 
@@ -27,10 +25,19 @@ tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id',
                      'sentiment_value', 'language', 'tn_original_parent']
 
 
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TweetAuthor
+        # fields = '__all__'
+        fields = ['id', 'name']
+
+
 class TweetTextSerializer(serializers.ModelSerializer):
+    tw_author = AuthorSerializer()
+
     class Meta:
         model = Tweet
-        fields = ['text']
+        fields = ['text', 'id', 'tw_author']
 
 
 class ConversationFlowSerializer(serializers.ModelSerializer):
@@ -92,12 +99,6 @@ class TweetSequenceStatViewSet(viewsets.ModelViewSet):
         topic = self.kwargs["topic"]
         filename = '{}_partial_conversations_stats.xlsx'.format(topic)
         return filename
-
-
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TweetAuthor
-        fields = '__all__'
 
 
 class SimpleRequestSerializer(serializers.ModelSerializer):
