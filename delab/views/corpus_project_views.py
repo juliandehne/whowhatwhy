@@ -29,11 +29,8 @@ class SimpleRequestListView(ListView):
 
 def simple_request_proxy(request, pk):
     """
-    The idea is that if the download_process is still running in the background, the Task_Status_view shoudl be displayed.
+    The idea is that if the download_process is still running in the background, the Task_Status_view should be displayed.
     Otherwise, the downloaded conversations should be displayed!
-    :param request:
-    :param simple_request_id:
-    :return:
     """
     running_tasks = get_tasks_status(pk)
     if len(running_tasks) > 0:
@@ -158,8 +155,8 @@ class TaskStatusView(ListView):
         # context["timelines_downloaded"] = context['tweets_downloaded'] - timelines_not_downloaded
         sentiments_analyzed = simple_request.tweet_set.filter(sentiment_value__isnull=False).count()
         context["sentiments_analyzed"] = sentiments_analyzed
-        flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
-        context["flows_analyzed"] = flows_analyzed
+        # flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
+        # context["flows_analyzed"] = flows_analyzed
 
         # tweet_ids = simple_request.tweet_set.values_list("id", flat=True)
         timelines_downloaded = TweetAuthor.objects.filter(has_timeline=True).count()
