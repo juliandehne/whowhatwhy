@@ -17,10 +17,9 @@ def run():
     if preparation:
         update_tweet_sentiments(language=LANGUAGE.ENGLISH)
         update_tweet_sentiments(language=LANGUAGE.GERMAN)
-        print("STEP 1.1: updated tweet sentiments")
+        print("STEP 1 FINISHED: updated tweet sentiments")
         # download the extended author data for those who are missing
         update_authors(platform=PLATFORM.TWITTER)
         # update_authors(platform=PLATFORM.REDDIT)
-        print("STEP 2: FINISHED updating authors")
+        print("STEP 2 FINISHED: updating authors")
         # download the twitter timelines for those who are missing
-     

@@ -11,7 +11,7 @@
                     <small class="text-muted">{{ tweet.created_at|date:"F d, Y" }}</small>
                 </div>
                 <p class="article-content">{{ tweet.text }}</p>
-                <img src="{{ tweet.conversation_flow.image.url }}">
+                <!-- <img src="{{ tweet.conversation_flow.image.url }}"> -->
                 <br>
                 <a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation here</a>
             </div>

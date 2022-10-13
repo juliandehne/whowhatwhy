@@ -13,6 +13,8 @@ from delab.delab_enums import LANGUAGE, PLATFORM
 from delab.toxicity.perspectives import get_client
 from util.abusing_lists import batch
 
+INTOLERANCE_DICT = "intolerance_dict"
+
 
 def download_terrible_tweets(download_dictionary, link, download_right_wing=False):
     for lang in LANGUAGE:
@@ -135,7 +137,7 @@ def download_bad_tweets(data_read, lang):
             query += row[0] + " OR "
         query += data_read[-1][0]
         # print(query)
-        download_conversations(topic_string="intolerance_dict", query_string=query, request_id=-1,
+        download_conversations(topic_string=INTOLERANCE_DICT, query_string=query, request_id=-1,
                                language=lang)
 
 

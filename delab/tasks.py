@@ -5,9 +5,10 @@ from background_task import background
 from background_task.models import CompletedTask
 from background_task.models import Task
 from django.utils import timezone
-from delab.corpus.download_conversations_proxy import download_conversations
 from delab.corpus.download_author_information import update_authors
-from delab.corpus.download_conversations_reddit import download_subreddit
+from delab.corpus.download_conversations_proxy import download_conversations, download_timelines
+from delab.sentiment.sentiment_classification import update_tweet_sentiments
+from .analytics.flow_picture_computation import update_sentiment_flows
 from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
@@ -62,30 +63,25 @@ def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=Fal
 
 
 @background(schedule=1)
-def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
-    from delab.sentiment.sentiment_classification import update_tweet_sentiments
+def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
+    download_timelines(simple_request_id, platform=platform)
+    update_sentiments(simple_request_id, language,
+                      verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                      schedule=timezone.now())
 
-    update_tweet_sentiments(simple_request_id, language)
+
+@background(schedule=1)
+def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
+    update_sentiments(simple_request_id, language,
+                      verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                      schedule=timezone.now())
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
 
 
 @background(schedule=1)
 def update_flows(simple_request_id=-1):
-    from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
     update_sentiment_flows(simple_request_id)
-
-
-@background(schedule=1)
-def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
-    from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
-    from django_project.settings import TRAX_CAPABILITIES
-
-    update_timelines_from_conversation_users(simple_request_id, platform)
-    if TRAX_CAPABILITIES:
-        update_sentiments(simple_request_id, language,
-                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                          schedule=timezone.now())
 
 
 def get_tasks_status(simple_request_id):

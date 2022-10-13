@@ -56,19 +56,21 @@ def get_conversation_flows(conversation_id, only_text=False):
         else:
             flow_tweets = Tweet.objects.filter(twitter_id__in=flow).order_by("created_at").all()
         flow_dict[flow_name] = flow_tweets
-    return flow_dict
+
+    name_of_longest = max(flow_dict, key=lambda x: len(set(flow_dict[x])))
+    return flow_dict, name_of_longest
 
 
 def compute_conversation_flow(conversation_id):
     if not ConversationFlow.objects.filter(conversation_id=conversation_id).exists():
         try:
-            flows = get_conversation_flows(conversation_id)
+            flows, name_of_longest = get_conversation_flows(conversation_id)
             for name, tweets in flows.items():
                 flow, created = ConversationFlow.objects.get_or_create(
                     flow_name=name,
-                    conversation_id=conversation_id
+                    conversation_id=conversation_id,
+                    longest=(name == name_of_longest)
                 )
                 flow.tweets.add(*tweets)
         except AssertionError as ae:
             pass
-

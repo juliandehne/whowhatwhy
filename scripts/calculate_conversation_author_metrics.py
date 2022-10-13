@@ -83,7 +83,6 @@ def is_root_author(author_id, conversation_id):
 def calculate_author_baseline_visions(conversation_id):
     """
     calculate the baseline vision of the author for the given conversation
-    :param author_id:
     :param conversation_id:
     :return:
     """

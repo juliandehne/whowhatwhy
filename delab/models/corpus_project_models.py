@@ -227,6 +227,7 @@ class ConversationFlow(models.Model):
     tweets = models.ManyToManyField(Tweet)
     flow_name = models.TextField(null=True, unique=True)
     conversation_id = models.BigIntegerField(null=True)
+    longest = models.BooleanField(default=False)
 
     @classmethod
     def create(cls, image, flow_name):
