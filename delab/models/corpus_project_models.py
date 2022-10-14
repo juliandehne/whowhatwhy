@@ -222,8 +222,13 @@ class ConversationFlowMetrics(models.Model):
     stance = models.FloatField(null=True, help_text="is in opposition -1 or in total agreement with the previous tweet")
 
 
+class MyImageField(models.ImageField):
+    def __str__(self):
+        return self.url
+
+
 class ConversationFlow(models.Model):
-    image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
+    image = MyImageField(default='default.jpg', upload_to='sa_flow_pics')
     tweets = models.ManyToManyField(Tweet)
     flow_name = models.TextField(null=True, unique=True)
     conversation_id = models.BigIntegerField(null=True)

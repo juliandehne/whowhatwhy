@@ -7,12 +7,12 @@ from background_task.models import Task
 from django.utils import timezone
 from delab.corpus.download_author_information import update_authors
 from delab.corpus.download_conversations_proxy import download_conversations, download_timelines
-from delab.sentiment.sentiment_classification import update_tweet_sentiments
-from .analytics.flow_picture_computation import update_sentiment_flows
+from .analytics.flow_picture_computation import update_flow_picture
 from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 from .network.conversation_network import download_twitter_follower
+from .sentiment.sentiment_classification import update_tweet_sentiments
 
 logger = logging.getLogger(__name__)
 
@@ -72,16 +72,14 @@ def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, lan
 
 @background(schedule=1)
 def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
-    update_sentiments(simple_request_id, language,
-                      verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                      schedule=timezone.now())
+    update_tweet_sentiments(simple_request_id, language)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
 
 
 @background(schedule=1)
 def update_flows(simple_request_id=-1):
-    update_sentiment_flows(simple_request_id)
+    update_flow_picture(simple_request_id)
 
 
 def get_tasks_status(simple_request_id):

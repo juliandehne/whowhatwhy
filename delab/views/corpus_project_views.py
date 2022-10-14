@@ -11,9 +11,10 @@ from django.views.generic import (
     ListView,
     CreateView
 )
+from django.db.models import OuterRef, Subquery
 
 from delab.delab_enums import PLATFORM
-from delab.models import SimpleRequest, Tweet, TwTopic, TweetAuthor
+from delab.models import SimpleRequest, Tweet, TwTopic, TweetAuthor, ConversationFlow
 from delab.tasks import get_tasks_status
 from util.abusing_strings import convert_to_hash
 
@@ -48,8 +49,15 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent__isnull=True)) \
-            .order_by('created_at')
+
+        longest_flow_sub = ConversationFlow.objects.filter(conversation_id=OuterRef('conversation_id'),
+                                                           longest=True).only("image")
+        longest_flow = longest_flow_sub.values("image")[:1]
+        tweets = Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent__isnull=True)) \
+            .order_by('created_at').annotate(conversation_flow=longest_flow)
+        # for tweet in tweets:
+        #    print(tweet.conversation_flow)
+        return tweets
 
     def get_context_data(self, **kwargs):
         context = super(ConversationListView, self).get_context_data(**kwargs)

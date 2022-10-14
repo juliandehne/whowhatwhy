@@ -5,9 +5,10 @@ from django_pandas.io import read_frame
 
 from delab.models import ConversationFlow, Tweet
 from django_project import settings
+from delab.corpus.filter_sequences import compute_conversation_flow
 
 
-def update_sentiment_flows(simple_request_id=-1):
+def update_flow_picture(simple_request_id=-1):
     """
     computes sentiment flow plots for the conversations
     :param simple_request_id:
@@ -17,17 +18,21 @@ def update_sentiment_flows(simple_request_id=-1):
         "conversation_id").values_list("conversation_id",
                                        flat=True).all()
     for conversation_id in conversation_ids:
+        compute_conversation_flow(conversation_id)
         compute_flow_matrix(conversation_id)
 
 
 def compute_flow_matrix(conversation_id):
+    """
+    because of performance reasons, we are only computing the flow_picture for the longest flow
+    """
     flow = ConversationFlow.objects.filter(conversation_id=conversation_id, longest=True).get()
-    df = read_frame(flow.tweets, fieldnames=["id",
-                                             "conversation_id",
-                                             "sentiment",
-                                             "sentiment_value",
-                                             "created_at",
-                                             ])
+    df = read_frame(flow.tweets.all(), fieldnames=["id",
+                                                   "conversation_id",
+                                                   "sentiment",
+                                                   "sentiment_value",
+                                                   "created_at",
+                                                   ])
     compute_flow_picture(flow.flow_name, df)
 
 

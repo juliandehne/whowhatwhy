@@ -11,9 +11,12 @@
                     <small class="text-muted">{{ tweet.created_at|date:"F d, Y" }}</small>
                 </div>
                 <p class="article-content">{{ tweet.text }}</p>
-                <!-- <img src="{{ tweet.conversation_flow.image.url }}"> -->
+                <h4> the longest flow</h4>
+                <img src="{{ HTTP_HOST }}/media/{{tweet.conversation_flow}}">
+
                 <br>
-                <a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation here</a>
+                <a class="article-title" href="{% url 'delab-conversation' tweet.conversation_id %}">Full Conversation
+                    here</a>
             </div>
         </article>
     {% endfor %}
