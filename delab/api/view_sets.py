@@ -15,7 +15,7 @@ from delab.models import Tweet, TweetAuthor, ModerationCandidate2, ModerationRat
     TweetSequence, MissingTweets, ConversationFlow
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
-from ..corpus.filter_sequences import compute_conversation_flow
+from ..corpus.filter_sequences import compute_conversation_flows
 
 """
 LOOK at the README to see all the different endpoints implemented as a way to get the downloaded tweets
@@ -57,7 +57,7 @@ class ConversationFlowViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         conversation_id = self.kwargs["conversation_id"]
         # this is a side_effect, I am not sure is a good idea
-        compute_conversation_flow(conversation_id)
+        compute_conversation_flows(conversation_id)
         return ConversationFlow.objects.filter(conversation_id=conversation_id).all()
 
 

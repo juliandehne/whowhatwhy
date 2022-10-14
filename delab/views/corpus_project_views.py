@@ -13,6 +13,7 @@ from django.views.generic import (
 )
 from django.db.models import OuterRef, Subquery
 
+from delab.corpus.filter_sequences import compute_conversation_flows
 from delab.delab_enums import PLATFORM
 from delab.models import SimpleRequest, Tweet, TwTopic, TweetAuthor, ConversationFlow
 from delab.tasks import get_tasks_status
@@ -75,8 +76,11 @@ class ConversationView(ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Tweet.objects.filter(conversation_id=self.request.resolver_match.kwargs['conversation_id']) \
-            .order_by("created_at")
+        conversation_id = self.request.resolver_match.kwargs['conversation_id']
+        if not ConversationFlow.objects.filter(conversation_id=conversation_id, longest=True).exists():
+            compute_conversation_flows(conversation_id)
+        return ConversationFlow.objects.filter(conversation_id=conversation_id, longest=True).get().tweets.order_by(
+            "created_at")
 
     def get_context_data(self, **kwargs):
         context = super(ConversationView, self).get_context_data(**kwargs)

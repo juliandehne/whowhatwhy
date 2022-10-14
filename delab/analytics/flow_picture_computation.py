@@ -5,7 +5,7 @@ from django_pandas.io import read_frame
 
 from delab.models import ConversationFlow, Tweet
 from django_project import settings
-from delab.corpus.filter_sequences import compute_conversation_flow
+from delab.corpus.filter_sequences import compute_conversation_flows
 
 
 def update_flow_picture(simple_request_id=-1):
@@ -18,7 +18,7 @@ def update_flow_picture(simple_request_id=-1):
         "conversation_id").values_list("conversation_id",
                                        flat=True).all()
     for conversation_id in conversation_ids:
-        compute_conversation_flow(conversation_id)
+        compute_conversation_flows(conversation_id)
         compute_flow_matrix(conversation_id)
 
 

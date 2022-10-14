@@ -61,7 +61,7 @@ def get_conversation_flows(conversation_id, only_text=False):
     return flow_dict, name_of_longest
 
 
-def compute_conversation_flow(conversation_id):
+def compute_conversation_flows(conversation_id):
     if not ConversationFlow.objects.filter(conversation_id=conversation_id).exists():
         try:
             flows, name_of_longest = get_conversation_flows(conversation_id)
