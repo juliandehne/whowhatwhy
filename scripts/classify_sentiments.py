@@ -1,6 +1,7 @@
 from delab.delab_enums import LANGUAGE
 from delab.sentiment.sentiment_classification import classify_tweet_sentiment, update_tweet_sentiments
 from delab.tasks import update_sentiments
+from delab.toxicity.perspectives import compute_toxicity_for_text
 
 """ This is a django runscript, it can be started in the django home directory with
     $ python manage.py runscript [filename_no_ending]    
@@ -9,9 +10,10 @@ from delab.tasks import update_sentiments
 
 def run(*args):
     # some_test_cases(args)
+
     update_tweet_sentiments(-1)
     update_tweet_sentiments(-1, LANGUAGE.GERMAN)
-    # figure_out_weights()
+    compute_toxicity_for_text()
 
 
 def some_test_cases(args):

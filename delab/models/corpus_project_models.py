@@ -123,6 +123,8 @@ class Tweet(models.Model):
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
     sentiment_value = models.FloatField(null=True)  # should be mapped between 0 and 1 with 1.0 being very positive
     sentiment = models.TextField(null=True)  # a shortcut, true is very positive, false is very negative
+    toxic_value = models.FloatField(null=True)
+    is_toxic = models.BooleanField(null=True)
     conversation_id = models.BigIntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
     language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,

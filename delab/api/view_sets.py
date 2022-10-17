@@ -15,6 +15,7 @@ from delab.models import Tweet, TweetAuthor, ModerationCandidate2, ModerationRat
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
 from .flow_renderer import render_longest_flow_txt
+from ..analytics.cccp_analytics import get_central_author_tweet_queryset
 from ..corpus.filter_sequences import compute_conversation_flows
 
 """
@@ -130,6 +131,12 @@ class TweetSerializer(serializers.ModelSerializer):
         # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
 
     # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
+
+
+class CentralAuthorTweetSerializer(serializers.Serializer):
+    tw_author__name = serializers.CharField(max_length=400)
+    is_central = serializers.BooleanField()
+    text = serializers.CharField(max_length=2000)
 
 
 class ModerationCandidateSerializer(serializers.ModelSerializer):
@@ -329,3 +336,18 @@ def longest_flow_view(request, conversation_id):
     response['Content-Disposition'] = (
         'attachment; filename={0}'.format("conversation_flow_" + str(conversation_id) + ".txt"))
     return response
+
+
+# ViewSets define the view behavior.
+class CentralAuthorExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
+    queryset = Tweet.objects.none()
+    serializer_class = CentralAuthorTweetSerializer
+    renderer_classes = (XLSXRenderer,)
+    filename = 'central_author.xlsx'
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = tweet_fields_used
+
+    # filterset_fields = ['conversation_id', 'tn_order', 'author_id', 'language']
+    def get_queryset(self):
+        conversation_id = self.kwargs["conversation_id"]
+        return get_central_author_tweet_queryset(conversation_id)

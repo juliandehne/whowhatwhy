@@ -1,34 +1,16 @@
-import datetime
 import random
-import time
 
 from delab.bot.intolerance_strategies_texts import *
-from delab.delab_enums import LANGUAGE
-from delab.toxicity.perspectives import get_client
-from delab.models import TWCandidateIntolerance
 from delab.bot.sender import send_generated_tweet
-
-
-def get_toxicity_from_perspective(text):
-    try:
-        analyze_request = {
-            'comment': {
-                'text': text},
-            'requestedAttributes': {'SEVERE_TOXICITY': {}}
-        }
-
-        client = get_client()
-        response = client.comments().analyze(body=analyze_request).execute()
-        toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
-        return toxicity
-    except Exception:
-        print("something went wrong")
+from delab.delab_enums import LANGUAGE
+from delab.models import TWCandidateIntolerance
+from delab.toxicity.perspectives import get_toxicity
 
 
 def generate_answers(candidate):
     text = candidate.tweet.text
     language = candidate.tweet.language
-    toxicity = get_toxicity_from_perspective(text)
+    toxicity = get_toxicity(text)
     # bound to the array indixes. The more toxic words come left in the array
     tox_level = 2
     if toxicity > 0.8:
