@@ -1,7 +1,6 @@
 import logging
 
 from django.db.models import Exists, OuterRef
-
 from delab.models import Timeline, Tweet, TweetAuthor
 from delab.delab_enums import PLATFORM
 from delab.tw_connection_util import DelabTwarc

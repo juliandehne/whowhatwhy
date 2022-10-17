@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from delab.api.view_sets import get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
-    get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view
+    get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view, longest_flow_view
 from .api.router import get_routes
 from .views.moderation_project_2_views import *
 from .views.intolerance_project_views import *
@@ -49,4 +49,8 @@ urlpatterns = [
     path('downloads', downloads_view, name='delab-downloads'),
     path('', include(get_routes().urls)),
     # path('rest/migration/tweets_excel/conversation/<int:conversation_id>/', TweetExcelSingleViewSet.as_view),
+
+    # flow patterns
+    # also see api/router.py
+    path('rest/flow_text/conversation/<int:conversation_id>', longest_flow_view),
 ]

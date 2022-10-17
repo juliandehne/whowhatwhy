@@ -73,15 +73,24 @@ def get_file_from_rest(conversation_id, file_type, full, server_address, topic):
     return cropped_response
 
 
+def download_flows_in_all_formats(conversation_id, request, zip_file):
+    server_address = "http://" + INTERNAL_IPS[0] + ":" + request.META['SERVER_PORT']
+    url = "{}/delab/rest/flow_text/conversation/{}".format(server_address, conversation_id)
+    text_file_response = requests.get(url)
+    zip_file.writestr("conversation_flow_{}.txt".format(str(conversation_id)), text_file_response.content)
+
+
 def create_full_zip_response_conversation(request, topic, filename, full):
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
 
     conversation_ids = get_all_conversation_ids(topic)
-    sample_size = min(len(conversation_ids), 10)
+    # sample_size = min(len(conversation_ids), 10)
     # conversation_ids = conversation_ids[:sample_size]
     for conversation_id in conversation_ids:
-        download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
+        # download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
+        download_flows_in_all_formats(conversation_id, request, zip_file)
+
     zip_file.close()
 
     # Return zip

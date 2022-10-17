@@ -1,9 +1,12 @@
 import itertools
+import logging
 
 import networkx as nx
 
 from delab.models import Tweet, ConversationFlow
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
+
+logger = logging.getLogger(__name__)
 
 
 def get_all_reply_paths(conversation_id, min_path_length, required_max_path_length):
@@ -73,4 +76,4 @@ def compute_conversation_flows(conversation_id):
                 )
                 flow.tweets.add(*tweets)
         except AssertionError as ae:
-            pass
+            logger.error(ae)

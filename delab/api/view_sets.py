@@ -5,7 +5,6 @@ from drf_renderer_xlsx.mixins import XLSXFileMixin
 from drf_renderer_xlsx.renderers import XLSXRenderer
 from rest_framework import renderers
 from rest_framework import serializers, viewsets
-# Serializers define the API representation.
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -15,6 +14,7 @@ from delab.models import Tweet, TweetAuthor, ModerationCandidate2, ModerationRat
     TweetSequence, MissingTweets, ConversationFlow
 from .api_util import get_file_name, get_all_conversation_ids
 from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
+from .flow_renderer import render_longest_flow_txt
 from ..corpus.filter_sequences import compute_conversation_flows
 
 """
@@ -318,4 +318,14 @@ def get_xml_conversation_view(request, topic, conversation_id, full):
     response = Response(xml_dump)
     response['Content-Disposition'] = (
         'attachment; filename={0}'.format(get_file_name(conversation_id, full, ".xml")))
+    return response
+
+
+@api_view(['GET'])
+@renderer_classes([TabbedTextRenderer])
+def longest_flow_view(request, conversation_id):
+    result = render_longest_flow_txt(conversation_id)
+    response = Response(result)
+    response['Content-Disposition'] = (
+        'attachment; filename={0}'.format("conversation_flow_" + str(conversation_id) + ".txt"))
     return response
