@@ -88,7 +88,7 @@ def create_full_zip_response_conversation(request, topic, filename, full):
     # sample_size = min(len(conversation_ids), 10)
     # conversation_ids = conversation_ids[:sample_size]
     for conversation_id in conversation_ids:
-        # download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
+        download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
         download_flows_in_all_formats(conversation_id, request, zip_file)
 
     zip_file.close()
