@@ -50,6 +50,9 @@ def query_sql(app="delab",
 def get_query_native(query_string, app="delab",
                      fieldnames=None,
                      table_name="tweet"):
+    """
+    this is a utility method to run custom sql queries from jupyter notebook or from the django project in turns
+    """
     fieldnames = get_standard_field_names(fieldnames)
     if get_ipython().__class__.__name__ == "ZMQInteractiveShell":
         pd.set_option('display.max_colwidth', None)  # I am settings this here for easy of use currently
@@ -68,7 +71,7 @@ def get_query_native(query_string, app="delab",
         class_ = getattr(module, class_name)
         try:
             qs = class_.objects.raw(query_string)
-            df = read_frame(qs)
+            df = read_frame(qs, fieldnames=fieldnames)
             return df
         except ProgrammingError:
             logging.error("tried to get query_set but gave error")
