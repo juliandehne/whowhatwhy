@@ -19,6 +19,12 @@ def get_conversation_trees(topic: str, conversation_id=None, conversation_filter
 
 
 def convert_to_conversation_trees(conversation_id=None, topic=None):
+    """
+
+    @param conversation_id: the id of the conversation
+    @param topic: the topic title as string
+    @return: a dictionary in the form {conversation_id : int  -> rootNode : TreeNode}
+    """
     objects = Tweet.objects.select_related("tw_author")
 
     if conversation_id is not None:

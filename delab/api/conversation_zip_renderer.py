@@ -10,6 +10,7 @@ from django.http import HttpResponse
 
 from django_project.settings import INTERNAL_IPS
 from .api_util import get_file_name, get_all_conversation_ids
+from delab.analytics.cccp_analytics import compute_cccp_candidate_authors, compute_all_cccp_authors
 
 
 def create_zip_response_conversation(request, topic, conversation_id, filename):
@@ -90,6 +91,36 @@ def create_full_zip_response_conversation(request, topic, filename, full):
     for conversation_id in conversation_ids:
         download_conversations_in_all_formats(conversation_id, request, topic, zip_file, full)
         download_flows_in_all_formats(conversation_id, request, zip_file)
+
+    zip_file.close()
+
+    # Return zip
+    response = HttpResponse(buffer.getvalue())
+    response['Content-Type'] = 'application/x-zip-compressed'
+    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+
+    return response
+
+
+def download_cccp_text(conversation_id, author_id, measure, request, zip_file):
+    server_address = "http://" + INTERNAL_IPS[0] + ":" + request.META['SERVER_PORT']
+    url = "{}/delab/rest/cccp/conversation/{}/author/{}".format(server_address, conversation_id, author_id)
+    text_file_response = requests.get(url)
+    zip_file.writestr("cccp_tree_{}_{}_{}.txt".format(measure, str(conversation_id), str(author_id)),
+                      text_file_response.content)
+
+
+def create_zip_response_cccp(request):
+    # Create zip
+
+    buffer = io.BytesIO()
+    zip_file = zipfile.ZipFile(buffer, 'w')
+    filename = "cccp_conversations.zip"
+
+    candidate_lists, measure_authors_dictionary, author2measure = compute_all_cccp_authors()
+    for conversation_id, author_id in candidate_lists:
+        measure = author2measure[author_id]
+        download_cccp_text(conversation_id, author_id, measure, request, zip_file),
 
     zip_file.close()
 

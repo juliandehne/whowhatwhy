@@ -2,7 +2,8 @@ from django.urls import path, include
 
 from delab.api.view_sets import get_tabbed_conversation_view, \
     get_cropped_conversation_ids, \
-    get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view, longest_flow_view
+    get_all_conversations_tabbed, get_zip_view, get_full_zip_view, get_xml_conversation_view, longest_flow_view, \
+    get_cccp_zip, get_tabbed_conversation_for_central_authors_view
 from .api.router import get_routes
 from .views.moderation_project_2_views import *
 from .views.intolerance_project_views import *
@@ -15,7 +16,6 @@ urlpatterns = [
     path('proxy/moderation2/label', moderation2_label_proxy,
          name='delab-label-moderation2-proxy'),
     path('label/moderation2/<int:pk>', ModerationLabelView2.as_view(), name='delab-label-moderation2'),
-
 
     # the patterns for the intolerance labeling
     path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
@@ -53,4 +53,7 @@ urlpatterns = [
     # flow patterns
     # also see api/router.py
     path('rest/flow_text/conversation/<int:conversation_id>', longest_flow_view),
+    path('rest/cccp/conversations', get_cccp_zip),
+    path('rest/cccp/conversation/<int:conversation_id>/author/<int:author_id>',
+         get_tabbed_conversation_for_central_authors_view)
 ]
