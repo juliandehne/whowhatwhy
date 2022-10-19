@@ -211,6 +211,9 @@ class ConversationAuthorMetrics(models.Model):
     n_posts = models.IntegerField()
     is_root_author = models.BooleanField()
 
+    class Meta:
+        unique_together = ('conversation_id', 'author')
+
 
 class ConversationFlowMetrics(models.Model):
     conversation_id = models.BigIntegerField()

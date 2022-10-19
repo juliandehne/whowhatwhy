@@ -30,6 +30,8 @@ def run():
                 author2Centrality[author] = centrality_score
 
         for author in author2Centrality.keys():
+            if ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id, author__twitter_id=author).exists():
+                continue
             n_posts = calculate_n_posts(author,
                                         conversation_id)
             centrality_score = author2Centrality[author] / n_posts
@@ -38,15 +40,16 @@ def run():
             baseline_vision = baseline_visions[author]
 
             try:
-                tw_author = TweetAuthor.objects.filter(twitter_id=author).get()
-                ConversationAuthorMetrics.objects.create(
-                    author=tw_author,
-                    conversation_id=conversation_id,
-                    centrality=centrality_score,
-                    n_posts=n_posts,
-                    is_root_author=is_root_author_v,
-                    baseline_vision=baseline_vision
-                )
+                if TweetAuthor.objects.filter(twitter_id=author).exists():
+                    tw_author = TweetAuthor.objects.filter(twitter_id=author).get()
+                    ConversationAuthorMetrics.objects.create(
+                        author=tw_author,
+                        conversation_id=conversation_id,
+                        centrality=centrality_score,
+                        n_posts=n_posts,
+                        is_root_author=is_root_author_v,
+                        baseline_vision=baseline_vision
+                    )
             except django.db.utils.IntegrityError as saving_metric_exception:
                 # print(saving_metric_exception)
                 pass

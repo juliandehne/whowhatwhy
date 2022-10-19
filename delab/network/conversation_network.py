@@ -151,24 +151,31 @@ def compute_subsequent_merge(conversation_id):
     @param conversation_id:
     @return: [to eliminate nodes for merge], {node_id -> new_parent}
     """
-    tweets = Tweet.objects.filter(conversation_id=conversation_id)
+    tweets = Tweet.objects.filter(conversation_id=conversation_id).order_by("created_at")
     to_delete_list = []
     to_change_map = {}
     for tweet in tweets:
-        current = tweet
-        # if the parent is the same author, recursively go up the tree until you find a different author
-        while current.tn_parent is not None and current.author_id == current.tn_parent.author_id:
-            to_change_map[tweet.twitter_id] = current.tn_parent.tn_parent_id
-            if current.tn_parent.tn_parent is not None:
-                if current.tn_parent.tn_parent.author_id == current.tn_parent.author_id:
-                    to_delete_list.append(current.tn_parent.author_id)
-            current = current.tn_parent
-        # if the parent is a different author, check if it has been changed previously due to merging
-        if tweet.tn_parent is not None \
-                and tweet.tn_parent.tn_parent is not None \
-                and tweet.tn_parent.author_id == tweet.tn_parent.tn_parent.author_id \
-                and tweet.author_id != tweet.tn_parent.author_id:
-            to_change_map[tweet.twitter_id] = to_change_map[tweet.tn_parent.twitter_id]
+        # if tweet.twitter_id == 82814624:
+        #    print("testing 1")
+
+        # we are not touching the root
+        if tweet.tn_parent is None:
+            continue
+        # if a tweet is merged, ignore
+        if tweet.twitter_id in to_delete_list:
+            continue
+        # if a tweet shares the author with its parent, deleted it
+        if tweet.author_id == tweet.tn_parent.author_id:
+            to_delete_list.append(tweet.twitter_id)
+        # if the parent has been deleted, find the next available parent
+        else:
+            current = tweet
+            while current.tn_parent.twitter_id in to_delete_list:
+                # we can make this assertion because we did not delete the root
+                assert current.tn_parent is not None
+                current = current.tn_parent
+            if current.twitter_id != tweet.twitter_id:
+                to_change_map[tweet.twitter_id] = current.tn_parent.twitter_id
 
     return to_delete_list, to_change_map
 
@@ -190,7 +197,7 @@ def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
             G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
             if row.tn_parent_id is not None:
                 if row.tn_parent_id not in nodes:
-                    print(conversation_id)
+                    logger.error("conversation {} has no root_node".format(conversation_id))
                 assert row.tn_parent_id in nodes
                 if row.twitter_id in changed_nodes:
                     new_parent = changed_nodes[row.twitter_id]
@@ -202,6 +209,8 @@ def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
                     edges.append((row.tn_parent_id, row.twitter_id))
     assert len(edges) > 0
     G.add_edges_from(edges)
+    if merge_subsequent:
+        return G, to_eliminate_nodes, changed_nodes
     return G
 
 

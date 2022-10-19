@@ -1,12 +1,8 @@
+import networkx as nx
 import pandas as pd
 
-from delab.models import Tweet
-import django.db.utils
-import networkx as nx
-
-from delab.analytics.author_centrality import author_centrality
-from delab.api.api_util import get_all_conversation_ids, get_author_tweet_map
-from delab.models.corpus_project_models import ConversationAuthorMetrics, Tweet, TweetAuthor
+from delab.api.api_util import get_author_tweet_map
+from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
@@ -120,14 +116,18 @@ def calculate_author_baseline_visions(conversation_id):
     :return:
     """
     author2baseline = {}
-    reply_graph = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
+    reply_graph, removed, changed = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
     root = get_root(reply_graph)
     tweet2author, author2tweets = get_author_tweet_map(conversation_id)
+    for node in removed:
+        tweet2author.pop(node, None)
     for author in author2tweets.keys():
         n_posts = len(author2tweets[author])
         root_distance_measure = 0
         reply_vision_measure = 0
         for tweet in author2tweets[author]:
+            if tweet in removed:
+                continue
             if tweet == root:
                 root_distance_measure += 1
             else:

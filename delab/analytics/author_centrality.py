@@ -13,19 +13,27 @@ def author_centrality(conversation_id):
      [{author:"author":author_id, "centrality_score":score_value, "conversation_id": conversation_id}]
     the key "root_distance_avg" holds the average distance to the root node for the given author
     """
-    tweets = Tweet.objects.filter(conversation_id=conversation_id)
+    tweets = list(Tweet.objects.filter(conversation_id=conversation_id).all())
 
-    reply_graph = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
+    reply_graph, to_eliminate_nodes, changed_nodes = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
     # longest_path = nx.dag_longest_path(reply_graph)
+    tweets_2 = [tweet for tweet in tweets if tweet.twitter_id not in to_eliminate_nodes]
+    if len(to_eliminate_nodes) > 0:
+        assert len(tweets_2) < len(tweets)
     root_node = get_root(reply_graph)
 
     conversation_paths = []
     for node in reply_graph:
         if reply_graph.out_degree(node) == 0:  # it's a leaf
-            conversation_paths.append(nx.shortest_path(reply_graph, root_node, node))
+            try:
+                conversation_paths.append(nx.shortest_path(reply_graph, root_node, node))
+            except nx.exception.NetworkXNoPath as no_path_ex:
+                print(no_path_ex)
+                print(reply_graph.edges())
+                break
 
     records = compute_conversation_author_centrality(conversation_id, conversation_paths, reply_graph, root_node,
-                                                     tweets)
+                                                     tweets_2)
     return records
 
 

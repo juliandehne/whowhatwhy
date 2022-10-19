@@ -29,6 +29,12 @@ def get_all_conversation_ids(topic=None):
 
 
 def get_author_tweet_map(conversation_id):
+    """
+
+    @param conversation_id:
+    @return: tweet2author and author2tweetsmaps with the author being the author_id in the tweet table aka.
+    the twitter id for an author not the id of the tweetauthor table
+    """
     tweets = Tweet.objects.filter(conversation_id=conversation_id).only("author_id", "twitter_id")
     tweet2author = {}
     author2tweets = {}
