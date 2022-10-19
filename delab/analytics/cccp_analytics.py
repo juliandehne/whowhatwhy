@@ -1,8 +1,15 @@
 import pandas as pd
 
 from delab.models import Tweet
+import django.db.utils
+import networkx as nx
 
-MEASURES = ["repetition_prob", "baseline_vision", "centrality"]
+from delab.analytics.author_centrality import author_centrality
+from delab.api.api_util import get_all_conversation_ids, get_author_tweet_map
+from delab.models.corpus_project_models import ConversationAuthorMetrics, Tweet, TweetAuthor
+from delab.network.conversation_network import get_nx_conversation_graph, get_root
+
+MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
 
 def compute_all_cccp_authors():
@@ -30,6 +37,10 @@ def get_central_author_tweet_queryset(conversation_id, tw_author_id):
 
 
 def prepare_metric_records():
+    """
+    prepares a dataframe with the tweet author data and and the conversation_author_metrics
+    @return:
+    """
     records = []
     tweets = Tweet.objects.all()
     for tweet in tweets:
@@ -80,3 +91,63 @@ def compute_cccp_candidate_authors(df, measure="mean"):
     result = mean_largest.index.tolist()
     # print(result)
     return result
+
+
+def calculate_n_posts(author_id, conversation_id):
+    """
+    calculate the number of posts an author has written in a conversation
+    :return:
+    """
+    return Tweet.objects.filter(author_id=author_id, conversation_id=conversation_id).count()
+
+
+def is_root_author(author_id, conversation_id):
+    """
+    calculate if the author is the originator of the conversation
+    :param author_id:
+    :param conversation_id:
+    :return:
+    """
+    root_count = Tweet.objects.filter(author_id=author_id, conversation_id=conversation_id,
+                                      tn_parent__isnull=True).count()
+    return root_count != 0
+
+
+def calculate_author_baseline_visions(conversation_id):
+    """
+    calculate the baseline vision of the author for the given conversation
+    :param conversation_id:
+    :return:
+    """
+    author2baseline = {}
+    reply_graph = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
+    root = get_root(reply_graph)
+    tweet2author, author2tweets = get_author_tweet_map(conversation_id)
+    for author in author2tweets.keys():
+        n_posts = len(author2tweets[author])
+        root_distance_measure = 0
+        reply_vision_measure = 0
+        for tweet in author2tweets[author]:
+            if tweet == root:
+                root_distance_measure += 1
+            else:
+                path = next(nx.all_simple_paths(reply_graph, root, tweet))
+                root_distance = len(path)
+                root_distance_measure += 0.25 ** root_distance
+                reply_vision_path_measure = 0
+
+                reply_paths = next(nx.all_simple_paths(reply_graph, root, tweet))
+                for previous_tweet in reply_paths:
+                    if previous_tweet != tweet:
+                        path_to_previous = nx.all_simple_paths(reply_graph, previous_tweet, tweet)
+                        path_to_previous = next(path_to_previous)
+                        path_length = len(path_to_previous)
+                        reply_vision_path_measure += 0.5 ** path_length
+                reply_vision_path_measure = reply_vision_path_measure / len(reply_paths)
+                reply_vision_measure += reply_vision_path_measure
+        root_distance_measure = root_distance_measure / n_posts
+        reply_vision_measure = reply_vision_measure / n_posts
+        author2baseline[author] = (root_distance_measure + reply_vision_measure) / 2  # un-normalized
+        baseline = author2baseline[author]
+        assert 0 <= baseline <= 1
+    return author2baseline
