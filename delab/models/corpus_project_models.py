@@ -245,3 +245,12 @@ class ConversationFlow(models.Model):
         # do something with the book
         return conversation_flow
 
+
+class Conversation(models.Model):
+    """
+    TODO at some point change all the other references to conversation_id to Foreign Keys
+    """
+    conversation_id = models.BigIntegerField(unique=True)
+    depth = models.IntegerField()
+    branching_factor = models.FloatField()
+    root_dominance = models.FloatField()

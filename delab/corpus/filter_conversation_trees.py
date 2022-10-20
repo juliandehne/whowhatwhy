@@ -1,3 +1,4 @@
+import pandas as pd
 from typing import List
 
 from django.db.models import F
@@ -5,7 +6,12 @@ from django.forms.models import model_to_dict
 
 from delab.TwConversationTree import TreeNode
 from delab.api.api_util import ConversationFilter
-from delab.models import Tweet
+from delab.models import Tweet, Conversation
+
+import networkx as nx
+from delab.corpus.filter_sequences import get_conversation_flows
+from delab.models import Tweet, Conversation
+from delab.network.conversation_network import get_nx_conversation_tree, get_root_author
 
 
 def get_conversation_trees(topic: str, conversation_id=None, conversation_filter: ConversationFilter = None):
@@ -127,3 +133,57 @@ def get_conversation_root_as_data(conversation_id):
     result = {"text": tweet.text, "created_at": tweet.created_at, "id": tweet.twitter_id, "author_id": tweet.author_id,
               "conversation_id": tweet.conversation_id, "lang": tweet.language}
     return result
+
+
+def get_well_structured_conversation_ids(n=-1):
+    qs = Conversation.objects.all()
+    q = qs.values('conversation_id', 'depth', 'branching_factor', 'root_dominance')
+    df = pd.DataFrame.from_records(q)
+
+    df_normalized = df.drop("conversation_id", axis=1)
+    df_normalized = (df_normalized - df_normalized.mean()) / df_normalized.std()
+    df_normalized["branching_factor"] *= -1
+    df_normalized["root_dominance"] *= -1
+    df_normalized["metrics_avg"] = df_normalized["branching_factor"] + df_normalized["root_dominance"] + df_normalized[
+        "depth"]
+    df_normalized["conversation_id"] = df.conversation_id
+    # print(df_normalized.head(2))
+    df_normalized.sort_values("metrics_avg", inplace=True)
+    if n > 0:
+        result = df_normalized.head(n)
+    else:
+        result = df_normalized
+    return result.conversation_id
+
+
+def compute_conversation_properties(conversation_ids):
+    created_count = 0
+    for conversation_id in conversation_ids:
+        reply_tree = get_nx_conversation_tree(conversation_id)
+        branching_factor = nx.tree.branching_weight(reply_tree)
+
+        root_node_author_id = get_root_author(conversation_id)
+        root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id,
+                                                tw_author__id=root_node_author_id).count()
+        not_root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id).exclude(
+            tw_author__id=root_node_author_id).count()
+        root_dominance = root_tweet_count / (not_root_tweet_count + 1)
+
+        flow_dict, longest_name = get_conversation_flows(conversation_id)
+        depth = len(flow_dict[longest_name])
+
+        created = False
+        try:
+            conversation, created = Conversation.objects.get_or_create(
+                conversation_id=conversation_id,
+                branching_factor=branching_factor,
+                root_dominance=root_dominance,
+                depth=depth
+            )
+        except Exception as ae:
+            pass
+
+        if created:
+            created_count += 1
+
+        print("created {}  conversations ".format(created_count))

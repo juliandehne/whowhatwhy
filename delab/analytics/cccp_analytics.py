@@ -2,6 +2,7 @@ import networkx as nx
 import pandas as pd
 
 from delab.api.api_util import get_author_tweet_map
+from delab.corpus.filter_conversation_trees import get_well_structured_conversation_ids
 from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
 
@@ -37,8 +38,9 @@ def prepare_metric_records():
     prepares a dataframe with the tweet author data and and the conversation_author_metrics
     @return:
     """
+    conversation_ids = get_well_structured_conversation_ids(100)
     records = []
-    tweets = Tweet.objects.all()
+    tweets = Tweet.objects.filter(tn_parent__isnull=False, conversation_id__in=conversation_ids).all()
     for tweet in tweets:
         if tweet.tw_author is None:
             continue
