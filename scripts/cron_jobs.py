@@ -30,7 +30,7 @@ def run():
 
     time.sleep(2)
 
-    download_network_structures(repeat=Task.WEEKLY)
+    # download_network_structures(repeat=Task.WEEKLY)
     # download_moderating_tweets(repeat=Task.WEEKLY)
     download_intolerant_tweets(repeat=Task.WEEKLY)
 

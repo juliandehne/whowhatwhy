@@ -279,7 +279,7 @@ def download_conversation_network(conversation_id, conversation_ids, count, leve
     # this would also search the network in the other direction
     user_ids = get_participants(conversation_id, filter_follower_not_downloaded=True)
     download_followers_recursively(user_ids, twarc, levels, following=False)
-    logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
+    # logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
 
 
 def prevent_multiple_downloads(conversation_ids):

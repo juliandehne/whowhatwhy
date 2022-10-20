@@ -159,6 +159,7 @@ def get_well_structured_conversation_ids(n=-1):
 def compute_conversation_properties(conversation_ids):
     created_count = 0
     for conversation_id in conversation_ids:
+        print("computed {} of {} conversation filters".format(created_count, len(conversation_ids)))
         reply_tree = get_nx_conversation_tree(conversation_id)
         branching_factor = nx.tree.branching_weight(reply_tree)
 
