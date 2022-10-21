@@ -157,7 +157,7 @@ class TweetAuthor(models.Model):
     follower_downloaded = models.BooleanField(default=False)
     following_downloaded = models.BooleanField(default=False)
     is_organisation = models.BooleanField(null=True, default=False)
-    #is_climate_author = models.BooleanField(null=True, default=False)
+    #is_climate_author = models.BooleanField(default=False)
 
 
 class Tweet(models.Model):
@@ -222,7 +222,8 @@ class Tweet(models.Model):
     publish = models.BooleanField(null=True, default=False,
                                   help_text="If this is checked, then the moderation suggestion would actually be "
                                             "send to twitter!")
-    #is_climate_author = models.BooleanField(default=False)
+    is_climate_author = models.BooleanField(null=True, default=False)
+
 
     class Meta:
         verbose_name = 'Tweet'

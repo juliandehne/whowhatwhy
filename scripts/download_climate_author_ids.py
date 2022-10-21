@@ -1,9 +1,9 @@
-from delab.corpus.download_author_information import download_author_ids
+from delab.corpus.download_author_information import update_is_climate_author
 import yaml
 from yaml.loader import SafeLoader
 
 def run():
-    download_author_ids(read_yaml('ger'))
+    update_is_climate_author(read_yaml('ger'))
 
 def read_yaml(lang):
     if lang == 'ger':

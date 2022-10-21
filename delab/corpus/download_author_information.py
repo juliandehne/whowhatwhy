@@ -133,6 +133,19 @@ def download_user_batch(author_batch, twarc):
                     download_user_batch(author_batch, twarc)
 
 
-def download_author_ids(names):
+def update_is_climate_author(names):
     twarc = DelabTwarc()
-    ids = twarc.user_lookup(names, usernames=True)
+    ids = twarc.user_lookup(users=names, usernames=True)
+    if "data" in ids:
+        for author_payload in ids["data"]:
+            tw_id = author_payload["id"]
+            climate_tweets = Tweet.objects.filter(twitter_id=tw_id).all()
+            for tweet in climate_tweets:
+                tweet.is_climate_author = True
+                tweet.save(update_fields=["is_climate_author"])
+
+    """
+    TODO: Errors abfangen
+    - Methode zum tsten finden
+    """
+         

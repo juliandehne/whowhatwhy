@@ -65,3 +65,16 @@ class MODERATION(models.TextChoices):
     DIPLOMATIC, = "diplomatic",
     ARBITRATION = "by arbitration"
     NO_NEED = "no need"
+
+class ORGANISATION(models.TextChoices):
+    FRIDAYS_FOR_FUTURE = "fff"
+    GREENPEACE = "greenpeace"
+    GOVERNMENTAL = "governmental"
+    OTHER = "other"
+
+
+
+
+
+
+
