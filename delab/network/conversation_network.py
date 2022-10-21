@@ -190,7 +190,7 @@ def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
 
     G = nx.DiGraph()
     edges = []
-    nodes = [reply.twitter_id for reply in replies]
+    nodes = [reply.twitter_id for reply in replies if reply.twitter_id not in to_eliminate_nodes]
     for row in replies:
         if row.twitter_id not in to_eliminate_nodes:
             nodes.append(row.twitter_id)

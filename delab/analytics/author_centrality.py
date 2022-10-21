@@ -1,5 +1,6 @@
 import math
 
+import matplotlib.pyplot as plt
 import networkx as nx
 
 from delab.models import Tweet
@@ -16,6 +17,11 @@ def author_centrality(conversation_id):
     tweets = list(Tweet.objects.filter(conversation_id=conversation_id).all())
 
     reply_graph, to_eliminate_nodes, changed_nodes = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
+    # nx.draw(reply_graph)
+    # plt.show()
+    # unlinked_nodes = [node for node in reply_graph.nodes() if reply_graph.in_degree(node) == 0]
+    # print(unlinked_nodes)
+
     # longest_path = nx.dag_longest_path(reply_graph)
     tweets_2 = [tweet for tweet in tweets if tweet.twitter_id not in to_eliminate_nodes]
     if len(to_eliminate_nodes) > 0:
@@ -25,12 +31,7 @@ def author_centrality(conversation_id):
     conversation_paths = []
     for node in reply_graph:
         if reply_graph.out_degree(node) == 0:  # it's a leaf
-            try:
-                conversation_paths.append(nx.shortest_path(reply_graph, root_node, node))
-            except nx.exception.NetworkXNoPath as no_path_ex:
-                print(no_path_ex)
-                print(reply_graph.edges())
-                break
+            conversation_paths.append(nx.shortest_path(reply_graph, root_node, node))
 
     records = compute_conversation_author_centrality(conversation_id, conversation_paths, reply_graph, root_node,
                                                      tweets_2)

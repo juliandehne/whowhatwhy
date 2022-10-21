@@ -1,18 +1,14 @@
+import django.db.utils
 import networkx as nx
 import pandas as pd
 
+from delab.analytics.author_centrality import author_centrality
+from delab.api.api_util import get_all_conversation_ids
 from delab.api.api_util import get_author_tweet_map
 from delab.corpus.filter_conversation_trees import get_well_structured_conversation_ids
+from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor
 from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
-
-import django.db.utils
-
-from delab.analytics.author_centrality import author_centrality
-from delab.analytics.cccp_analytics import calculate_author_baseline_visions, calculate_n_posts, is_root_author
-from delab.api.api_util import get_all_conversation_ids
-from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor
-
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
@@ -23,13 +19,20 @@ def calculate_conversation_author_metrics():
     single authors and conversations
     """
     conversation_ids = get_all_conversation_ids()
-    for conversation_id in conversation_ids:
-        try:
-            author2Centrality = {}
-            records = author_centrality(conversation_id)
-        except AssertionError as ae:
-            print("dysfunctional conversation tree found")
-            continue
+    to_compute_conversation_ids_flows = conversation_ids - set(
+        ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
+    count = 0
+    for conversation_id in to_compute_conversation_ids_flows:
+        calculate_author_metrics(conversation_id)
+        count += 1
+        print("computed {}/{} conversation author metrics".format(count, len(conversation_ids)))
+
+
+def calculate_author_metrics(conversation_id):
+    try:
+        author2Centrality = {}
+        records = author_centrality(conversation_id)
+
         baseline_visions = calculate_author_baseline_visions(conversation_id)
         for record in records:
             author = record["author"]
@@ -51,22 +54,23 @@ def calculate_conversation_author_metrics():
                                               conversation_id)
             baseline_vision = baseline_visions[author]
 
-            try:
-                if TweetAuthor.objects.filter(twitter_id=author).exists():
-                    tw_author = TweetAuthor.objects.filter(twitter_id=author).get()
-                    ConversationAuthorMetrics.objects.create(
-                        author=tw_author,
-                        conversation_id=conversation_id,
-                        centrality=centrality_score,
-                        n_posts=n_posts,
-                        is_root_author=is_root_author_v,
-                        baseline_vision=baseline_vision
-                    )
-            except django.db.utils.IntegrityError as saving_metric_exception:
-                # print(saving_metric_exception)
-                pass
-            except django.db.utils.DataError as date_error:
-                print(date_error)
+            if TweetAuthor.objects.filter(twitter_id=author).exists():
+                tw_author = TweetAuthor.objects.filter(twitter_id=author).get()
+                ConversationAuthorMetrics.objects.create(
+                    author=tw_author,
+                    conversation_id=conversation_id,
+                    centrality=centrality_score,
+                    n_posts=n_posts,
+                    is_root_author=is_root_author_v,
+                    baseline_vision=baseline_vision
+                )
+    except AssertionError as ae:
+        print("dysfunctional conversation tree found, {}".format(ae))
+    except django.db.utils.IntegrityError as saving_metric_exception:
+        # print(saving_metric_exception)
+        pass
+    except django.db.utils.DataError as date_error:
+        print(date_error)
 
 
 def compute_all_cccp_authors():
