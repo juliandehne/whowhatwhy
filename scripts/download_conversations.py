@@ -1,8 +1,5 @@
-import json
-
 from delab.corpus.download_conversations_proxy import download_conversations
-from delab.delab_enums import LANGUAGE, PLATFORM
-from delab.tw_connection_util import TwitterStreamConnector
+from delab.delab_enums import LANGUAGE
 
 """ This is a django runscript, it can be started in the django home directory with
     $ python manage.py runscript [filename_no_ending]    

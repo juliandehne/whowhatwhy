@@ -65,6 +65,11 @@ def get_conversation_flows(conversation_id, only_text=False):
 
 
 def compute_conversation_flows(conversation_id):
+    """
+    computes the conversation flows for all conversations in order to be used by the api (flows export)
+    or by the dual flow analysis
+    @param conversation_id:
+    """
     if not ConversationFlow.objects.filter(conversation_id=conversation_id).exists():
         try:
             flows, name_of_longest = get_conversation_flows(conversation_id)

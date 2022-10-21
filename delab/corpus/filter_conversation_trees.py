@@ -136,6 +136,13 @@ def get_conversation_root_as_data(conversation_id):
 
 
 def get_well_structured_conversation_ids(n=-1):
+    """
+    computes the n discussions with the best set of properties in terms of a useful dialogue or interaction
+    This specifically filters out mushroom structures (with a root and many replies) or those reply trees, that
+    have short conversation flows (depth) or are dominated by single users (mostly the root user)
+    @param n:
+    @return:
+    """
     qs = Conversation.objects.all()
     q = qs.values('conversation_id', 'depth', 'branching_factor', 'root_dominance')
     df = pd.DataFrame.from_records(q)
@@ -157,34 +164,42 @@ def get_well_structured_conversation_ids(n=-1):
 
 
 def compute_conversation_properties(conversation_ids):
+    """
+    computes properties like the depth or the branching factor for all conversations in order to be used later on
+    as a filter for conversations that come close to a useful discussion/discourse
+    @param conversation_ids:
+    """
     created_count = 0
     for conversation_id in conversation_ids:
-        print("computed {} of {} conversation filters".format(created_count, len(conversation_ids)))
-        reply_tree = get_nx_conversation_tree(conversation_id)
-        branching_factor = nx.tree.branching_weight(reply_tree)
-
-        root_node_author_id = get_root_author(conversation_id)
-        root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id,
-                                                tw_author__id=root_node_author_id).count()
-        not_root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id).exclude(
-            tw_author__id=root_node_author_id).count()
-        root_dominance = root_tweet_count / (not_root_tweet_count + 1)
-
-        flow_dict, longest_name = get_conversation_flows(conversation_id)
-        depth = len(flow_dict[longest_name])
-
-        created = False
         try:
-            conversation, created = Conversation.objects.get_or_create(
-                conversation_id=conversation_id,
-                branching_factor=branching_factor,
-                root_dominance=root_dominance,
-                depth=depth
-            )
-        except Exception as ae:
-            pass
+            print("computed {} of {} conversation filters".format(created_count, len(conversation_ids)))
+            reply_tree = get_nx_conversation_tree(conversation_id)
+            branching_factor = nx.tree.branching_weight(reply_tree)
 
-        if created:
-            created_count += 1
+            root_node_author_id = get_root_author(conversation_id)
+            root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id,
+                                                    tw_author__id=root_node_author_id).count()
+            not_root_tweet_count = Tweet.objects.filter(conversation_id=conversation_id).exclude(
+                tw_author__id=root_node_author_id).count()
+            root_dominance = root_tweet_count / (not_root_tweet_count + 1)
 
-        print("created {}  conversations ".format(created_count))
+            flow_dict, longest_name = get_conversation_flows(conversation_id)
+            depth = len(flow_dict[longest_name])
+
+            created = False
+            try:
+                conversation, created = Conversation.objects.get_or_create(
+                    conversation_id=conversation_id,
+                    branching_factor=branching_factor,
+                    root_dominance=root_dominance,
+                    depth=depth
+                )
+            except Exception as integrity_error:
+                print(integrity_error)
+
+            if created:
+                created_count += 1
+
+            print("created {}  conversations ".format(created_count))
+        except AssertionError as ae:
+            print(ae)
