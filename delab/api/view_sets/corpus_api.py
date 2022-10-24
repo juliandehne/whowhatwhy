@@ -30,7 +30,7 @@ class TweetTextSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tweet
-        fields = ['text', 'id', 'tw_author']
+        fields = ['text', 'id', 'tw_author', 'created_at']
 
 
 class ConversationFlowSerializer(serializers.ModelSerializer):
