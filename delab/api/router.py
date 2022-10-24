@@ -1,7 +1,7 @@
 from rest_framework import routers
 
 from delab.api.view_sets import TweetExcelViewSet, TweetViewSet, TweetExcelSingleViewSet, TweetSingleViewSet, \
-    ModerationRatingTweetSet, TweetSequenceStatViewSet, ConversationFlowViewSet
+    ModerationRatingTweetSet, TweetSequenceStatViewSet, ConversationFlowViewSet, FlowDuoTweetSet, FlowDuoWindowTweetSet
 
 
 def get_routes():
@@ -16,5 +16,7 @@ def get_routes():
     router.register(r'rest/(?P<topic>\D+)/tweets_excel/conversation/(?P<conversation_id>\d+)/(?P<full>\D+)',
                     TweetExcelSingleViewSet)
     router.register(r'rest/(?P<topic>\D+)/tweets_json/conversation/(?P<conversation_id>\d+)/(?P<full>\D+)',
-                    TweetSingleViewSet)
+                    TweetSingleViewSet),
+    router.register(r'rest/duoflows', FlowDuoTweetSet, basename="duoflows")
+    router.register(r'rest/duoflowwindows', FlowDuoWindowTweetSet, basename="duoflowwindows")
     return router

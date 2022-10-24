@@ -2,7 +2,7 @@ import logging
 
 from delab.api.api_util import get_all_conversation_ids
 from delab.corpus.filter_sequences import get_conversation_flows
-from delab.models import Conversation, ConversationFlow
+from delab.models import ConversationFlow
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,41 @@ class FLowDuo:
         self.toxic_delta = toxic_delta
         self.tweets1 = tweets1
         self.tweets2 = tweets2
+
+
+class FlowDuoWindow(FLowDuo):
+    def __init__(self, name1, name2, toxic_delta, tweets1, tweets2, post_branch_length, pre_branch_length):
+        super().__init__(name1, name2, toxic_delta, tweets1, tweets2)
+        self.common_tweets = []
+        self.id2tweet = {}
+        self.tweets1_post_branching = []
+        self.tweets2_post_branching = []
+        self.initialize_window(post_branch_length, pre_branch_length)
+
+    def initialize_window(self, post_branch_length, pre_branch_length):
+        self.tweets1 = sorted(self.tweets1, key=lambda x: x.created_at)
+        self.tweets2 = sorted(self.tweets2, key=lambda x: x.created_at)
+        flow_1_ids = []
+        flow_2_ids = []
+        for tweet in self.tweets1:
+            self.id2tweet[tweet.twitter_id] = tweet
+            flow_1_ids.append(tweet.twitter_id)
+        for tweet in self.tweets2:
+            self.id2tweet[tweet.twitter_id] = tweet
+            flow_2_ids.append(tweet.twitter_id)
+        intersection_id = set(flow_1_ids).intersection(set(flow_2_ids))
+        for tweet in self.tweets1:
+            if tweet.twitter_id != intersection_id:
+                self.common_tweets.append(tweet)
+            else:
+                break
+        branching_index = flow_1_ids.index(intersection_id)
+        assert flow_2_ids.index(intersection_id) == branching_index
+        start_index_pre_branching = max(branching_index - pre_branch_length, 0)
+        self.common_tweets = self.common_tweets[start_index_pre_branching:branching_index]
+        end_index_post_branching = min(branching_index + 1 + post_branch_length, len(self.tweets1), len(self.tweets2))
+        self.tweets1_post_branching = self.tweets1[branching_index + 1: end_index_post_branching]
+        self.tweets2_post_branching = self.tweets2[branching_index + 1: end_index_post_branching]
 
 
 def get_flow_duos(n):
@@ -81,12 +116,14 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
                     else:
                         pos_toxicity = 0
                         for positive_tweet in tweets:
-                            pos_toxicity += positive_tweet.toxic_value
+                            if positive_tweet.toxic_value is not None:
+                                pos_toxicity += positive_tweet.toxic_value
                         pos_toxicity = pos_toxicity / len(tweets)
 
                         neg_toxicity = 0
                         for neg_tweet in tweets:
-                            neg_toxicity += neg_tweet.toxic_value
+                            if neg_tweet.toxic_value is not None:
+                                neg_toxicity += neg_tweet.toxic_value
                         neg_toxicity = neg_toxicity / len(tweets_2)
                         tox_delta = pos_toxicity - neg_toxicity
                         max_delta = max(max_delta, tox_delta)

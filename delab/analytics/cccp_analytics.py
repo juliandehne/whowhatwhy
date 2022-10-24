@@ -18,7 +18,7 @@ def calculate_conversation_author_metrics():
     This computes the available measures like centrality or number of posts aggregated on the level of
     single authors and conversations
     """
-    conversation_ids = get_all_conversation_ids()
+    conversation_ids = set(get_all_conversation_ids())
     to_compute_conversation_ids_flows = conversation_ids - set(
         ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
     count = 0
@@ -108,7 +108,42 @@ def prepare_metric_records():
     @return:
     """
     conversation_ids = get_well_structured_conversation_ids(100)
+    records = get_author_metrics_using_raw(conversation_ids)
+    # select_data_using_django_orm(conversation_ids, records)
+    df = pd.DataFrame.from_records(records)
+    return df
+
+
+def get_author_metrics_using_raw(conversation_ids):
+    """
+    this function is needed because using the django relational mapper, the query is way to slow
+    this is due to conversation_id not being a foreign key in all the related tables (todo)
+    @param conversation_ids:
+    @return:
+    """
     records = []
+    metrics = ConversationAuthorMetrics.objects.filter(conversation_id__in=conversation_ids).raw(
+        "SELECT cam.id, dt.id as tweet_id, cam.conversation_id, cam.author_id, text, dt.twitter_id, "
+        "is_toxic, toxic_value, n_posts, "
+        "centrality, baseline_vision, n_posts, is_root_author "
+        "FROM delab_tweet dt join delab_conversationauthormetrics cam "
+        "on dt.conversation_id = cam.conversation_id and dt.tw_author_id = cam.author_id")
+    for tweet in metrics:
+        tweet_record = {"tweet_id": tweet.tweet_id, "text": tweet.text, "conversation_id": tweet.conversation_id,
+                        "author_id": tweet.author_id, "centrality": tweet.centrality,
+                        "baseline_vision": tweet.baseline_vision, "n_posts": tweet.n_posts}
+        records.append(tweet_record)
+    return records
+
+
+def select_data_using_django_orm(conversation_ids, records):
+    """
+    @deprecated
+    loads the data using djano object relational mapper. Takes too long for the big dataset
+    @param conversation_ids:
+    @param records:
+    @return:
+    """
     tweets = Tweet.objects.filter(tn_parent__isnull=False, conversation_id__in=conversation_ids).all()
     for tweet in tweets:
         if tweet.tw_author is None:
@@ -125,8 +160,6 @@ def prepare_metric_records():
             tweet_record["baseline_vision"] = author_metrics.baseline_vision
             tweet_record["n_posts"] = author_metrics.n_posts
             records.append(tweet_record)
-    df = pd.DataFrame.from_records(records)
-    return df
 
 
 def compute_cccp_candidate_authors(df, measure="mean"):

@@ -1,20 +1,15 @@
+import networkx as nx
 import pandas as pd
-from typing import List
-
-from django.db.models import F
 from django.forms.models import model_to_dict
 
 from delab.TwConversationTree import TreeNode
-from delab.api.api_util import ConversationFilter
-from delab.models import Tweet, Conversation
 
-import networkx as nx
 from delab.corpus.filter_sequences import get_conversation_flows
 from delab.models import Tweet, Conversation
 from delab.network.conversation_network import get_nx_conversation_tree, get_root_author
 
 
-def get_conversation_trees(topic: str, conversation_id=None, conversation_filter: ConversationFilter = None):
+def get_conversation_trees(topic: str, conversation_id=None):
     """
     :param topic: the topic string
     :param conversation_id:  the conversation id

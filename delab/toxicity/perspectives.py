@@ -1,7 +1,6 @@
 import logging
 import time
 from pathlib import Path
-
 import yaml
 from googleapiclient import discovery
 import os
@@ -58,7 +57,7 @@ def get_toxicity(text):
                 'requestedAttributes': {'SEVERE_TOXICITY': {}}
             }
             response = client.comments().analyze(body=analyze_request).execute()
-            if response["status_code"] == 429:
+            if 'status_code' in response and response["status_code"] == 429:
                 time.sleep(60)
             toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
             time.sleep(2)

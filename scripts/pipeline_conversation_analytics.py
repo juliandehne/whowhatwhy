@@ -4,6 +4,7 @@ from delab.api.api_util import get_all_conversation_ids
 from delab.corpus.filter_conversation_trees import get_well_structured_conversation_ids, compute_conversation_properties
 from delab.corpus.filter_sequences import compute_conversation_flows
 from delab.models import Conversation, ConversationFlow
+from delab.toxicity.perspectives import compute_toxicity_for_text
 
 
 def run():
@@ -24,12 +25,15 @@ def run():
         count += 1
         print(" computed flows for {}/{} conversations".format(count, len(to_compute_conversation_ids_flows)))
 
-    print("STEP 3 compute the dual flows")
+    print("STEP 3 compute toxicity for tweets")
+    compute_toxicity_for_text()
+
+    print("STEP 4 compute the dual flows")
     # dual_flows = get_flow_duos()
 
-    print("STEP 4: calculate conversation author metrics")
+    print("STEP 5: calculate conversation author metrics")
     calculate_conversation_author_metrics()
 
-    print("STEP 5: calculate cccp examples")
+    print("STEP 6: calculate cccp examples")
     # compute_all_cccp_authors()
 
