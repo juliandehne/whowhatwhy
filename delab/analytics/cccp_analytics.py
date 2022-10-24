@@ -9,6 +9,7 @@ from delab.corpus.filter_conversation_trees import get_well_structured_conversat
 from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor
 from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
+from django_project.settings import MAX_CCCP_CONVERSATION_CANDIDATES, CCCP_N_LARGEST
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
@@ -107,7 +108,7 @@ def prepare_metric_records():
     prepares a dataframe with the tweet author data and and the conversation_author_metrics
     @return:
     """
-    conversation_ids = get_well_structured_conversation_ids(100)
+    conversation_ids = get_well_structured_conversation_ids()
     records = get_author_metrics_using_raw(conversation_ids)
     # select_data_using_django_orm(conversation_ids, records)
     df = pd.DataFrame.from_records(records)
@@ -168,12 +169,19 @@ def compute_cccp_candidate_authors(df, measure="mean"):
     @param measure: the measure to be used for filtering candidates, such as "mean" for all measures, or "centrality"
     @return: a list of pairs (conversation_id, author_id)
     """
+
     df_central_authors = df.drop(
         ["text"], axis=1)
+    root_author_ids = set(Tweet.objects.filter(tn_parent__isnull=True).values_list("tw_author__id", flat=True))
+    df_central_authors = df_central_authors[~df_central_authors["author_id"].isin(root_author_ids)]
+    n_posts = df_central_authors["n_posts"]
+    df_central_authors["centrality"] = df_central_authors["centrality"] * n_posts
+    df_central_authors["baseline_vision"] = df_central_authors["baseline_vision"] * n_posts
+    df_central_authors["n_posts"] = df_central_authors["n_posts"] * n_posts
     df_repetition_probs = df.drop(
         ["text",
          "centrality", "baseline_vision", "n_posts", "author_id"], axis=1)
-    # %%
+
     df_repetition_probs = df_repetition_probs.groupby(["conversation_id"]).count()
     grouped_ca = df_central_authors.groupby(["conversation_id", "author_id"]).mean()
     grouped_ca = grouped_ca.drop("tweet_id", axis=1)
@@ -183,12 +191,15 @@ def compute_cccp_candidate_authors(df, measure="mean"):
     if measure == "mean":
         grouped_ca = grouped_ca.apply(lambda x: x / x.max())
         grouped_ca['mean'] = grouped_ca.mean(axis=1)
-        mean_largest = grouped_ca.nlargest(20, "mean")
+        mean_largest = grouped_ca.nlargest(CCCP_N_LARGEST, "mean")
     if measure == "repetition_prob" or measure == "baseline_vision" or measure == "centrality":
-        mean_largest = grouped_ca.nlargest(20, measure)
+        mean_largest = grouped_ca.nlargest(CCCP_N_LARGEST, measure)
 
     # this is the result list, first element of tuple is conversation, second the author
     result = mean_largest.index.tolist()
+
+    # result = ((conversation_id, author_id) for (conversation_id, author_id) in result if
+    #          author_id not in root_author_ids)
     # print(result)
     return result
 

@@ -7,6 +7,7 @@ from delab.TwConversationTree import TreeNode
 from delab.corpus.filter_sequences import get_conversation_flows
 from delab.models import Tweet, Conversation
 from delab.network.conversation_network import get_nx_conversation_tree, get_root_author
+from django_project.settings import MAX_CCCP_CONVERSATION_CANDIDATES
 
 
 def get_conversation_trees(topic: str, conversation_id=None):
@@ -130,15 +131,16 @@ def get_conversation_root_as_data(conversation_id):
     return result
 
 
-def get_well_structured_conversation_ids(n=-1):
+def get_well_structured_conversation_ids(n=-1, n_conversation_candidates=MAX_CCCP_CONVERSATION_CANDIDATES):
     """
     computes the n discussions with the best set of properties in terms of a useful dialogue or interaction
     This specifically filters out mushroom structures (with a root and many replies) or those reply trees, that
     have short conversation flows (depth) or are dominated by single users (mostly the root user)
+    @param n_conversation_candidates:
     @param n:
     @return:
     """
-    qs = Conversation.objects.all()
+    qs = Conversation.objects.all()[:n_conversation_candidates]
     q = qs.values('conversation_id', 'depth', 'branching_factor', 'root_dominance')
     df = pd.DataFrame.from_records(q)
 
