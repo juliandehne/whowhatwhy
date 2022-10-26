@@ -11,6 +11,7 @@ from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 from .network.conversation_network import download_twitter_follower
+from .toxicity.perspectives import compute_toxicity_for_text
 
 logger = logging.getLogger(__name__)
 
@@ -124,3 +125,10 @@ def download_network_structures():
     levels = 1
     n_conversations = -1
     download_twitter_follower(levels, n_conversations)
+
+
+@background()
+def update_toxic_values():
+    logger.debug("CRONJOB: update toxic networks!")
+    compute_toxicity_for_text()
+
