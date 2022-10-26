@@ -58,6 +58,7 @@ def get_toxicity(text):
             }
             response = client.comments().analyze(body=analyze_request).execute()
             if 'status_code' in response and response["status_code"] == 429:
+                logger.debug("toxicity download going to sleep for 60 because of api limit: {}".format(response))
                 time.sleep(60)
             toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
             time.sleep(2)
