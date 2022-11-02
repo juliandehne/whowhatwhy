@@ -58,7 +58,7 @@ def download_authors(author_ids):
     twarc = DelabTwarc()
     new_authors = repair_fk_tweet_authors(author_ids)
     # batch processing means breaking down a big loop
-    # in smaller loops 
+    # in smaller loops
     author_batches = batch(new_authors, 99)
     for author_batch in author_batches:
         download_user_batch(author_batch, twarc)
@@ -161,3 +161,21 @@ def deal_with_missing_authors(author_batch, twarc, userbatch):
                 tweet.save(update_fields=["tw_author"])
     if len(author_batch) < author_batch_size:
         download_user_batch(author_batch, twarc)
+
+
+def update_is_climate_author(names):
+    twarc = DelabTwarc()
+    ids = twarc.user_lookup(users=names, usernames=True)
+    if "data" in ids:
+        for author_payload in ids["data"]:
+            tw_id = author_payload["id"]
+            climate_tweets = Tweet.objects.filter(twitter_id=tw_id).all()
+            for tweet in climate_tweets:
+                tweet.is_climate_author = True
+                tweet.save(update_fields=["is_climate_author"])
+
+    """
+    TODO: Errors abfangen
+    - Methode zum tsten finden
+    """
+
