@@ -1,13 +1,32 @@
 import logging
 
 from django.db.models import Exists, OuterRef
-
 from delab.models import Timeline, Tweet, TweetAuthor
 from delab.delab_enums import PLATFORM
 from delab.tw_connection_util import DelabTwarc
-from delab.corpus.download_timelines_reddit import download_timelines
+from django.db import IntegrityError
 
 logger = logging.getLogger(__name__)
+
+
+def update_timelines_twitter(simple_request_id=-1,
+                             fix_legacy_db=False):
+    """
+    This downloads the timelines for a given conversation
+    :param simple_request_id: the request id that was used when querying the conversation
+    :param fix_legacy_db: Download the authors for the conversation, that are still missing in the database
+    :return:
+    """
+    if simple_request_id < 0:
+        author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True, platform=PLATFORM.TWITTER).values_list(
+            'twitter_id',
+            flat=True)
+        if fix_legacy_db:
+            fix_legacy()
+    else:
+        author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
+            simple_request_id=simple_request_id, platform=PLATFORM.TWITTER).values_list('author_id', flat=True).distinct()
+    get_user_timeline_twarc(author_ids)
 
 
 def save_author_tweet_to_tb(json_result, author_id):
@@ -38,8 +57,11 @@ def save_author_tweet_to_tb(json_result, author_id):
                 author.save(update_fields=["has_timeline"])
                 t.tw_author = author
                 t.save(update_fields=["tw_author"])
-            except Exception:
-                logger.error("author for tweet was not downloaded")
+            except IntegrityError as ie:
+                logger.error(ie)
+                pass
+            except Exception as not_clear:
+                logger.error("author for tweet was not downloaded + {}".format(not_clear))
     else:
         logger.debug("no timeline was found for author {}".format(author_id))
 
@@ -78,31 +100,6 @@ def fix_legacy():
             existing_timeline2.save(update_fields=["tw_author"])
         except TweetAuthor.DoesNotExist:
             logger.error("author was not downloaded before updating timelines")
-
-
-def update_timelines_from_conversation_users(simple_request_id=-1,
-                                             platform=PLATFORM.TWITTER,
-                                             fix_legacy_db=True):
-    """
-    This downloads the timelines for a given conversation
-    :param simple_request_id: the request id that was used when querying the conversation
-    :param platform: PLATFORM.TWITTER or PLATFORM.REDDIT
-    :param fix_legacy_db: Download the authors for the conversation, that are still missing in the database
-    :return:
-    """
-    if platform == PLATFORM.REDDIT:
-        download_timelines(simple_request_id)
-    if platform == PLATFORM.TWITTER:
-        if simple_request_id < 0:
-            author_ids = TweetAuthor.objects.filter(has_timeline__isnull=True, platform=platform).values_list(
-                'twitter_id',
-                flat=True)
-            if fix_legacy_db:
-                fix_legacy()
-        else:
-            author_ids = Tweet.objects.filter(~Exists(Timeline.objects.filter(author_id=OuterRef("author_id")))).filter(
-                simple_request_id=simple_request_id, platform=platform).values_list('author_id', flat=True).distinct()
-        get_user_timeline_twarc(author_ids)
 
 
 def get_user_timeline_twarc(author_ids, max_results=10):

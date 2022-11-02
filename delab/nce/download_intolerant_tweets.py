@@ -10,8 +10,10 @@ from django.db.utils import IntegrityError
 from delab.corpus.download_conversations_proxy import download_conversations
 from delab.models import Tweet, TWCandidateIntolerance
 from delab.delab_enums import LANGUAGE, PLATFORM
-from delab.toxicity.perspectives import get_client
+from delab.toxicity.perspectives import get_client, get_toxicity
 from util.abusing_lists import batch
+
+INTOLERANCE_DICT = "intolerance_dict"
 
 
 def download_terrible_tweets(download_dictionary, link, download_right_wing=False):
@@ -135,7 +137,7 @@ def download_bad_tweets(data_read, lang):
             query += row[0] + " OR "
         query += data_read[-1][0]
         # print(query)
-        download_conversations(topic_string="intolerance_dict", query_string=query, request_id=-1,
+        download_conversations(topic_string=INTOLERANCE_DICT, query_string=query, request_id=-1,
                                language=lang)
 
 
@@ -206,19 +208,3 @@ def check_toxic_tree(parent):
     return toxic_sum, count
 
 
-def get_toxicity(text):
-    toxicity = 0
-    client = get_client()
-    if len(text) > 1:
-        try:
-            analyze_request = {
-                'comment': {
-                    'text': text},
-                'requestedAttributes': {'SEVERE_TOXICITY': {}}
-            }
-            response = client.comments().analyze(body=analyze_request).execute()
-            toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
-            time.sleep(2)
-        except Exception:
-            print("something went wrong")
-    return toxicity

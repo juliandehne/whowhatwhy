@@ -1,26 +1,22 @@
 import datetime
-from random import choice
 
 from background_task.models import Task
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Q, Count
-from django.http import Http404
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
     ListView,
-    CreateView,
-    UpdateView, TemplateView
+    CreateView
 )
+from django.db.models import OuterRef, Subquery
 
+from delab.corpus.filter_sequences import compute_conversation_flows
 from delab.delab_enums import PLATFORM
-from delab.models import SimpleRequest, Tweet, TwTopic, TWCandidate, TweetAuthor, TWCandidateIntolerance, \
-    TWIntoleranceRating, IntoleranceAnswer, IntoleranceAnswerValidation, ModerationCandidate2, ModerationRating
+from delab.models import SimpleRequest, Tweet, TwTopic, TweetAuthor, ConversationFlow
 from delab.tasks import get_tasks_status
-
-from django_project.settings import min_intolerance_answer_coders_needed, min_intolerance_coders_needed
 from util.abusing_strings import convert_to_hash
 
 
@@ -35,11 +31,8 @@ class SimpleRequestListView(ListView):
 
 def simple_request_proxy(request, pk):
     """
-    The idea is that if the download_process is still running in the background, the Task_Status_view shoudl be displayed.
+    The idea is that if the download_process is still running in the background, the Task_Status_view should be displayed.
     Otherwise, the downloaded conversations should be displayed!
-    :param request:
-    :param simple_request_id:
-    :return:
     """
     running_tasks = get_tasks_status(pk)
     if len(running_tasks) > 0:
@@ -57,8 +50,15 @@ class ConversationListView(ListView):
 
     def get_queryset(self):
         simple_request = get_object_or_404(SimpleRequest, id=self.request.resolver_match.kwargs['pk'])
-        return Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent__isnull=True)) \
-            .order_by('created_at')
+
+        longest_flow_sub = ConversationFlow.objects.filter(conversation_id=OuterRef('conversation_id'),
+                                                           longest=True).only("image")
+        longest_flow = longest_flow_sub.values("image")[:1]
+        tweets = Tweet.objects.filter(Q(simple_request=simple_request) & Q(tn_parent__isnull=True)) \
+            .order_by('created_at').annotate(conversation_flow=longest_flow)
+        # for tweet in tweets:
+        #    print(tweet.conversation_flow)
+        return tweets
 
     def get_context_data(self, **kwargs):
         context = super(ConversationListView, self).get_context_data(**kwargs)
@@ -76,8 +76,11 @@ class ConversationView(ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Tweet.objects.filter(conversation_id=self.request.resolver_match.kwargs['conversation_id']) \
-            .order_by("created_at")
+        conversation_id = self.request.resolver_match.kwargs['conversation_id']
+        if not ConversationFlow.objects.filter(conversation_id=conversation_id, longest=True).exists():
+            compute_conversation_flows(conversation_id)
+        return ConversationFlow.objects.filter(conversation_id=conversation_id, longest=True).get().tweets.order_by(
+            "created_at")
 
     def get_context_data(self, **kwargs):
         context = super(ConversationView, self).get_context_data(**kwargs)
@@ -164,8 +167,8 @@ class TaskStatusView(ListView):
         # context["timelines_downloaded"] = context['tweets_downloaded'] - timelines_not_downloaded
         sentiments_analyzed = simple_request.tweet_set.filter(sentiment_value__isnull=False).count()
         context["sentiments_analyzed"] = sentiments_analyzed
-        flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
-        context["flows_analyzed"] = flows_analyzed
+        # flows_analyzed = simple_request.tweet_set.filter(conversation_flow__isnull=False).count()
+        # context["flows_analyzed"] = flows_analyzed
 
         # tweet_ids = simple_request.tweet_set.values_list("id", flat=True)
         timelines_downloaded = TweetAuthor.objects.filter(has_timeline=True).count()
@@ -185,7 +188,6 @@ class TaskStatusView(ListView):
             return redirect("delab-conversations-for-request", pk=pk)
         else:
             return super(TaskStatusView, self).dispatch(request, *args, **kwargs)
-
 
 
 def downloads_view(request):

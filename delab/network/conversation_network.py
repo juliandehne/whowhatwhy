@@ -146,29 +146,88 @@ class FaultyGraphException(Exception):
     pass
 
 
-def get_nx_conversation_graph(conversation_id):
+def compute_subsequent_merge(conversation_id):
+    """
+    @param conversation_id:
+    @return: [to eliminate nodes for merge], {node_id -> new_parent}
+    """
+    tweets = Tweet.objects.filter(conversation_id=conversation_id).order_by("created_at")
+    to_delete_list = []
+    to_change_map = {}
+    for tweet in tweets:
+        # if tweet.twitter_id == 82814624:
+        #    print("testing 1")
+
+        # we are not touching the root
+        if tweet.tn_parent is None:
+            continue
+        # if a tweet is merged, ignore
+        if tweet.twitter_id in to_delete_list:
+            continue
+        # if a tweet shares the author with its parent, deleted it
+        if tweet.author_id == tweet.tn_parent.author_id:
+            to_delete_list.append(tweet.twitter_id)
+        # if the parent has been deleted, find the next available parent
+        else:
+            current = tweet
+            while current.tn_parent.twitter_id in to_delete_list:
+                # we can make this assertion because we did not delete the root
+                assert current.tn_parent is not None
+                current = current.tn_parent
+            if current.twitter_id != tweet.twitter_id:
+                to_change_map[tweet.twitter_id] = current.tn_parent.twitter_id
+
+    return to_delete_list, to_change_map
+
+
+def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
+    to_eliminate_nodes = []
+    changed_nodes = {}
+    if merge_subsequent is True:
+        to_eliminate_nodes, changed_nodes = compute_subsequent_merge(conversation_id)
     replies = Tweet.objects.filter(conversation_id=conversation_id)
     # .only("id", "twitter_id", "tn_parent_id", "created_at")
 
     G = nx.DiGraph()
     edges = []
-    nodes = [reply.twitter_id for reply in replies]
+    nodes = [reply.twitter_id for reply in replies if reply.twitter_id not in to_eliminate_nodes]
     for row in replies:
-        nodes.append(row.twitter_id)
-        G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
-        if row.tn_parent_id is not None:
-            if row.tn_parent_id not in nodes:
-                print(conversation_id)
-            assert row.tn_parent_id in nodes
-            edges.append((row.tn_parent_id, row.twitter_id))
-    assert len(edges) > 0
+        if row.twitter_id not in to_eliminate_nodes:
+            nodes.append(row.twitter_id)
+            G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
+            if row.tn_parent_id is not None:
+                if row.tn_parent_id not in nodes:
+                    logger.error("conversation {} has no root_node".format(conversation_id))
+                assert row.tn_parent_id in nodes
+                if row.twitter_id in changed_nodes:
+                    new_parent = changed_nodes[row.twitter_id]
+                    if new_parent is not None:
+                        edges.append((new_parent, row.twitter_id))
+                    else:
+                        G.remove_node(row.twitter_id)
+                else:
+                    edges.append((row.tn_parent_id, row.twitter_id))
+    assert len(edges) > 0, "there are no edges for conversation {}".format(conversation_id)
     G.add_edges_from(edges)
+    if merge_subsequent:
+        return G, to_eliminate_nodes, changed_nodes
     return G
 
 
 def get_root(conversation_graph: nx.DiGraph):  # tree rooted at 0
     roots = [n for n, d in conversation_graph.in_degree() if d == 0]
     return roots[0]
+
+
+def get_root_author(conversation_id):
+    return Tweet.objects.filter(tn_parent__isnull=True, conversation_id=conversation_id).get().tw_author_id
+
+
+def get_nx_conversation_tree(conversation_id, merge_subsequent=False):
+    g = get_nx_conversation_graph(conversation_id, merge_subsequent=merge_subsequent)
+    root = get_root(g)
+    tree = nx.bfs_tree(g, root)
+    return tree
 
 
 def get_tweet_subgraph(conversation_graph):
@@ -183,6 +242,11 @@ def get_tweet_subgraph(conversation_graph):
 
 
 def compute_author_graph(conversation_id: int):
+    """
+    computes the combined reply tree and author tree (author - parent_of -> tweet)
+    @param conversation_id:
+    @return:
+    """
     G = get_nx_conversation_graph(conversation_id)
     G2 = compute_author_graph_helper(G, conversation_id)
     return G2
@@ -215,7 +279,7 @@ def download_conversation_network(conversation_id, conversation_ids, count, leve
     # this would also search the network in the other direction
     user_ids = get_participants(conversation_id, filter_follower_not_downloaded=True)
     download_followers_recursively(user_ids, twarc, levels, following=False)
-    logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
+    # logger.debug(" {}/{} conversations finished".format(count, len(conversation_ids)))
 
 
 def prevent_multiple_downloads(conversation_ids):

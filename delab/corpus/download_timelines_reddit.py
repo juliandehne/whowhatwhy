@@ -10,7 +10,7 @@ from util.abusing_strings import convert_to_hash
 logger = logging.getLogger(__name__)
 
 
-def download_timelines(simple_request_id=-1):
+def download_timelines_reddit(simple_request_id=-1):
     reddit = get_praw()
     if simple_request_id < 0:
         authors = TweetAuthor.objects.filter(platform=PLATFORM.REDDIT, has_timeline__isnull=True).all()

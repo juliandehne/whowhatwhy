@@ -2,16 +2,15 @@ import logging
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-# from django.dispatch import receiver
 from django.utils import timezone
-
 from delab.bot.intolerance_bot import generate_answers
 from delab.bot.intolerance_bot import send_message
 from delab.bot.sender import publish_moderation
+from delab.delab_enums import PLATFORM
 from delab.mm.download_moderating_tweets import MODTOPIC2
 from delab.models import SimpleRequest, Tweet, TWIntoleranceRating, IntoleranceAnswer, \
     IntoleranceAnswerValidation
-from delab.delab_enums import PLATFORM
+from delab.nce.download_intolerant_tweets import INTOLERANCE_DICT
 from delab.tasks import download_conversations_scheduler
 from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 
@@ -84,7 +83,7 @@ def process_simple_request(sender, instance, created, **kwargs):
     """
     logging.info("received signal from post_save {} for pk {}".format(timezone.now(), instance.pk))
 
-    scripted_topics = [MODTOPIC2, "TopicNotGiven"]
+    scripted_topics = [MODTOPIC2, "TopicNotGiven", INTOLERANCE_DICT]
     if created and instance.topic.title not in scripted_topics:
         # cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
         download_conversations_scheduler(instance.topic.title,

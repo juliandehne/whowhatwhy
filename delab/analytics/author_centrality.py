@@ -1,5 +1,6 @@
 import math
 
+import matplotlib.pyplot as plt
 import networkx as nx
 
 from delab.models import Tweet
@@ -13,10 +14,18 @@ def author_centrality(conversation_id):
      [{author:"author":author_id, "centrality_score":score_value, "conversation_id": conversation_id}]
     the key "root_distance_avg" holds the average distance to the root node for the given author
     """
-    tweets = Tweet.objects.filter(conversation_id=conversation_id)
+    tweets = list(Tweet.objects.filter(conversation_id=conversation_id).all())
 
-    reply_graph = get_nx_conversation_graph(conversation_id)
+    reply_graph, to_eliminate_nodes, changed_nodes = get_nx_conversation_graph(conversation_id, merge_subsequent=True)
+    # nx.draw(reply_graph)
+    # plt.show()
+    # unlinked_nodes = [node for node in reply_graph.nodes() if reply_graph.in_degree(node) == 0]
+    # print(unlinked_nodes)
+
     # longest_path = nx.dag_longest_path(reply_graph)
+    tweets_2 = [tweet for tweet in tweets if tweet.twitter_id not in to_eliminate_nodes]
+    if len(to_eliminate_nodes) > 0:
+        assert len(tweets_2) < len(tweets)
     root_node = get_root(reply_graph)
 
     conversation_paths = []
@@ -25,7 +34,7 @@ def author_centrality(conversation_id):
             conversation_paths.append(nx.shortest_path(reply_graph, root_node, node))
 
     records = compute_conversation_author_centrality(conversation_id, conversation_paths, reply_graph, root_node,
-                                                     tweets)
+                                                     tweets_2)
     return records
 
 

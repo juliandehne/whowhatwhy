@@ -2,7 +2,8 @@ import time
 
 from background_task.models import Task
 
-from delab.tasks import download_intolerant_tweets, download_moderating_tweets, download_network_structures
+from delab.tasks import download_intolerant_tweets, download_moderating_tweets, download_network_structures, \
+    update_toxic_values
 
 
 def run():
@@ -28,11 +29,17 @@ def run():
         for background_task_3 in background_tasks_3:
             background_task_3.delete()
 
+    if Task.objects.filter(task_name='delab.tasks.update_toxic_values').exists():
+        background_tasks_4 = Task.objects.filter(task_name='delab.tasks.update_toxic_values')
+        for background_task_4 in background_tasks_4:
+            background_task_4.delete()
+
     time.sleep(2)
 
-    download_network_structures(repeat=Task.WEEKLY)
+    # download_network_structures(repeat=Task.WEEKLY)
     # download_moderating_tweets(repeat=Task.WEEKLY)
     download_intolerant_tweets(repeat=Task.WEEKLY)
 
+    update_toxic_values()
 
 

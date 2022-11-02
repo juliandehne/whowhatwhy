@@ -9,6 +9,7 @@ from delab.models import Tweet, ModerationCandidate2, TwTopic, SimpleRequest
 from util.abusing_lists import batch
 
 MODTOPIC2 = "moderationdictmining"
+MODTOPIC2_WEBSITE = "moderationdictmining_website"
 
 query_token_file = "delab/mm/FunctionPhrasesPartial.csv"
 
@@ -38,7 +39,12 @@ def tweet_filter(query: str, tweet: Tweet):
         title=query,
         topic=topic
     )
-    tweet.simple_request = simple_request
+    tweet = tweet_filter_helper(query, simple_request.id, tweet)
+    return tweet
+
+
+def tweet_filter_helper(query, simple_request_id, tweet):
+    tweet.simple_request_id = simple_request_id
     # tweet.topic = topic
     if Tweet.objects.filter(twitter_id=tweet.twitter_id).exists():
         tweet = Tweet.objects.filter(twitter_id=tweet.twitter_id).first()

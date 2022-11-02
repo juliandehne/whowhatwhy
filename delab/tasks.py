@@ -1,16 +1,17 @@
 import logging
+from functools import partial
 
 from background_task import background
 from background_task.models import CompletedTask
 from background_task.models import Task
 from django.utils import timezone
-from delab.corpus.download_conversations_proxy import download_conversations
 from delab.corpus.download_author_information import update_authors
-from delab.corpus.download_conversations_reddit import download_subreddit
+from delab.corpus.download_conversations_proxy import download_conversations, download_timelines
 from .delab_enums import PLATFORM, LANGUAGE
-from .mm.download_moderating_tweets import download_mod_tweets
+from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 from .network.conversation_network import download_twitter_follower
+from .toxicity.perspectives import compute_toxicity_for_text
 
 logger = logging.getLogger(__name__)
 
@@ -19,16 +20,32 @@ logger = logging.getLogger(__name__)
 def download_conversations_scheduler(topic_string, platform, query_string, simple_request_id, simulate=True,
                                      max_data=False,
                                      fast_mode=False, language=LANGUAGE.ENGLISH):
+    moderation_tweet_filter = partial(tweet_filter_helper, query_string, simple_request_id)
+
     if simulate:
         logger.error("pretending to downloading conversations{}".format(query_string))
     else:
-        if platform == PLATFORM.TWITTER:
-            download_conversations(topic_string, query_string, simple_request_id, language=language, max_data=max_data,
-                                   fast_mode=fast_mode, platform=platform)
-        if platform == PLATFORM.REDDIT:
-            # TODO: eventually change this to an r/all search instead of downloading the topic with same name as
-            #  subreddit, needs to rewrite twitter requests to reddit and inversely
-            download_subreddit(topic_string, simple_request_id)
+        download_param_dict = {"topic_string": topic_string,
+                               "query_string": query_string,
+                               "request_id": simple_request_id,
+                               "language": language,
+                               "max_data": max_data,
+                               "fast_mode": fast_mode,
+                               "platform": platform
+                               }
+        if topic_string == MODTOPIC2_WEBSITE:
+            download_param_dict["topic_string"] = MODTOPIC2
+            if platform == PLATFORM.TWITTER:
+                download_conversations(**download_param_dict,
+                                       tweet_filter=moderation_tweet_filter)
+            if platform == PLATFORM.REDDIT:
+                download_conversations(**download_param_dict,
+                                       tweet_filter=moderation_tweet_filter)
+        else:
+            if platform == PLATFORM.TWITTER:
+                download_conversations(**download_param_dict)
+            if platform == PLATFORM.REDDIT:
+                download_conversations(**download_param_dict)
 
         update_author(simple_request_id, platform, fast_mode, language,
                       verbose_name="author_analysis_{}".format(simple_request_id),
@@ -45,9 +62,16 @@ def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=Fal
 
 
 @background(schedule=1)
-def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
-    from delab.sentiment.sentiment_classification import update_tweet_sentiments
+def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
+    download_timelines(simple_request_id, platform=platform)
+    update_sentiments(simple_request_id, language,
+                      verbose_name="sentiment_analysis_{}".format(simple_request_id),
+                      schedule=timezone.now())
 
+
+@background(schedule=1)
+def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
+    from .sentiment.sentiment_classification import update_tweet_sentiments
     update_tweet_sentiments(simple_request_id, language)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
@@ -55,20 +79,8 @@ def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
 
 @background(schedule=1)
 def update_flows(simple_request_id=-1):
-    from delab.sentiment.sentiment_flow_analysis import update_sentiment_flows
-    update_sentiment_flows(simple_request_id)
-
-
-@background(schedule=1)
-def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, language=LANGUAGE.ENGLISH):
-    from delab.topic.topic_data_preperation import update_timelines_from_conversation_users
-    from django_project.settings import TRAX_CAPABILITIES
-
-    update_timelines_from_conversation_users(simple_request_id, platform)
-    if TRAX_CAPABILITIES:
-        update_sentiments(simple_request_id, language,
-                          verbose_name="sentiment_analysis_{}".format(simple_request_id),
-                          schedule=timezone.now())
+    from .analytics.flow_picture_computation import update_flow_picture
+    update_flow_picture(simple_request_id)
 
 
 def get_tasks_status(simple_request_id):
@@ -113,4 +125,10 @@ def download_network_structures():
     levels = 1
     n_conversations = -1
     download_twitter_follower(levels, n_conversations)
+
+
+@background()
+def update_toxic_values():
+    logger.debug("CRONJOB: update toxic networks!")
+    compute_toxicity_for_text()
 

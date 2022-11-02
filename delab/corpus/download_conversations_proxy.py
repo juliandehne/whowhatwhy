@@ -3,6 +3,8 @@ import logging
 from delab.delab_enums import PLATFORM, LANGUAGE
 from .download_conversations_reddit import search_r_all
 from .download_conversations_twitter import download_conversations_tw
+from .download_timelines_reddit import download_timelines_reddit
+from .download_timelines_twitter import update_timelines_twitter
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +47,10 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                                   recent)
     else:
         search_r_all(query_string, request_id, topic_string, tweet_filter=tweet_filter)
+
+
+def download_timelines(simple_request_id, platform: PLATFORM):
+    if platform == PLATFORM.TWITTER:
+        update_timelines_twitter(simple_request_id)
+    if platform == PLATFORM.REDDIT:
+        download_timelines_reddit(simple_request_id)

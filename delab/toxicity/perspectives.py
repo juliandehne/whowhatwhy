@@ -1,8 +1,18 @@
+import logging
+import time
 from pathlib import Path
-
 import yaml
 from googleapiclient import discovery
 import os
+
+from delab.models import Tweet
+
+"""
+This is the implementation of the perspectives API
+
+"""
+
+logger = logging.getLogger(__name__)
 
 
 def get_client():
@@ -27,13 +37,31 @@ def get_client():
     return client
 
 
-class UkraineComment:
-    def __init__(self, text, language, conversation_id, platform):
-        self.toxicity_value = 0
-        self.text = text
-        self.language = language
-        self.conversation_id = conversation_id
-        self.platform = platform
+def compute_toxicity_for_text():
+    tweets = Tweet.objects.filter(toxic_value__isnull=True).all()
+    for tweet in tweets:
+        toxicity = get_toxicity(tweet.text)
+        tweet.toxic_value = toxicity
+        tweet.is_toxic = toxicity > 0.8
+        tweet.save(update_fields=["toxic_value", "is_toxic"])
 
-    def set_toxicity(self, toxicity):
-        self.toxicity_value = toxicity
+
+def get_toxicity(text):
+    toxicity = 0
+    client = get_client()
+    if len(text) > 1:
+        try:
+            analyze_request = {
+                'comment': {
+                    'text': text},
+                'requestedAttributes': {'SEVERE_TOXICITY': {}}
+            }
+            response = client.comments().analyze(body=analyze_request).execute()
+            if 'status_code' in response and response["status_code"] == 429:
+                logger.debug("toxicity download going to sleep for 60 because of api limit: {}".format(response))
+                time.sleep(60)
+            toxicity = response["attributeScores"]["SEVERE_TOXICITY"]["summaryScore"]["value"]
+            time.sleep(2)
+        except Exception as ex:
+            logger.error(ex)
+    return toxicity

@@ -5,21 +5,53 @@ from drf_renderer_xlsx.mixins import XLSXFileMixin
 from drf_renderer_xlsx.renderers import XLSXRenderer
 from rest_framework import renderers
 from rest_framework import serializers, viewsets
-# Serializers define the API representation.
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from delab.corpus.filter_conversation_trees import get_conversation_trees
-from delab.models import Tweet, TweetAuthor, TWCandidate, ModerationCandidate2, ModerationRating, SimpleRequest, \
-    TweetSequence, MissingTweets
-from .api_util import get_file_name, get_all_conversation_ids
-from .conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
+from delab.models import Tweet, TweetAuthor, SimpleRequest, \
+    TweetSequence, MissingTweets, ConversationFlow
+from ..api_util import get_file_name, get_all_conversation_ids, PassthroughRenderer, TabbedTextRenderer
+from ..conversation_zip_renderer import create_zip_response_conversation, create_full_zip_response_conversation
+from ..flow_renderer import render_longest_flow_txt
+from ...corpus.filter_sequences import compute_conversation_flows
 
-"""
 
-LOOK at the README to see all the different endpoints implemented as a way to get the downloaded tweets
-"""
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TweetAuthor
+        # fields = '__all__'
+        fields = ['id', 'name']
+
+
+class TweetTextSerializer(serializers.ModelSerializer):
+    tw_author = AuthorSerializer()
+
+    class Meta:
+        model = Tweet
+        fields = ['text', 'id', 'tw_author', 'created_at']
+
+
+class ConversationFlowSerializer(serializers.ModelSerializer):
+    tweets = TweetTextSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ConversationFlow
+        fields = ['id', 'flow_name', 'conversation_id', 'tweets']
+
+
+# ViewSets define the view behavior.
+class ConversationFlowViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ConversationFlowSerializer
+
+    # filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    def get_queryset(self):
+        conversation_id = self.kwargs["conversation_id"]
+        # this is a side_effect, I am not sure is a good idea
+        compute_conversation_flows(conversation_id)
+        return ConversationFlow.objects.filter(conversation_id=conversation_id).all()
+
 
 tweet_fields_used = ['id', 'twitter_id', 'text', 'conversation_id', 'author_id', 'created_at',
                      'tn_parent_id',
@@ -69,18 +101,6 @@ class TweetSequenceStatViewSet(viewsets.ModelViewSet):
         return filename
 
 
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TweetAuthor
-        fields = '__all__'
-
-
-class CandidateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TWCandidate
-        fields = '__all__'
-
-
 class SimpleRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = SimpleRequest
@@ -107,39 +127,6 @@ class TweetSerializer(serializers.ModelSerializer):
         # fields = tweet_fields_used + ["tw_author__name", "tw_author__location"]
 
     # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
-
-
-class ModerationCandidateSerializer(serializers.ModelSerializer):
-    tweet = TweetSerializer()
-
-    class Meta:
-        model = ModerationCandidate2
-        fields = '__all__'
-
-
-class ModerationRatingSerializer(serializers.ModelSerializer):
-    mod_candidate = ModerationCandidateSerializer()
-
-    class Meta:
-        model = ModerationRating
-        fields = '__all__'
-
-
-class ModerationRatingTweetSet(viewsets.ModelViewSet):
-    serializer_class = ModerationRatingSerializer
-    queryset = ModerationRating.objects.none()
-
-    def get_queryset(self):
-        return ModerationRating.objects.select_related("mod_candidate").all()
-
-
-class TabbedTextRenderer(renderers.BaseRenderer):
-    # here starts the wonky stuff
-    media_type = 'text/plain'
-    format = 'txt'
-
-    def render(self, data, media_type=None, renderer_context=None):
-        return smart_text(data, encoding=self.charset)
 
 
 class NormXMLRenderer(renderers.BaseRenderer):
@@ -169,15 +156,6 @@ class TweetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         topic = self.kwargs["topic"]
         return get_tweet_queryset(topic)
-
-
-# ViewSets define the view behavior.
-class CandidateExcelViewSet(XLSXFileMixin, viewsets.ModelViewSet):
-    queryset = TWCandidate.objects.all()
-    serializer_class = CandidateSerializer
-    renderer_classes = (XLSXRenderer,)
-    filename = 'labeled_moderator_statements.xlsx'
-    filter_backends = [DjangoFilterBackend]
 
 
 # ViewSets define the view behavior.
@@ -266,17 +244,6 @@ def get_tabbed_conversation_view(request, topic, conversation_id, full):
     return response
 
 
-class PassthroughRenderer(renderers.BaseRenderer):
-    """
-        Return data as-is. View should supply a Response.
-    """
-    media_type = ''
-    format = ''
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        return data
-
-
 @api_view(['GET'])
 @renderer_classes([PassthroughRenderer])
 def get_zip_view(request, topic, conversation_id):
@@ -304,4 +271,14 @@ def get_xml_conversation_view(request, topic, conversation_id, full):
     response = Response(xml_dump)
     response['Content-Disposition'] = (
         'attachment; filename={0}'.format(get_file_name(conversation_id, full, ".xml")))
+    return response
+
+
+@api_view(['GET'])
+@renderer_classes([TabbedTextRenderer])
+def longest_flow_view(request, conversation_id):
+    result = render_longest_flow_txt(conversation_id)
+    response = Response(result)
+    response['Content-Disposition'] = (
+        'attachment; filename={0}'.format("conversation_flow_" + str(conversation_id) + ".txt"))
     return response

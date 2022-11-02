@@ -16,7 +16,6 @@ admin.site.register(TWCandidateIntolerance)
 admin.site.register(TWIntoleranceRating)
 admin.site.register(IntoleranceAnswer)
 admin.site.register(IntoleranceAnswerValidation)
-admin.site.register(TWCandidate)
 admin.site.register(ModerationCandidate2)
 admin.site.register(ModerationRating)
 

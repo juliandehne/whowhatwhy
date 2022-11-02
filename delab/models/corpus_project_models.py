@@ -115,44 +115,6 @@ class SimpleRequest(models.Model):
         return simple_request
 
 
-class TopicDictionary(models.Model):
-    """
-    This contains the pickled Vocabulary for the Topic Distances
-    """
-    word = models.CharField(max_length=200, unique=True)  # the word that needs embedding
-    ft_vector = models.TextField()  # the json serialized fasttext vector
-
-
-# Create your models here.
-class SADictionary(models.Model):
-    """ A with json serialized python dictionary that contains the vocabulary for the
-        sentiment analysis task that needs to be available at run_time in order to
-        process the tweet that is being classified
-    """
-
-    dictionary_string = models.TextField()
-    title = models.CharField(max_length=200)
-
-    @classmethod
-    def create(cls, dictionary_string, title):
-        """ creates a template for the saving the dictionary to db
-
-            Parameters
-            ----------
-            dictionary_string : string
-                the serialized python dictionary containing the vocabulary
-            title : string
-                a string describing what the dictionary is used for i.e. sentiment analysis
-
-            Returns
-            -------
-            SADictionary
-        """
-        sa_dictionary = cls(dictionary_string=dictionary_string, title=title)
-        # do something with the book
-        return sa_dictionary
-
-
 from django.utils.safestring import mark_safe
 
 
@@ -163,7 +125,6 @@ class TweetAuthor(models.Model):
     location = models.TextField(default="unknown")
     followers_count = models.IntegerField(default=0)
     has_timeline = models.BooleanField(null=True, blank=True)
-    timeline_bertopic_id = models.IntegerField(null=True, blank=True)
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the platform used (twitter or reddit)")
     is_moderator = models.BooleanField(default=False)
@@ -187,47 +148,19 @@ class Tweet(models.Model):
     topic = models.ForeignKey(TwTopic, on_delete=models.DO_NOTHING)
     sentiment_value = models.FloatField(null=True)  # should be mapped between 0 and 1 with 1.0 being very positive
     sentiment = models.TextField(null=True)  # a shortcut, true is very positive, false is very negative
+    toxic_value = models.FloatField(null=True)
+    is_toxic = models.BooleanField(null=True)
     conversation_id = models.BigIntegerField()
     simple_request = models.ForeignKey(SimpleRequest, on_delete=models.DO_NOTHING)
-    conversation_flow = models.ForeignKey(ConversationFlow, on_delete=models.CASCADE, null=True)
     language = models.TextField(default=LANGUAGE.ENGLISH, choices=LANGUAGE.choices,
                                 help_text="the language we are querying")
-    bertopic_id = models.IntegerField(null=True,
-                                      help_text="the bertopic id given by running a language based bertopic model")
-    bert_visual = models.TextField(null=True, blank=True,
-                                   help_text="the bertopic representation given by running a language based bertopic "
-                                             "model")
-    conversation_bertopic_id = models.IntegerField(null=True,
-                                                   help_text="the bertopic id given by running a conversation based "
-                                                             "bertopic model")
-    conversation_bert_visual = models.TextField(null=True, blank=True,
-                                                help_text="the bertopic representation given by running a "
-                                                          "conversation based bertopic model")
-    topic_bertopic_id = models.IntegerField(null=True,
-                                            help_text="the bertopic id given by running a delab topic based bertopic "
-                                                      "model")
-    topic_bert_visual = models.TextField(null=True, blank=True,
-                                         help_text="the bertopic representation given by running a delab topic based "
-                                                   "bertopic model")
 
     tn_parent = models.ForeignKey('self', to_field="twitter_id", null=True, on_delete=models.CASCADE,
                                   help_text="This holds the twitter_id (!) of the tweet that was responded to")
     tn_original_parent = models.BigIntegerField(blank=True, null=True)
     tn_parent_type = models.TextField(choices=TWEET_RELATIONSHIPS.choices,
                                       help_text="replied_to, retweeted or quoted", null=True, blank=True)
-    c_is_local_moderator = models.BooleanField(null=True,
-                                               help_text="True if it is the most moderating tweet in the "
-                                                         "conversation, based on m_index")
-    c_is_local_moderator_score = models.FloatField(null=True, help_text="m_index without weights")
-    h_is_moderator = models.BooleanField(null=True, help_text="True if a human thinks it is moderating")
-    h2_is_moderator = models.BooleanField(null=True, help_text="True if a second human thinks it is moderating")
 
-    c_is_moderator = models.BooleanField(null=True,
-                                         help_text="True if it is the most moderating tweet in the conversation, "
-                                                   "based on moderator-classifier")
-    c_is_moderator_score = models.FloatField(null=True, help_text="moderator-classifier trained model applied")
-
-    # objects = DataFrameManager()
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
     banned_at = models.DateTimeField(null=True)
@@ -262,7 +195,6 @@ class Timeline(models.Model):
     conversation_id = models.BigIntegerField(null=True)
     in_reply_to_user_id = models.BigIntegerField(null=True, blank=True)
     lang = models.TextField()
-    ft_vector_dump = models.BinaryField(null=True)  # stores the fasttext vectors corresponding to the binary field
     platform = models.TextField(default=PLATFORM.TWITTER, choices=PLATFORM.choices, null=True,
                                 help_text="the plattform used (twitter or reddit)")
 
@@ -283,30 +215,6 @@ class FollowerNetwork(models.Model):
 class TweetSequence(models.Model):
     tweets = models.ManyToManyField(Tweet)
     name = models.TextField(blank=True, null=True, unique=True)
-    u_conflict_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
-                                            help_text="Do you agree that there is a conflict in the sequence?")
-    u_conflict_type_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
-                                                 help_text="Do you agree that the conflict is not constructive?")
-    u_adversarial_positions_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
-                                                         help_text="Do you agree that the sequence displays opposing "
-                                                                   "positions?")
-    u_arguments_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
-                                             help_text="Do you agree that the participants offer arguments to support "
-                                                       "their positions?")
-    u_relationship_focus_rating = models.IntegerField(default=Likert.NOT_SURE, choices=Likert.choices, null=True,
-                                                      help_text="Do you agree that sequence deals with identity,"
-                                                                "relationships, persons, groups or other "
-                                                                "non-issue-related aspects?")
-    u_relationship_comment = models.TextField(blank=True, null=True,
-                                              help_text="If the answers to u_arguments and u_relationship_focus is "
-                                                        "not agree, plz comment what the sequence is about")
-    u_echo_chamber_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
-                                                help_text="Do you agree that sequence shows aspects of an echo "
-                                                          "chamber (repetition, exclusion of other views)?")
-    u_whataboutism_rating = models.IntegerField(default=Likert.STRONGLY_NOT_AGREE, choices=Likert.choices, null=True,
-                                                help_text="Do you agree that sequence shows whataboutism?")
-    u_moderation_type_rating = models.TextField(default=MODERATION.NO_NEED, choices=MODERATION.choices, null=True,
-                                                help_text="Which type of moderation would you recommend?")
 
 
 class MissingTweets(models.Model):
@@ -330,6 +238,9 @@ class ConversationAuthorMetrics(models.Model):
     n_posts = models.IntegerField()
     is_root_author = models.BooleanField()
 
+    class Meta:
+        unique_together = ('conversation_id', 'author')
+
 
 class ConversationFlowMetrics(models.Model):
     conversation_id = models.BigIntegerField()
@@ -342,3 +253,31 @@ class ConversationFlowMetrics(models.Model):
     is_ethos_attack = models.BooleanField(null=True)
     stance = models.FloatField(null=True, help_text="is in opposition -1 or in total agreement with the previous tweet")
 
+
+class MyImageField(models.ImageField):
+    def __str__(self):
+        return self.url
+
+
+class ConversationFlow(models.Model):
+    image = MyImageField(default='default.jpg', upload_to='sa_flow_pics')
+    tweets = models.ManyToManyField(Tweet)
+    flow_name = models.TextField(null=True, unique=True)
+    conversation_id = models.BigIntegerField(null=True)
+    longest = models.BooleanField(default=False)
+
+    @classmethod
+    def create(cls, image, flow_name):
+        conversation_flow = cls(image=image, flow_name=flow_name)
+        # do something with the book
+        return conversation_flow
+
+
+class Conversation(models.Model):
+    """
+    TODO at some point change all the other references to conversation_id to Foreign Keys
+    """
+    conversation_id = models.BigIntegerField(unique=True)
+    depth = models.IntegerField()
+    branching_factor = models.FloatField()
+    root_dominance = models.FloatField()

@@ -288,3 +288,9 @@ min_intolerance_coders_needed = 2
 min_intolerance_answer_coders_needed = 2
 
 performance_conversation_max_size = 100
+
+MAX_CANDIDATES_DUO_FLOW_ANALYSIS = 50
+MAX_DUO_FLOWS_FOR_ANALYSIS = 10
+
+MAX_CCCP_CONVERSATION_CANDIDATES = 1000
+CCCP_N_LARGEST = 10

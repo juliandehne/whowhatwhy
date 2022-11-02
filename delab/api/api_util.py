@@ -1,4 +1,6 @@
+from django.utils.encoding import smart_text
 from django_pandas.io import read_frame
+from rest_framework import renderers
 
 from delab.models import Tweet
 
@@ -10,6 +12,26 @@ def get_standard_field_names():
             "created_at",
             "in_reply_to_user_id",
             "text", "tw_author__name", "tw_author__location", "topic__title"]
+
+
+class PassthroughRenderer(renderers.BaseRenderer):
+    """
+        Return data as-is. View should supply a Response.
+    """
+    media_type = ''
+    format = ''
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
+class TabbedTextRenderer(renderers.BaseRenderer):
+    # here starts the wonky stuff
+    media_type = 'text/plain'
+    format = 'txt'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        return smart_text(data, encoding=self.charset)
 
 
 def get_file_name(conversation_id, full, suffix):
@@ -29,6 +51,12 @@ def get_all_conversation_ids(topic=None):
 
 
 def get_author_tweet_map(conversation_id):
+    """
+
+    @param conversation_id:
+    @return: tweet2author and author2tweetsmaps with the author being the author_id in the tweet table aka.
+    the twitter id for an author not the id of the tweetauthor table
+    """
     tweets = Tweet.objects.filter(conversation_id=conversation_id).only("author_id", "twitter_id")
     tweet2author = {}
     author2tweets = {}
@@ -65,8 +93,3 @@ def add_parents_to_frame(qs):
     df['in_reply_to_user_id'] = df['in_reply_to_user_id'].astype('Int64')
     return df
 
-
-class ConversationFilter:
-    max_orphan_count = 4
-    min_depth = 3
-    merge_subsequent = True
