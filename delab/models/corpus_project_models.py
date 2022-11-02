@@ -10,6 +10,10 @@ from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, NETWORKRELS, 
 
 
 class ConversationFlow(models.Model):
+    """
+    a ConversationFlow is defined as a reply chain from root to a leaf
+    master git branch contains proper implementations
+    """
     image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
 
     @classmethod
@@ -24,6 +28,12 @@ SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-Z
 
 
 def validate_exists(title):
+    """
+    helper function for the interaction with the UI
+    This checks if the same query has been sent before
+    @param title:
+    @return:
+    """
     try:
         simple_request = SimpleRequest.objects.filter(title=title).get()
         redirect_url = reverse('simple-request-proxy', kwargs={'pk': simple_request.pk})
@@ -39,6 +49,9 @@ def validate_exists(title):
 
 
 class TwTopic(models.Model):
+    """
+    TwTopic is a human labeled topic string that is used to group queries
+    """
     title = models.CharField(max_length=200)
 
     class Meta:
@@ -66,8 +79,8 @@ def get_sentinel_topic():
 
 class SimpleRequest(models.Model):
     """
-        the idea here is that for a given topic there
-        needs to be a query to get a certain part of the twitter conversations from the web.
+        the idea here is that for a given topic
+        there needs to be a query to get a certain part of the twitter conversations from the web.
         The title is a string that could be used as a twitter search query
     """
 

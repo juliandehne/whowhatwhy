@@ -19,26 +19,30 @@ logger = logging.getLogger(__name__)
 
 
 def download_conversations_tw(topic_string, query_string, request_id=-1, language=LANGUAGE.ENGLISH, max_data=False,
-                              fast_mode=False, conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
+                              conversation_filter=None, tweet_filter=None, platform=PLATFORM.TWITTER,
                               recent=True,
                               max_conversation_length=MAX_CONVERSATION_LENGTH,
                               min_conversation_length=MIN_CONVERSATION_LENGTH,
                               max_number_of_candidates=MAX_CANDIDATES):
+    """
+     @param recent: use the recent api from twitter which is faster and more current
+     @param conversation_filter: this takes on a partial function that rejects a TWConversationTree based on some criteria
+                                 before saving it
+     @param tweet_filter: this takes on a partial function that takes on a tweet, storing it and doing some additional task
+                         before returning the now persistent tweet
+     @param platform: reddit or twitter
+     @param max_data: if it is set to true, the powerset (all combinations) of the query words is computed
+     @param language: en, de or others
+     @param request_id: if > 0 this is the reference to the SimpleRequest table that is filled when using the website
+     @param query_string: the query used to find tweets in twitter
+     @param topic_string: the title of the the topic as string
+     @param max_number_of_candidates: the number of tweets used as candidates for a conversation
+     @param min_conversation_length: this restricts conversations with too few posts,
+            it should be noted that this is no flow analysis
+     @param max_conversation_length: this restricts conversations with too many posts
+     """
     if query_string is None or query_string.strip() == "":
         return False
-    """
-    :param recent: use the recent api from twitter which is faster and more current
-    :param topic_string:
-    :param query_string:
-    :param request_id:
-    :param language:
-    :param max_data:
-    :param fast_mode:
-    :param conversation_filter:
-    :param tweet_filter:
-    :param platform:
-    :return:
-    """
 
     simple_request, topic = set_up_topic_and_simple_request(query_string, request_id, topic_string)
 
@@ -57,7 +61,7 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
                 combination_counter += 1
                 new_query = " ".join(hashtag_set)
                 filter_conversations(twarc, new_query, topic, simple_request, platform, language=language,
-                                     fast_mode=fast_mode, conversation_filter=conversation_filter,
+                                     conversation_filter=conversation_filter,
                                      tweet_filter=tweet_filter, recent=recent,
                                      max_conversation_length=max_conversation_length,
                                      min_conversation_length=min_conversation_length,
@@ -66,7 +70,7 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
         filter_conversations(twarc, query_string, topic, simple_request, platform, language=language,
-                             fast_mode=fast_mode, conversation_filter=conversation_filter,
+                             conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter, recent=recent, max_conversation_length=max_conversation_length,
                              min_conversation_length=min_conversation_length,
                              max_number_of_candidates=max_number_of_candidates)
@@ -81,58 +85,54 @@ def filter_conversations(twarc,
                          min_conversation_length=MIN_CONVERSATION_LENGTH,
                          language=LANGUAGE.ENGLISH,
                          max_number_of_candidates=MAX_CANDIDATES,
-                         fast_mode=False,
                          conversation_filter=None,
                          tweet_filter=None, recent=True):
     """
-    :param recent:
-    :param twarc:
-    :param query:
-    :param topic:
-    :param simple_request:
-    :param platform:
-    :param max_conversation_length:
-    :param min_conversation_length:
-    :param language:
-    :param max_number_of_candidates:
-    :param fast_mode:
-    :param conversation_filter:
-    :param tweet_filter:
-    :return:
+    @see download_conversations_tw
+    @param twarc:
+    @param query:
+    @param topic:
+    @param simple_request:
+    @param platform:
+    @param max_conversation_length:
+    @param min_conversation_length:
+    @param language:
+    @param max_number_of_candidates:
+    @param conversation_filter:
+    @param tweet_filter:
+    @param recent:
+    @return:
     """
 
+    # download the tweets that fulfill the query as candidates for whole conversation trees
     candidates, n_pages = download_conversation_representative_tweets(twarc, query, max_number_of_candidates, language,
                                                                       recent=recent)
-
     downloaded_tweets = 0
     n_dismissed_candidates = 0
-    # tweet_lookup_request_counter = 250
-    # if recent:
-    #    tweet_lookup_request_counter = 400
 
+    # iterate through the candidates
     for candidate in candidates:
-        # assert that not more then tweets quota is downloaded
-        # tweet_lookup_request_counter = ensuring_tweet_lookup_quota(n_pages, recent, tweet_lookup_request_counter)
-        # tweet_lookup_request_counter -= 1
-        # assert that the conversation is long enough
         try:
             reply_count = candidate["public_metrics"]["reply_count"]
-
+            # apply the length constraints early
             if (min_conversation_length / 2) < reply_count < max_conversation_length:
                 logger.debug("selected candidate tweet {}".format(candidate))
                 conversation_id = candidate["conversation_id"]
 
+                # download the other tweets from the conversation as a TWConversationTree
                 root_node = download_conversation_as_tree(twarc, conversation_id, max_conversation_length)
 
+                # apply the conversation filter
                 if conversation_filter is not None:
                     root_node = conversation_filter(root_node)
 
+                # skip the processing if there was a problem with constructing the conversation tree
                 if root_node is None:
                     logger.error("found conversation_id that could not be processed")
                     continue
                 else:
+                    # some communication code in order to see what kinds of trees are being downloaded
                     flat_tree_size = root_node.flat_size()
-                    # tweet_lookup_request_counter -= flat_tree_size
                     logger.debug("found tree with size: {}".format(flat_tree_size))
                     logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
                     downloaded_tweets += flat_tree_size
@@ -240,6 +240,13 @@ def create_tree_from_raw_tweet_stream(conversation_id, max_replies, root_data, t
 
 
 def create_conversation_tree_from_tweet_data(conversation_id, root_tweet, tweets):
+    """
+    this function constructs a TwConversationTree structure out of the unsorted list of tweets
+    @param conversation_id:
+    @param root_tweet:
+    @param tweets:
+    @return: (TwConversationTree, [orphan_data])
+    """
     # sort tweets by creation date in order to speed up the tree construction
     tweets.sort(key=lambda x: x["created_at"], reverse=False)
     root = TreeNode(root_tweet, root_tweet["id"])
@@ -271,6 +278,13 @@ def check_conversation_max_size(max_replies, tweets):
 
 
 def get_priority_parent_from_references(references):
+    """
+    This constructs the parent relationship between the tweets in the tree.
+    It is primarily based on the reply to relationship but if this does not exist,
+    the retweet or quote rel is used
+    @param references:
+    @return:
+    """
     reference_types = [ref["type"] for ref in references]
     replied_tos = [int(ref["id"]) for ref in references if ref["type"] == TWEET_RELATIONSHIPS.REPLIED_TO]
     retweeted_tos = [int(ref["id"]) for ref in references if ref["type"] == TWEET_RELATIONSHIPS.RETWEETED]
@@ -301,8 +315,8 @@ def save_tree_to_db(root_node: TreeNode,
         :param tweet_filter: a function that takes a tweet model object and validates it (returns None if not)
 
     """
-    store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
     # TODO run some tree validations
+    store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
 
 
 def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
