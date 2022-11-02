@@ -26,13 +26,13 @@ def run():
         print(" computed flows for {}/{} conversations".format(count, len(to_compute_conversation_ids_flows)))
 
     print("STEP 3 compute toxicity for tweets")
-    compute_toxicity_for_text()
+    # compute_toxicity_for_text()
 
     print("STEP 4 compute the dual flows")
-    # dual_flows = get_flow_duos()
+    dual_flows = get_flow_duos(10)
 
     print("STEP 5: calculate conversation author metrics")
-    calculate_conversation_author_metrics()
+    # calculate_conversation_author_metrics()
 
     print("STEP 6: calculate cccp examples")
     # compute_all_cccp_authors()
