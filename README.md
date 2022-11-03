@@ -1,10 +1,8 @@
 # Delab
 
-Open Source Project to bundle political opinions in a concise and validated fashion and write a chatbot that acts as a
-moderator. Uses natural language processing to sort out inflammatory or overly positive comments. It also deals with
-other linguistic features in later stages.
+"The current approach to controlling insults and hate messages in social media goes no further than deleting the messages," explains project leader Dr Valentin Gold from the Center of Methods in Social Sciences at Göttingen University. "We therefore want to develop a virtual moderator that uses artificial intelligence to recognise when discussions in social media are becoming increasingly destructive in character. In addition, the virtual moderator should also intervene in the debate and help to prevent escalation. We plan to train the moderator for three languages: English, German, and Polish." Depending on the situation, various strategies for de-escalating conflicts in social media will be applied. Before the virtual moderator is used in real debates, the effectiveness of the different strategies will be tested experimentally in the laboratory.
 
-Delab is the temporary repository for the delab project of Uni Göttingen.
+This repository provides a framework for accessing Twitter/Reddit storing data for analysis, and building the Human-in-the-loop experiments as well as the chatterbot that moderates.
 
 # What makes this project different
 
