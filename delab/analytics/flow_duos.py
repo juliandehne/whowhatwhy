@@ -100,8 +100,10 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
     conversation_ids = get_all_conversation_ids()
     n_conversation_candidates = min(len(conversation_ids), n_conversation_candidates)
     conversation_ids = conversation_ids[:n_conversation_candidates]
-
+    conversation_count = 0
     for conversation_id in conversation_ids:
+        conversation_count += 1
+        logger.debug("processed {}/{} conversations".format(conversation_count, len(conversation_ids)))
         try:
             flows, longest = get_conversation_flows(conversation_id)
         except AssertionError as ae:
@@ -135,9 +137,11 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
                             if neg_tweet.toxic_value is not None:
                                 neg_toxicity += neg_tweet.toxic_value
                         neg_toxicity = neg_toxicity / len(tweets_2)
-                        tox_delta = pos_toxicity - neg_toxicity
+                        tox_delta = abs(pos_toxicity - neg_toxicity)
                         max_delta = max(max_delta, tox_delta)
                         flow_duos[(name, name_2)] = tox_delta
-                        print("current_highest_delta is {}, after processing acceptable {} flowduos".format(max_delta,
-                                                                                                            len(flow_duos)))
+                        # print("current_highest_delta is {}, after processing acceptable {} flowduos".format(max_delta,
+                        #                                                                                    len(flow_duos)))
+    logger.debug(
+        "current_highest_delta is {}, after processing acceptable {} flowduos".format(max_delta, len(flow_duos)))
     return flow_duos
