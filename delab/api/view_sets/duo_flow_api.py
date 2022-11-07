@@ -26,7 +26,7 @@ class FlowDuoTweetSet(viewsets.ModelViewSet):
     serializer_class = FLowDuoSerializer
 
     def get_queryset(self):
-        dual_flows = get_flow_duos(5)
+        dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS)
         return dual_flows
 
 
