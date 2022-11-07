@@ -177,7 +177,6 @@ def update_is_climate_author(names):
                 for tweet in climate_tweets:
                     tweet.is_climate_author = True
                     tweet.save(update_fields=["is_climate_author"])
-            print(missing_authors)
             download_authors(missing_authors)
 
 
