@@ -3,9 +3,15 @@ import logging
 from delab.api.api_util import get_all_conversation_ids
 from delab.corpus.filter_sequences import get_conversation_flows
 from delab.models import ConversationFlow
-from django_project.settings import MAX_CANDIDATES_DUO_FLOW_ANALYSIS
+from django_project.settings import MAX_CANDIDATES_DUO_FLOW_ANALYSIS, MAX_DUO_FLOWS_FOR_ANALYSIS
 
 logger = logging.getLogger(__name__)
+
+# settings concerning filtering flows
+min_length_flows = 10
+min_post_branching = 5
+min_pre_branching = 3
+max_delta = 0
 
 
 class FLowDuo:
@@ -31,6 +37,7 @@ class FlowDuoWindow(FLowDuo):
         self.tweets2 = sorted(list(self.tweets2), key=lambda x: x.created_at)
         flow_1_ids = []
         flow_2_ids = []
+        # convert tweet lists to id lists
         for tweet in self.tweets1:
             self.id2tweet[tweet.twitter_id] = tweet
             flow_1_ids.append(tweet.twitter_id)
@@ -45,7 +52,8 @@ class FlowDuoWindow(FLowDuo):
                 self.common_tweets.append(tweet)
             else:
                 break
-        assert flow_2_ids.index(intersection_id) == branching_index
+        assert flow_2_ids.index(
+            intersection_id) == branching_index, "the branching index should be the same for both branches"
         start_index_pre_branching = max(branching_index - pre_branch_length, 0)
         self.common_tweets = self.common_tweets[start_index_pre_branching:branching_index]
         end_index_post_branching = min(branching_index + 1 + post_branch_length, len(self.tweets1), len(self.tweets2))
@@ -61,10 +69,6 @@ def get_flow_duos(n):
     @return [FLowDuo]
     """
     # constraints
-    min_length_flows = 10
-    min_post_branching = 5
-    min_pre_branching = 3
-    max_delta = 0
 
     flow_duos = compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_branching)
     flow_duo_pairs = sorted(flow_duos.keys(), key=lambda x: flow_duos[x])
@@ -123,7 +127,7 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
                     tweet2_ids = set([tweet.twitter_id for tweet in tweets_2])
                     n_pre_branching = len(tweet_ids.intersection(tweet2_ids))
                     n_smaller_flow = min(len(tweet_ids), len(tweet2_ids))
-                    if n_pre_branching < min_pre_branching and (n_smaller_flow - n_pre_branching) < min_post_branching:
+                    if n_pre_branching < min_pre_branching or (n_smaller_flow - n_pre_branching) < min_post_branching:
                         continue
                     else:
                         pos_toxicity = 0
@@ -145,3 +149,18 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
     logger.debug(
         "current_highest_delta is {}, after processing acceptable {} flowduos".format(max_delta, len(flow_duos)))
     return flow_duos
+
+
+def flow_duos2flow_windows(dual_flows, post_branch_length=5, pre_branch_length=5):
+    result = []
+    for dual_flow in dual_flows:
+        window = FlowDuoWindow(dual_flow.name1, dual_flow.name2, dual_flow.toxic_delta, dual_flow.tweets1,
+                               dual_flow.tweets2, post_branch_length, pre_branch_length)
+        result.append(window)
+    return result
+
+
+def get_flow_duo_windows():
+    dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS)
+    result = flow_duos2flow_windows(dual_flows)
+    return result
