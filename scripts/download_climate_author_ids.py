@@ -1,9 +1,11 @@
-from delab.corpus.download_author_information import update_is_climate_author
+#from delab.corpus.download_author_information import update_is_climate_author
 import yaml
 from yaml.loader import SafeLoader
 
+
 def run():
-    update_is_climate_author(read_yaml('ger'))
+    #update_is_climate_author(read_yaml('en'))
+    print(read_yaml('en'))
 
 def read_yaml(lang):
     if lang == 'ger':
@@ -13,7 +15,7 @@ def read_yaml(lang):
     else:
         with open('twitter/strategic_communication/climate_change_en.yaml') as file:
             data = yaml.load(file, Loader=SafeLoader)
-            accounts = "\"climate change\" ("
+            accounts = []
     for key in data:
         data2 = data[key]
         for key2 in data2:
