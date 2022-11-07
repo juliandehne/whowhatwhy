@@ -1,7 +1,7 @@
 from rest_framework import serializers, viewsets
 
 from delab.api.view_sets.corpus_api import TweetSerializer, TweetTextSerializer
-from django_project.settings import MAX_DUO_FLOWS_FOR_ANALYSIS, FLOW_DUO_API_COUNT
+from django_project.settings import MAX_DUO_FLOWS_FOR_ANALYSIS
 from ...analytics.flow_duos import get_flow_duos, FlowDuoWindow
 
 
@@ -26,7 +26,7 @@ class FlowDuoTweetSet(viewsets.ModelViewSet):
     serializer_class = FLowDuoSerializer
 
     def get_queryset(self):
-        dual_flows = get_flow_duos(FLOW_DUO_API_COUNT)
+        dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS)
         return dual_flows
 
 
