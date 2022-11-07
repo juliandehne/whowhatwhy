@@ -43,7 +43,7 @@ organisations:
   - organisation:
       name: UN Climate Change
       twitter_account: UNFCCC
-      gouvernmental: 'true'
+      governmental: 'true'
 politicians:
   - politician:
       name: Patricia Espinosa C.

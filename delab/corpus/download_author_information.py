@@ -169,14 +169,21 @@ def update_is_climate_author(names):
     for id_batch in ids:
         if "data" in id_batch:
             missing_authors = []
+            missing_author_names =[]
             for author_payload in id_batch["data"]:
                 tw_id = author_payload["id"]
-                climate_tweets = Tweet.objects.filter(author_id=tw_id).all()
-                if climate_tweets.count() == 0:
+                tw_username = author_payload["username"]
+                climate_authors = TweetAuthor.objects.filter(twitter_id=tw_id).all()
+                if climate_authors.count() == 0:
                     missing_authors.append(tw_id)
-                for tweet in climate_tweets:
-                    tweet.is_climate_author = True
-                    tweet.save(update_fields=["is_climate_author"])
+                    missing_author_names.append(tw_username)
+                for tweetAuthor in climate_authors:
+                    tweetAuthor.is_climate_author = True
+                    tweetAuthor.save(update_fields=["is_climate_author"])
             download_authors(missing_authors)
+            update_is_climate_author(missing_author_names)
+
+#def set_climate_author_type():
+
 
 

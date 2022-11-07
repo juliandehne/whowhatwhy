@@ -66,15 +66,10 @@ class MODERATION(models.TextChoices):
     ARBITRATION = "by arbitration"
     NO_NEED = "no need"
 
-class ORGANISATION(models.TextChoices):
-    FRIDAYS_FOR_FUTURE = "fff"
-    GREENPEACE = "greenpeace"
-    GOVERNMENTAL = "governmental"
-    OTHER = "other"
 
-
-
-
-
-
-
+class CLIMATEAUTHOR(models.TextChoices):
+    ORGANISATION = "organisation"
+    JOURNALIST = "journalist"
+    ACTIVIST = "activist"
+    POLITICIAN = "politician"
+    SCIENTIST = "scientist"

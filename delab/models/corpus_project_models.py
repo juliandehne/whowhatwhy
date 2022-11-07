@@ -116,7 +116,8 @@ class TweetAuthor(models.Model):
     follower_downloaded = models.BooleanField(default=False)
     following_downloaded = models.BooleanField(default=False)
     is_organisation = models.BooleanField(null=True, default=False)
-    # is_climate_author = models.BooleanField(default=False)
+    is_climate_author = models.BooleanField(default=False)
+    #climate_author_type = models.TextField(null=True, blank=True)
 
 
 class Tweet(models.Model):
@@ -153,7 +154,8 @@ class Tweet(models.Model):
     publish = models.BooleanField(null=True, default=False,
                                   help_text="If this is checked, then the moderation suggestion would actually be "
                                             "send to twitter!")
-    is_climate_author = models.BooleanField(null=True, default=False)
+
+    # is_climate_author = models.BooleanField(null=True, default=False)
 
     class Meta:
         verbose_name = 'Tweet'
@@ -265,3 +267,22 @@ class Conversation(models.Model):
     depth = models.IntegerField()
     branching_factor = models.FloatField()
     root_dominance = models.FloatField()
+
+
+class ClimateAuthor(models.Model):
+    type = models.TextField(default=None)
+    name = models.TextField()
+    twitter_account = models.TextField()
+    governmental = models.BooleanField(default=False)
+
+
+"""    
+class Politician(ClimateAuthor):
+    party = models.TextField(default=None)
+    
+class Organisation(ClimateAuthor):
+    governmental = models.BooleanField(default=False)
+    
+class Journalist(ClimateAuthor):
+    medium = models.TextField(default=None)
+"""
