@@ -168,15 +168,16 @@ def update_is_climate_author(names):
     ids = twarc.user_lookup(users=names, usernames=True)
     for id_batch in ids:
         if "data" in id_batch:
+            missing_authors = []
             for author_payload in id_batch["data"]:
                 tw_id = author_payload["id"]
-                missing_authors = []
                 climate_tweets = Tweet.objects.filter(author_id=tw_id).all()
                 if climate_tweets.count() == 0:
                     missing_authors.append(tw_id)
                 for tweet in climate_tweets:
                     tweet.is_climate_author = True
                     tweet.save(update_fields=["is_climate_author"])
+            print(missing_authors)
             download_authors(missing_authors)
 
 
