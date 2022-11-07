@@ -8,21 +8,6 @@ from django.urls import reverse
 from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, NETWORKRELS, \
     TWEET_RELATIONSHIPS, MODERATION
 
-
-class ConversationFlow(models.Model):
-    """
-    a ConversationFlow is defined as a reply chain from root to a leaf
-    master git branch contains proper implementations
-    """
-    image = models.ImageField(default='default.jpg', upload_to='sa_flow_pics')
-
-    @classmethod
-    def create(cls, image):
-        conversation_flow = cls(image=image)
-        # do something with the book
-        return conversation_flow
-
-
 SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-ZÖÄÜ]+)*$)",
                                           'Please enter hashtags seperated by spaces!')
 
@@ -131,7 +116,7 @@ class TweetAuthor(models.Model):
     follower_downloaded = models.BooleanField(default=False)
     following_downloaded = models.BooleanField(default=False)
     is_organisation = models.BooleanField(null=True, default=False)
-    #is_climate_author = models.BooleanField(default=False)
+    # is_climate_author = models.BooleanField(default=False)
 
 
 class Tweet(models.Model):
@@ -169,7 +154,6 @@ class Tweet(models.Model):
                                   help_text="If this is checked, then the moderation suggestion would actually be "
                                             "send to twitter!")
     is_climate_author = models.BooleanField(null=True, default=False)
-
 
     class Meta:
         verbose_name = 'Tweet'
