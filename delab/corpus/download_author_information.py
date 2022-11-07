@@ -166,16 +166,17 @@ def deal_with_missing_authors(author_batch, twarc, userbatch):
 def update_is_climate_author(names):
     twarc = DelabTwarc()
     ids = twarc.user_lookup(users=names, usernames=True)
-    if "data" in ids:
-        for author_payload in ids["data"]:
-            tw_id = author_payload["id"]
-            climate_tweets = Tweet.objects.filter(twitter_id=tw_id).all()
-            for tweet in climate_tweets:
-                tweet.is_climate_author = True
-                tweet.save(update_fields=["is_climate_author"])
+    for id_batch in ids:
+        if "data" in id_batch:
+            for author_payload in id_batch["data"]:
+                tw_id = author_payload["id"]
+                missing_authors = []
+                climate_tweets = Tweet.objects.filter(author_id=tw_id).all()
+                if climate_tweets.count() == 0:
+                    missing_authors.append(tw_id)
+                for tweet in climate_tweets:
+                    tweet.is_climate_author = True
+                    tweet.save(update_fields=["is_climate_author"])
+            download_authors(missing_authors)
 
-    """
-    TODO: Errors abfangen
-    - Methode zum tsten finden
-    """
 

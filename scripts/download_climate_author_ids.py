@@ -1,11 +1,10 @@
-#from delab.corpus.download_author_information import update_is_climate_author
+from delab.corpus.download_author_information import update_is_climate_author
 import yaml
 from yaml.loader import SafeLoader
 
 
 def run():
-    #update_is_climate_author(read_yaml('en'))
-    print(read_yaml('en'))
+    update_is_climate_author(read_yaml('en'))
 
 def read_yaml(lang):
     if lang == 'ger':
