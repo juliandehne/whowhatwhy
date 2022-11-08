@@ -19,18 +19,41 @@ class FLowDuo:
         self.name1 = name1
         self.name2 = name2
         self.toxic_delta = toxic_delta
-        self.tweets1 = tweets1
-        self.tweets2 = tweets2
+        self.tweets1: list[Tweet] = tweets1
+        self.tweets2: list[Tweet] = tweets2
 
 
 class FlowDuoWindow(FLowDuo):
     def __init__(self, name1, name2, toxic_delta, tweets1, tweets2, post_branch_length, pre_branch_length):
         super().__init__(name1, name2, toxic_delta, tweets1, tweets2)
-        self.common_tweets = []
+        self.common_tweets: list[Tweet] = []
         self.id2tweet = {}
-        self.tweets1_post_branching = []
-        self.tweets2_post_branching = []
+        self.tweets1_post_branching: list[Tweet] = []
+        self.tweets2_post_branching: list[Tweet] = []
         self.initialize_window(post_branch_length, pre_branch_length)
+
+    def to_str(self):
+        result = ""
+        result += "DuoFlows: {} {} with toxic_delta".format(self.name1, self.name2, self.toxic_delta)
+        result += "\n\n"
+        result += "\n\n"
+        result += "Common Tweets:"
+        result += "\n\n"
+        for common_tweet in self.common_tweets:
+            result += common_tweet.text
+        result += "\n\n"
+        result += "\n\n"
+        result += "post-branching tweets flow 1:"
+        result += "\n\n"
+        for tweet in self.tweets1_post_branching:
+            result += tweet.text
+        result += "\n\n"
+        result += "\n\n"
+        result += "post-branching tweets flow 2:"
+        result += "\n"
+        for tweet in self.tweets2_post_branching:
+            result += tweet.text
+        return result
 
     def initialize_window(self, post_branch_length, pre_branch_length):
         self.tweets1 = sorted(list(self.tweets1), key=lambda x: x.created_at)
@@ -193,7 +216,7 @@ def flow_duos2flow_windows(dual_flows, post_branch_length=5, pre_branch_length=5
     return result
 
 
-def get_flow_duo_windows(metric=DUOFLOW_METRIC.TOXICITY):
+def get_flow_duo_windows(metric=DUOFLOW_METRIC.SENTIMENT):
     dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS, metric)
     result = flow_duos2flow_windows(dual_flows)
     return result

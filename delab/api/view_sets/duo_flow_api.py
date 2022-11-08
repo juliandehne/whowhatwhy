@@ -1,8 +1,11 @@
 from rest_framework import serializers, viewsets
+from rest_framework.decorators import api_view, renderer_classes
 
+from delab.api.flow_renderer import render_duo_flows
 from delab.api.view_sets.corpus_api import TweetSerializer, TweetTextSerializer
 from django_project.settings import MAX_DUO_FLOWS_FOR_ANALYSIS
-from ...analytics.flow_duos import get_flow_duos, FlowDuoWindow, flow_duos2flow_windows, get_flow_duo_windows
+from delab.api.api_util import PassthroughRenderer
+from ...analytics.flow_duos import get_flow_duos, get_flow_duo_windows
 
 
 class FLowDuoSerializer(serializers.Serializer):
@@ -38,3 +41,7 @@ class FlowDuoWindowTweetSet(viewsets.ModelViewSet):
         return result
 
 
+@api_view(['GET'])
+@renderer_classes([PassthroughRenderer])
+def get_duo_flow_zip(request):
+    return render_duo_flows()
