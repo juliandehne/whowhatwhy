@@ -66,6 +66,7 @@ class MODERATION(models.TextChoices):
     ARBITRATION = "by arbitration"
     NO_NEED = "no need"
 
+
 class ORGANISATION(models.TextChoices):
     FRIDAYS_FOR_FUTURE = "fff"
     GREENPEACE = "greenpeace"
@@ -73,8 +74,6 @@ class ORGANISATION(models.TextChoices):
     OTHER = "other"
 
 
-
-
-
-
-
+class DUOFLOW_METRIC(models.TextChoices):
+    TOXICITY = "toxicity"
+    SENTIMENT = "sentiment"

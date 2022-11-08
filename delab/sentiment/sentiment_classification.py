@@ -11,9 +11,11 @@ from delab.sentiment.sentiment_analysis_ger import classify_german_sentiments
 
 def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
     if simple_request_id < 0:
-        tweets = Tweet.objects.filter(Q(language=language) &
-                                      (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(
-            sentiment="failed_analysis")).all()
+        # tweets = Tweet.objects.filter(Q(language=language) &
+        #                              (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(
+        #    sentiment="failed_analysis")).all()
+        tweets = Tweet.objects.filter(language=language, sentiment_value__isnull=True).exclude(
+            sentiment="failed_analysis").all()
     else:
         tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) & Q(language=language) &
                                       (Q(sentiment=None) | Q(sentiment_value=None)) &
