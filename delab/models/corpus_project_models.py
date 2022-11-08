@@ -6,7 +6,7 @@ from django.db.models import UniqueConstraint
 from django.urls import reverse
 
 from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, NETWORKRELS, \
-    TWEET_RELATIONSHIPS, MODERATION
+    TWEET_RELATIONSHIPS, MODERATION, DUOFLOW_METRIC
 
 SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-ZÖÄÜ]+)*$)",
                                           'Please enter hashtags seperated by spaces!')

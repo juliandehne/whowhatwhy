@@ -2,16 +2,16 @@ import logging
 
 from delab.api.api_util import get_all_conversation_ids
 from delab.corpus.filter_sequences import get_conversation_flows
-from delab.models import ConversationFlow
+from delab.models import ConversationFlow, Tweet
 from django_project.settings import MAX_CANDIDATES_DUO_FLOW_ANALYSIS, MAX_DUO_FLOWS_FOR_ANALYSIS
+from delab.delab_enums import DUOFLOW_METRIC
 
 logger = logging.getLogger(__name__)
 
 # settings concerning filtering flows
-min_length_flows = 10
-min_post_branching = 5
+min_length_flows = 6
+min_post_branching = 3
 min_pre_branching = 3
-max_delta = 0
 
 
 class FLowDuo:
@@ -61,16 +61,17 @@ class FlowDuoWindow(FLowDuo):
         self.tweets2_post_branching = self.tweets2[branching_index + 1: end_index_post_branching]
 
 
-def get_flow_duos(n):
+def get_flow_duos(n, metric=DUOFLOW_METRIC.TOXICITY):
     """
     # isolate interesting structure one tweet before the branching, the last common tweet between both flows
     # and the following two tweets within the flows.
     @param n number of best flow duos, that have the biggest delta
+        @param metric:
     @return [FLowDuo]
     """
     # constraints
 
-    flow_duos = compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_branching)
+    flow_duos = compute_flow_duos(min_length_flows, min_post_branching, min_pre_branching, metric)
     flow_duo_pairs = sorted(flow_duos.keys(), key=lambda x: flow_duos[x])
     result = []
     for name1, name2 in flow_duo_pairs[:n]:
@@ -87,21 +88,29 @@ def get_flow_duos(n):
     return result
 
 
-def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_branching,
-                      n_conversation_candidates=MAX_CANDIDATES_DUO_FLOW_ANALYSIS):
+def compute_flow_duos(min_length_flows, min_post_branching, min_pre_branching, metric,
+                      n_conversation_candidates=MAX_CANDIDATES_DUO_FLOW_ANALYSIS, verbose=False):
     """
     This filters suitable duos of flows in the same conversation that share a  common reply chain but then branch out
     into one branch that is toxic and another that is not. The toxicity is computed by the perspectives api.
     The toxicity columns in the tweet table need to be filled for this to make sense.
-    @param n_conversation_candidates: the number of conversations that looked at as candidates
-    @param max_delta:
     @param min_length_flows:
     @param min_post_branching:
     @param min_pre_branching:
+    @param metric: instance of DUOFLOW_METRIC ("sentiment" or "toxicity")
+    @param n_conversation_candidates: the number of conversations that looked at as candidates
     @return {(name, name2) -> toxic_delta}
     """
+    max_delta = 0
     flow_duos = {}
     conversation_ids = get_all_conversation_ids()
+    if metric == DUOFLOW_METRIC.TOXICITY:
+        computed_sentiment_filter = {"toxic_value__isnull": True}
+    else:
+        computed_sentiment_filter = {"sentiment_value__isnull": True}
+    has_toxic_tweet_conversation_ids = set(
+        Tweet.objects.filter(**computed_sentiment_filter).values_list("conversation_id", flat=True).all())
+    conversation_ids = list(set(conversation_ids).intersection(has_toxic_tweet_conversation_ids))
     n_conversation_candidates = min(len(conversation_ids), n_conversation_candidates)
     conversation_ids = conversation_ids[:n_conversation_candidates]
     conversation_count = 0
@@ -132,16 +141,39 @@ def compute_flow_duos(max_delta, min_length_flows, min_post_branching, min_pre_b
                     else:
                         pos_toxicity = 0
                         for positive_tweet in tweets:
-                            if positive_tweet.toxic_value is not None:
-                                pos_toxicity += positive_tweet.toxic_value
+                            if metric == DUOFLOW_METRIC.TOXICITY:
+                                if positive_tweet.is_toxic and verbose:
+                                    print("adding a toxic value on plus")
+                                if positive_tweet.toxic_value is not None:
+                                    pos_toxicity += positive_tweet.toxic_value
+                            else:
+                                if positive_tweet.sentiment_value is not None:
+                                    pos_toxicity += positive_tweet.sentiment_value
                         pos_toxicity = pos_toxicity / len(tweets)
 
                         neg_toxicity = 0
-                        for neg_tweet in tweets:
-                            if neg_tweet.toxic_value is not None:
-                                neg_toxicity += neg_tweet.toxic_value
+                        for neg_tweet in tweets_2:
+                            if metric == DUOFLOW_METRIC.TOXICITY:
+                                if neg_tweet.is_toxic and verbose:
+                                    print("adding a toxic value on minus")
+                                if neg_tweet.toxic_value is not None:
+                                    neg_toxicity += neg_tweet.toxic_value
+                            else:
+                                if neg_tweet.sentiment_value is not None:
+                                    neg_toxicity += neg_tweet.sentiment_value
                         neg_toxicity = neg_toxicity / len(tweets_2)
-                        tox_delta = abs(pos_toxicity - neg_toxicity)
+
+                        if metric == DUOFLOW_METRIC.TOXICITY:
+                            tox_delta = abs(pos_toxicity - neg_toxicity)
+                        else:
+                            tox_delta = 0
+                            if (pos_toxicity <= 0 and neg_toxicity <= 0) or (pos_toxicity >= 0 and neg_toxicity >= 0):
+                                tox_delta = abs(abs(pos_toxicity) - abs(neg_toxicity))
+                            else:
+                                if pos_toxicity >= 0 >= neg_toxicity:
+                                    tox_delta = pos_toxicity + abs(neg_toxicity)
+                                if neg_toxicity >= 0 >= pos_toxicity:
+                                    tox_delta = neg_toxicity + abs(pos_toxicity)
                         max_delta = max(max_delta, tox_delta)
                         flow_duos[(name, name_2)] = tox_delta
                         # print("current_highest_delta is {}, after processing acceptable {} flowduos".format(max_delta,
@@ -160,7 +192,7 @@ def flow_duos2flow_windows(dual_flows, post_branch_length=5, pre_branch_length=5
     return result
 
 
-def get_flow_duo_windows():
-    dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS)
+def get_flow_duo_windows(metric=DUOFLOW_METRIC.TOXICITY):
+    dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS, metric)
     result = flow_duos2flow_windows(dual_flows)
     return result

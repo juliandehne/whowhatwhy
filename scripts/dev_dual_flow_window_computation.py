@@ -1,10 +1,12 @@
 from delab.analytics.flow_duos import get_flow_duos, get_flow_duo_windows
+from delab.delab_enums import DUOFLOW_METRIC
 from django_project.settings import MAX_DUO_FLOWS_FOR_ANALYSIS
 
 
 def run():
     # flow_duos = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS)
-    flow_duos = get_flow_duo_windows()
+    metric = DUOFLOW_METRIC.SENTIMENT
+    flow_duos = get_flow_duo_windows(metric)
     for duo in flow_duos:
         print("duos are structured {} to {} ".format(len(duo.tweets1), len(duo.tweets2)))
         assert duo.common_tweets is not None
