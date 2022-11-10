@@ -11,7 +11,7 @@ from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.models import TweetAuthor, Tweet, SimpleRequest, TwTopic
 from delab.tw_connection_util import get_praw
-from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
+from django_project.settings import MAX_CANDIDATES_REDDIT, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
 from util.abusing_strings import convert_to_hash
 
 """
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str,
-                 max_number_of_candidates=MAX_CANDIDATES,
+                 max_number_of_candidates=MAX_CANDIDATES_REDDIT,
                  max_conversation_length=MAX_CONVERSATION_LENGTH,
                  min_conversation_length=MIN_CONVERSATION_LENGTH,
                  language=LANGUAGE.ENGLISH, tweet_filter=None, recent=True):

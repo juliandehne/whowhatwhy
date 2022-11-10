@@ -26,6 +26,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     :param recent:
     :return:
     """
+    """
     if fast_mode:
         max_number_of_candidates = 100
         min_conversation_length = 3
@@ -34,17 +35,19 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
             download_conversations_tw(topic_string, query_string, request_id, language, max_data,
                                       fast_mode, conversation_filter, tweet_filter, platform,
                                       recent, min_conversation_length=min_conversation_length,
-                                      max_conversation_length=max_conversation_length,
                                       max_number_of_candidates=max_number_of_candidates)
         else:
             search_r_all(query_string, request_id, topic_string, min_conversation_length=min_conversation_length,
                          max_conversation_length=max_conversation_length,
                          max_number_of_candidates=max_number_of_candidates, tweet_filter=tweet_filter, recent=recent)
+    """
 
     if platform == PLATFORM.TWITTER:
-        download_conversations_tw(topic_string, query_string, request_id, language, max_data,
-                                  fast_mode, conversation_filter, tweet_filter, platform,
-                                  recent)
+        download_conversations_tw(topic_string=topic_string, query_string=query_string, request_id=request_id,
+                                  language=language, max_data=max_data,
+                                  conversation_filter=conversation_filter,
+                                  tweet_filter=tweet_filter, platform=platform,
+                                  recent=recent)
     else:
         search_r_all(query_string, request_id, topic_string, tweet_filter=tweet_filter)
 

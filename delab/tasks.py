@@ -11,6 +11,7 @@ from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 from .network.conversation_network import download_twitter_follower
+from .sentiment.sentiment_classification import update_tweet_sentiments
 from .toxicity.perspectives import compute_toxicity_for_text
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,6 @@ def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, lan
 
 @background(schedule=1)
 def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
-    from .sentiment.sentiment_classification import update_tweet_sentiments
     update_tweet_sentiments(simple_request_id, language)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())
