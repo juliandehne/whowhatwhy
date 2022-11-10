@@ -138,6 +138,7 @@ def filter_conversations(twarc,
                     downloaded_tweets += flat_tree_size
                     if min_conversation_length < flat_tree_size < max_conversation_length:
                         save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
+                                        candidate_id=candidate["id"],
                                         tweet_filter=tweet_filter)
                         logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
                         # for debugging you can ascii art print the downloaded conversation_tree
@@ -302,7 +303,7 @@ def save_tree_to_db(root_node: TreeNode,
                     topic: TwTopic,
                     simple_request: SimpleRequest,
                     conversation_id: int,
-                    platform: PLATFORM,
+                    platform: PLATFORM, candidate_id=None,
                     tweet_filter=None):
     """ This method persist a conversation tree in the database
         Parameters
@@ -316,11 +317,11 @@ def save_tree_to_db(root_node: TreeNode,
 
     """
     # TODO run some tree validations
-    store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
+    store_tree_data(conversation_id, platform, root_node, simple_request, topic, candidate_id, tweet_filter)
 
 
 def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
-                    topic: TwTopic, tweet_filter):
+                    topic: TwTopic, candidate_id, tweet_filter):
     # before = dt.now()
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],

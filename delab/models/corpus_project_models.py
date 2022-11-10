@@ -155,6 +155,7 @@ class Tweet(models.Model):
                                             "send to twitter!")
     is_climate_author = models.BooleanField(null=True, default=False)
 
+
     class Meta:
         verbose_name = 'Tweet'
         verbose_name_plural = 'Tweets'
