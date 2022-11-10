@@ -31,8 +31,8 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
                                "request_id": simple_request_id,
                                "language": language,
                                "max_data": max_data,
-                               "fast_mode": fast_mode,
                                "platform": platform,
+                               "fast_mode": fast_mode,
                                "recent": False
                                }
         if topic_string == MODTOPIC2_WEBSITE:

@@ -77,7 +77,8 @@ def test_tweet_matches_dict(query, tweet):
         query = query[:index_original_query_end]
     keywords = query.replace("(", "").replace(")", "").replace("-", "").replace("\"", "")
     for item in keywords.split(" "):
-        if item in tweet.text:
+        item = item.lower().strip()
+        if item in tweet.text.lower():
             contained = contained and True
         else:
             contained = False
