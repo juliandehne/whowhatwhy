@@ -7,6 +7,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from delab.models import Tweet
 from delab.delab_enums import LANGUAGE
 from delab.sentiment.sentiment_analysis_ger import classify_german_sentiments
+from util.abusing_lists import batch
 
 
 def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
@@ -14,21 +15,23 @@ def update_tweet_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
         # tweets = Tweet.objects.filter(Q(language=language) &
         #                              (Q(sentiment=None) | Q(sentiment_value=None)) & ~Q(
         #    sentiment="failed_analysis")).all()
-        tweets = Tweet.objects.filter(language=language, sentiment_value__isnull=True).exclude(
+        tweets_all = Tweet.objects.filter(language=language, sentiment_value__isnull=True).exclude(
             sentiment="failed_analysis").all()
     else:
-        tweets = Tweet.objects.filter(Q(simple_request_id=simple_request_id) & Q(language=language) &
+        tweets_all = Tweet.objects.filter(Q(simple_request_id=simple_request_id) & Q(language=language) &
                                       (Q(sentiment=None) | Q(sentiment_value=None)) &
                                       ~Q(sentiment="failed_analysis")).all()
     # tweet_strings = tweets.values_list(["text"], flat=True)
     # print(tweet_strings[1:3])
-    tweet_strings = list(map(lambda x: x.text, tweets))
+    tweets_all = list(tweets_all)
+    for tweets in batch(tweets_all, 3000):
+        tweet_strings = list(map(lambda x: x.text, tweets))
 
-    predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
-    for tweet in tweets:
-        tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
-        tweet.sentiment_value = sentiment_values.get(tweet.text, None)
-    Tweet.objects.bulk_update(tweets, ["sentiment", "sentiment_value"])
+        predictions, sentiments, sentiment_values = classify_tweet_sentiment(tweet_strings)
+        for tweet in tweets:
+            tweet.sentiment = sentiments.get(tweet.text, "failed_analysis")
+            tweet.sentiment_value = sentiment_values.get(tweet.text, None)
+        Tweet.objects.bulk_update(tweets, ["sentiment", "sentiment_value"])
 
 
 def classify_tweet_sentiment(tweet_strings, verbose=False, language=LANGUAGE.ENGLISH):

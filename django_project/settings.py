@@ -16,6 +16,8 @@ import os
 import pathlib
 import sys
 
+from delab.delab_enums import DUOFLOW_METRIC
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -289,8 +291,9 @@ min_intolerance_answer_coders_needed = 2
 
 performance_conversation_max_size = 100
 
-MAX_CANDIDATES_DUO_FLOW_ANALYSIS = 50
-MAX_DUO_FLOWS_FOR_ANALYSIS = 10
+MAX_CANDIDATES_DUO_FLOW_ANALYSIS = 300
+MAX_DUO_FLOWS_FOR_ANALYSIS = 20
+CURRENT_DUO_FLOW_METRIC = DUOFLOW_METRIC.SENTIMENT
 
 MAX_CCCP_CONVERSATION_CANDIDATES = 1000
 CCCP_N_LARGEST = 10

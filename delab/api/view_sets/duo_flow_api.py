@@ -1,10 +1,10 @@
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import api_view, renderer_classes
 
+from delab.api.api_util import PassthroughRenderer
 from delab.api.flow_renderer import render_duo_flows
 from delab.api.view_sets.corpus_api import TweetSerializer, TweetTextSerializer
 from django_project.settings import MAX_DUO_FLOWS_FOR_ANALYSIS
-from delab.api.api_util import PassthroughRenderer
 from ...analytics.flow_duos import get_flow_duos, get_flow_duo_windows
 
 

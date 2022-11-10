@@ -3,13 +3,14 @@ import logging
 from delab.api.api_util import get_all_conversation_ids
 from delab.corpus.filter_sequences import get_conversation_flows
 from delab.models import ConversationFlow, Tweet
-from django_project.settings import MAX_CANDIDATES_DUO_FLOW_ANALYSIS, MAX_DUO_FLOWS_FOR_ANALYSIS
+from django_project.settings import MAX_CANDIDATES_DUO_FLOW_ANALYSIS, MAX_DUO_FLOWS_FOR_ANALYSIS, \
+    CURRENT_DUO_FLOW_METRIC
 from delab.delab_enums import DUOFLOW_METRIC
 
 logger = logging.getLogger(__name__)
 
 # settings concerning filtering flows
-min_length_flows = 6
+min_length_flows = 8
 min_post_branching = 3
 min_pre_branching = 3
 
@@ -34,25 +35,32 @@ class FlowDuoWindow(FLowDuo):
 
     def to_str(self):
         result = ""
-        result += "DuoFlows: {} {} with toxic_delta".format(self.name1, self.name2, self.toxic_delta)
+        result += "DuoFlows: {} {} with toxic_delta {}".format(self.name1, self.name2, self.toxic_delta)
         result += "\n\n"
         result += "\n\n"
         result += "Common Tweets:"
         result += "\n\n"
         for common_tweet in self.common_tweets:
-            result += common_tweet.text
+            result = self.write_tweet_text_with_author(common_tweet, result)
         result += "\n\n"
         result += "\n\n"
         result += "post-branching tweets flow 1:"
         result += "\n\n"
         for tweet in self.tweets1_post_branching:
-            result += tweet.text
+            result = self.write_tweet_text_with_author(tweet, result)
         result += "\n\n"
         result += "\n\n"
         result += "post-branching tweets flow 2:"
         result += "\n"
         for tweet in self.tweets2_post_branching:
-            result += tweet.text
+            result = self.write_tweet_text_with_author(tweet, result)
+        return result
+
+    def write_tweet_text_with_author(self, common_tweet, result):
+        author_name = str(common_tweet.author_id)
+        if common_tweet.tw_author is not None:
+            author_name = common_tweet.tw_author.name
+        result += author_name + ": " + common_tweet.text + "\n\n"
         return result
 
     def initialize_window(self, post_branch_length, pre_branch_length):
@@ -75,6 +83,9 @@ class FlowDuoWindow(FLowDuo):
                 self.common_tweets.append(tweet)
             else:
                 break
+        if (flow_2_ids.index(
+            intersection_id) != branching_index):
+            raise Exception("something wrong with flow duos")
         assert flow_2_ids.index(
             intersection_id) == branching_index, "the branching index should be the same for both branches"
         start_index_pre_branching = max(branching_index - pre_branch_length, 0)
@@ -84,7 +95,7 @@ class FlowDuoWindow(FLowDuo):
         self.tweets2_post_branching = self.tweets2[branching_index + 1: end_index_post_branching]
 
 
-def get_flow_duos(n, metric=DUOFLOW_METRIC.TOXICITY):
+def get_flow_duos(n, metric=CURRENT_DUO_FLOW_METRIC):
     """
     # isolate interesting structure one tweet before the branching, the last common tweet between both flows
     # and the following two tweets within the flows.
@@ -148,7 +159,7 @@ def compute_flow_duos(min_length_flows, min_post_branching, min_pre_branching, m
             continue
         candidate_flows = []
         for name, tweets in flows.items():
-            if len(tweets) > min_length_flows:
+            if len(tweets) < min_length_flows:
                 continue
             else:
                 candidate_flows.append((name, tweets))
@@ -216,7 +227,7 @@ def flow_duos2flow_windows(dual_flows, post_branch_length=5, pre_branch_length=5
     return result
 
 
-def get_flow_duo_windows(metric=DUOFLOW_METRIC.SENTIMENT):
+def get_flow_duo_windows(metric=CURRENT_DUO_FLOW_METRIC):
     dual_flows = get_flow_duos(MAX_DUO_FLOWS_FOR_ANALYSIS, metric)
     result = flow_duos2flow_windows(dual_flows)
     return result
