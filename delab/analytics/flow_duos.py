@@ -83,6 +83,8 @@ class FlowDuoWindow(FLowDuo):
                 self.common_tweets.append(tweet)
             else:
                 break
+        if intersection_id not in flow_2_ids:
+            raise Exception("something weird happened in the flow_duo window computation")
         if (flow_2_ids.index(
             intersection_id) != branching_index):
             raise Exception("something wrong with flow duos")
