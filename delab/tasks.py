@@ -56,8 +56,8 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
 
 @background(schedule=1)
 def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=False, language=LANGUAGE.ENGLISH):
-    update_authors(simple_request_id, platform)
     if not fast_mode:
+        update_authors(simple_request_id, platform=platform)
         update_author_timelines(simple_request_id, platform, language,
                                 verbose_name="timeline_download_{}".format(simple_request_id),
                                 schedule=timezone.now())

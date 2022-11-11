@@ -154,7 +154,7 @@ class Tweet(models.Model):
                                   help_text="If this is checked, then the moderation suggestion would actually be "
                                             "send to twitter!")
     is_climate_author = models.BooleanField(null=True, default=False)
-
+    was_query_candidate = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Tweet'

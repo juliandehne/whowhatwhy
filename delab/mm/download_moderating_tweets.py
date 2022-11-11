@@ -71,6 +71,10 @@ def test_tweet_matches_dict(query, tweet):
     :param tweet:
     :return:
     """
+    if tweet.was_query_candidate:
+        return True
+
+    # check string matches
     contained = True
     if "is:reply" in query:
         index_original_query_end = query.index("is:reply")
