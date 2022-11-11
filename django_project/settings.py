@@ -278,7 +278,7 @@ LOGGING = {
 
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
-MAX_CANDIDATES = 850
+MAX_CANDIDATES = 3000
 MAX_CANDIDATES_REDDIT = 100
 MIN_CONVERSATION_LENGTH = 5
 MAX_CONVERSATION_LENGTH = 300  # tested for 300
