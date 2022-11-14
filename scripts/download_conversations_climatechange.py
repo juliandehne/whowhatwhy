@@ -13,7 +13,7 @@ CLIMATE_AUTHOR_PROJECT = 'clima_strat_comm_author_project'
 
 def run():
     #download_conversations('Klimawandel',read_yaml('ger'),
-     #                     language=LANGUAGE.GERMAN, platform= PLATFORM.TWITTER)
+     #                    language=LANGUAGE.GERMAN, platform= PLATFORM.TWITTER)
     download_conversations(CLIMATE_AUTHOR_PROJECT, read_yaml('en'), language=LANGUAGE.ENGLISH,
                            platform=PLATFORM.TWITTER)
 

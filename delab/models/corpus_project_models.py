@@ -117,7 +117,7 @@ class TweetAuthor(models.Model):
     following_downloaded = models.BooleanField(default=False)
     is_organisation = models.BooleanField(null=True, default=False)
     is_climate_author = models.BooleanField(default=False)
-    #climate_author_type = models.TextField(null=True, blank=True)
+    climate_author_type = models.TextField(default="none", null=True)
 
 
 class Tweet(models.Model):
@@ -271,8 +271,8 @@ class Conversation(models.Model):
 
 class ClimateAuthor(models.Model):
     type = models.TextField(default=None)
-    name = models.TextField()
-    twitter_account = models.TextField()
+    name = models.TextField(default=None)
+    twitter_account = models.TextField(default=None)
     governmental = models.BooleanField(default=False)
 
 

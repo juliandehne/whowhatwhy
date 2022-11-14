@@ -20,7 +20,6 @@ activists:
   - activist:
       name: Rebecca Solnit
       twitter_account: RebeccaSolnit
-
 journalists:
   - journalist:
       name: Somini Sengupta
@@ -61,15 +60,6 @@ scientists:
   - scientist:
       name: Ulf Moslener
       twitter_account: UlfMoslener
-  - scientist:
-      name:
-      twitter_account:
-  - scientist:
-      name:
-      twitter_account:
-  - scientist:
-      name:
-      twitter_account:
 
 
 

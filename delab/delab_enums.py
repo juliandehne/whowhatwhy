@@ -69,6 +69,7 @@ class MODERATION(models.TextChoices):
 
 class CLIMATEAUTHOR(models.TextChoices):
     ORGANISATION = "organisation"
+    NGO = "non-governmental organisation"
     JOURNALIST = "journalist"
     ACTIVIST = "activist"
     POLITICIAN = "politician"
