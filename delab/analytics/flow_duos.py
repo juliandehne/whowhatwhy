@@ -85,8 +85,8 @@ class FlowDuoWindow(FLowDuo):
                 self.common_tweets.append(tweet)
             else:
                 break
-        assert flow_2_ids.index(
-            intersection_id) == branching_index, "the branching index should be the same for both branches"
+        # assert flow_2_ids.index(
+        #    intersection_id) == branching_index, "the branching index should be the same for both branches"
         start_index_pre_branching = max(branching_index - pre_branch_length, 0)
         self.common_tweets = self.common_tweets[start_index_pre_branching:branching_index]
         end_index_post_branching = min(branching_index + 1 + post_branch_length, len(self.tweets1), len(self.tweets2))
