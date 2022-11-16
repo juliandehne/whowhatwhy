@@ -141,6 +141,25 @@ For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wi
 
 # Code Overview
 
+## folders
+
+- blog : originally this django project was created out of a tutorial for creating a blog. This is legacy code that might be useful if indeed a blog should be part of the project later on 
+- database: the postgres_db files are mounted here (as a docker volume)
+- delab: the main project folder
+- django_project: contains the main settings for different apps (blog, delab)
+- logs: contains the logging output
+- media: contains the static files like flow pictures
+- notebooks: contains jupyter notebooks for analysis 
+- scripts: contains the django runtime scripts for analyzing sentiment, testing features etc. 
+- scriptsh: contains bash utlity scripts
+- scriptspy: contains python scripts that are not django runscripts
+- scriptsql: contains sql scripts for analysis or other purposes
+- twitter: contains static files that help accessing twitter and also the hidden access yaml
+- users: another django app for managing users, not in use much
+- util: a general purpose python utility folder
+
+## important delab files
+
 - django_project contains the settings.py file which shows most decisions
 - delab/templates contains the different webpages
 - delab/models.py contains the tables and main concepts

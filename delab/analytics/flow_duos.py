@@ -16,6 +16,10 @@ min_pre_branching = 3
 
 
 class FLowDuo:
+    """
+    This class represents a couple of two Conversatoin Flows (reply chains from root to leaf) that
+    have a big difference in given measures such as sentiment or toxicity
+    """
     def __init__(self, name1, name2, toxic_delta, tweets1, tweets2):
         self.name1 = name1
         self.name2 = name2
@@ -25,6 +29,9 @@ class FLowDuo:
 
 
 class FlowDuoWindow(FLowDuo):
+    """
+    This cuts a window in a duo flow dataset for inspection and qualitative analysis.
+    """
     def __init__(self, name1, name2, toxic_delta, tweets1, tweets2, post_branch_length, pre_branch_length):
         super().__init__(name1, name2, toxic_delta, tweets1, tweets2)
         self.common_tweets: list[Tweet] = []

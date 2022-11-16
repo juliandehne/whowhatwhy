@@ -1,1 +1,0 @@
-Select * from delab_tweet t where t.topic_id = 12;
