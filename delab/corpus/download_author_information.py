@@ -183,10 +183,11 @@ def create_climate_authors(data):
                 if name == "":
                     continue
                 climate_author = ClimateAuthor(type=type, name=name, twitter_account=twitter_account, governmental=governmental)
-                climate_author.save()
-                accounts.append(twitter_account)
-    #update_is_climate_author(accounts)
-    #set_climate_author_type()
+                if not ClimateAuthor.objects.filter(name=climate_author.name).exists():
+                    climate_author.save()
+                    accounts.append(twitter_account)
+    update_is_climate_author(accounts)
+    set_climate_author_type()
 
 
 def update_is_climate_author(names):
@@ -214,9 +215,10 @@ def set_climate_author_type():
     climate_authors = TweetAuthor.objects.filter(is_climate_author=True).all()
     for author in climate_authors:
         author_name = author.name
-        cl_author = ClimateAuthor.objects.filter(name=author_name)
-        author_type = cl_author.type
-        if author_type == 'organisation' and cl_author.governmental():
+        cl_authors = ClimateAuthor.objects.filter(name=author_name).all()
+        for cl_author in cl_authors:
+            author_type = cl_author.type
+        if author_type == 'organisation' and not cl_author.governmental:
             author.climate_author_type = CLIMATEAUTHOR.NGO
             author.save()
         else:
