@@ -115,7 +115,8 @@ def filter_conversations(twarc,
         try:
             reply_count = candidate["public_metrics"]["reply_count"]
             # apply the length constraints early
-            if (min_conversation_length / 2) < reply_count < max_conversation_length:
+            if (min_conversation_length / 2) < reply_count < 100:
+
                 logger.debug("selected candidate tweet {}".format(candidate))
                 conversation_id = candidate["conversation_id"]
 

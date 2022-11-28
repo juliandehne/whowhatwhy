@@ -7,10 +7,11 @@ import time
 from django.db import IntegrityError
 from django.db.models import Q
 
-from delab.delab_enums import PLATFORM, CLIMATEAUTHOR
+from delab.delab_enums import PLATFORM, CLIMATEAUTHOR, LANGUAGE
 from delab.models import Tweet, TweetAuthor, ClimateAuthor
 from delab.tw_connection_util import DelabTwarc
 from util.abusing_lists import batch
+
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ def deal_with_missing_authors(author_batch, twarc, userbatch):
         download_user_batch(author_batch, twarc)
 
 
-def create_climate_authors(data):
+def create_climate_authors(data, lang):
     accounts = []
     for key in data:
         data2 = data[key]
@@ -182,12 +183,13 @@ def create_climate_authors(data):
                     governmental = True
                 if name == "":
                     continue
-                climate_author = ClimateAuthor(type=type, name=name, twitter_account=twitter_account, governmental=governmental)
+                climate_author = ClimateAuthor(type=type, name=name, twitter_account=twitter_account, governmental=governmental, language=lang)
                 if not ClimateAuthor.objects.filter(name=climate_author.name).exists():
                     climate_author.save()
                     accounts.append(twitter_account)
     update_is_climate_author(accounts)
     set_climate_author_type()
+
 
 
 def update_is_climate_author(names):
@@ -224,3 +226,9 @@ def set_climate_author_type():
         else:
             author.climate_author_type = author_type
             author.save()
+
+
+
+
+
+

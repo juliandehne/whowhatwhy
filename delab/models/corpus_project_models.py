@@ -274,15 +274,4 @@ class ClimateAuthor(models.Model):
     name = models.TextField(default=None)
     twitter_account = models.TextField(default=None)
     governmental = models.BooleanField(default=False)
-
-
-"""    
-class Politician(ClimateAuthor):
-    party = models.TextField(default=None)
-    
-class Organisation(ClimateAuthor):
-    governmental = models.BooleanField(default=False)
-    
-class Journalist(ClimateAuthor):
-    medium = models.TextField(default=None)
-"""
+    language = models.TextField(default="none", null=True)

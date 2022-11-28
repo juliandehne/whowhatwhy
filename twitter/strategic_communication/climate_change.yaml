@@ -38,7 +38,7 @@ activists:
   - activist:
       name: Kaffeecup
       twitter_account: kaffeecup
-organisations:
+rganisations:
   - organisation:
       name: Greenpeace
       twitter_account: greenpeace_de
