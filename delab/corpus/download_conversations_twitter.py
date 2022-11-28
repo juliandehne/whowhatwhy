@@ -115,8 +115,7 @@ def filter_conversations(twarc,
         try:
             reply_count = candidate["public_metrics"]["reply_count"]
             # apply the length constraints early
-            if (min_conversation_length / 2) < reply_count < 100:
-
+            if (min_conversation_length / 2) < reply_count < max_conversation_length:
                 logger.debug("selected candidate tweet {}".format(candidate))
                 conversation_id = candidate["conversation_id"]
 
@@ -139,6 +138,7 @@ def filter_conversations(twarc,
                     downloaded_tweets += flat_tree_size
                     if min_conversation_length < flat_tree_size < max_conversation_length:
                         save_tree_to_db(root_node, topic, simple_request, conversation_id, platform,
+                                        candidate_id=int(candidate["id"]),
                                         tweet_filter=tweet_filter)
                         logger.debug("found suitable conversation and saved to db {}".format(conversation_id))
                         # for debugging you can ascii art print the downloaded conversation_tree
@@ -303,7 +303,7 @@ def save_tree_to_db(root_node: TreeNode,
                     topic: TwTopic,
                     simple_request: SimpleRequest,
                     conversation_id: int,
-                    platform: PLATFORM,
+                    platform: PLATFORM, candidate_id=None,
                     tweet_filter=None):
     """ This method persist a conversation tree in the database
         Parameters
@@ -314,19 +314,20 @@ def save_tree_to_db(root_node: TreeNode,
         :param conversation_id: the conversation id of the candidate tweet that was found with the request
         :param platform: this was added to allow for a "fake" delab platform to come in
         :param tweet_filter: a function that takes a tweet model object and validates it (returns None if not)
-
+        :param candidate_id
     """
     # TODO run some tree validations
-    store_tree_data(conversation_id, platform, root_node, simple_request, topic, tweet_filter)
+    store_tree_data(conversation_id, platform, root_node, simple_request, topic, candidate_id, tweet_filter)
 
 
 def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
-                    topic: TwTopic, tweet_filter):
+                    topic: TwTopic, candidate_id : int, tweet_filter):
     # before = dt.now()
+    twitter_id = int(root_node.data["id"])
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],
                   simple_request=simple_request,
-                  twitter_id=int(root_node.data["id"]),
+                  twitter_id=twitter_id,
                   author_id=int(root_node.data["author_id"]),
                   conversation_id=int(conversation_id),
                   created_at=root_node.data["created_at"],
@@ -335,6 +336,7 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
                   platform=platform,
                   tn_parent_id=root_node.parent_id,
                   tn_parent_type=root_node.parent_type,
+                  was_query_candidate=candidate_id == twitter_id,
                   # tn_priority=priority,
                   language=root_node.data["lang"])
     try:
@@ -346,4 +348,4 @@ def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNod
     # recursively persisting the children in the database
     if not len(root_node.children) == 0:
         for child in root_node.children:
-            store_tree_data(conversation_id, platform, child, simple_request, topic, tweet_filter)
+            store_tree_data(conversation_id, platform, child, simple_request, topic, candidate_id, tweet_filter)
