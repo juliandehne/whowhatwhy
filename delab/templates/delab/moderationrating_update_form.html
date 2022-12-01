@@ -1,0 +1,36 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        {% for context_text in conversation %}
+            {% if context_text == text %}
+                <span class="text-success">
+                >> {{ context_text }}
+                </span>
+            {% else %}
+                >> {{ context_text }}
+            {% endif %}
+            </br>
+            </br>
+        {% endfor %}
+        <div>
+            <h4>Previous Ratings</h4>
+            Your Rating: <b>{{ user_rating }} </b>
+            <br>
+            Other Rating: <b>{{ other_rating }} </b>
+            <br>
+            <br>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Update your Moderation Rating!</legend>
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button id="submitButton" class="btn btn-outline-info" type="submit" value="Update">Post</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
+

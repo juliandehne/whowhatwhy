@@ -57,5 +57,11 @@ class ModerationRating(models.Model):
     u_moderating_part = models.TextField(null=True, blank=True,
                                          help_text="Please copy the part of the tweet that is moderating to here!")
 
+    # recoded = models.BooleanField
+
+
     def get_absolute_url(self):
         return reverse('delab-label-moderation2-proxy')
+
+    class Meta:
+        unique_together = ('mod_candidate', 'mod_coder')

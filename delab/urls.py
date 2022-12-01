@@ -18,6 +18,14 @@ urlpatterns = [
          name='delab-label-moderation2-proxy'),
     path('label/moderation2/<int:pk>', ModerationLabelView2.as_view(), name='delab-label-moderation2'),
 
+    path('moderation2/relabel/nomore', NoMoreRelabelCandidatesView.as_view(),
+         name='delab-relabel-moderation2-nomore'),
+    path('proxy/moderation2/relabel', moderation2_relabel_proxy,
+         name='delab-relabel-moderation2-proxy'),
+    path('relabel/moderation2/<int:pk>', ModerationRelabelView.as_view(), name='delab-relabel-moderation2'),
+
+
+
     # the patterns for the intolerance labeling
     path('label/intolerance/<int:pk>', TWCandidateIntoleranceLabelView.as_view(), name='delab-label-intolerance'),
     path('answer/nomore', NoMoreAnswersToValidateView.as_view(), name='delab-intolerance-answer-validation-nomore'),
