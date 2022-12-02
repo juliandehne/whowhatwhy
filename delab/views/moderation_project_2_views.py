@@ -2,7 +2,7 @@ from random import choice
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count
+from django.db.models import Count, Sum, Q
 from django.shortcuts import redirect
 from django.views.generic import (
     CreateView,
@@ -74,10 +74,15 @@ def moderation2_relabel_proxy(request):
     user_coded_candidates = ModerationCandidate2.objects \
         .annotate(num_coders=Count('moderationrating')) \
         .exclude(num_coders__lt=2) \
+        .filter(moderationrating__relabel_count=0) \
+        .exclude(moderationrating__u_mod_rating=0) \
+        .annotate(rating_sum=Sum('moderationrating__u_mod_rating')) \
+        .filter(Q(rating_sum=1) | Q(rating_sum=0)) \
         .filter(moderationrating__in=current_user.moderationrating_set.all()) \
         .prefetch_related('moderationrating_set') \
         .all()
-    candidate_id_list = []
+    """
+    candidate_id_list = []    
     for candidate in user_coded_candidates:
         other_rating = None
         user_rating = None
@@ -91,9 +96,10 @@ def moderation2_relabel_proxy(request):
                     or (other_rating.u_mod_rating > 0 > user_rating.u_mod_rating):
                 # candidate_id_list.append(candidate.id)
                 candidate_id_list.append(user_rating.id)
-
+    """
     # candidates = ModerationCandidate2.objects.filter(id__in=candidate_id_list).all()
-    candidates = ModerationRating.objects.filter(id__in=candidate_id_list).all()
+
+    candidates = ModerationRating.objects.filter(mod_candidate__in=user_coded_candidates, mod_coder=current_user).all()
 
     if len(candidates) == 0:
         # raise Http404("There seems no more data to label!")
@@ -122,13 +128,12 @@ class ModerationRelabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin)
         return initial
     """
 
-    """
     def form_valid(self, form):
-        form.instance.mod_coder = self.request.user
+        # form.instance.mod_coder = self.request.user
         # form.instance.mod_candidate_id = self.request.resolver_match.kwargs['pk']
         # candidate = ModerationCandidate2.objects.filter(id=form.instance.candidate_id).get()
+        form.instance.relabel_count = form.instance.relabel_count + 1
         return super().form_valid(form)
-    """
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(ModerationRelabelView, self).get_context_data(**kwargs)
