@@ -15,7 +15,9 @@ CLIMATE_AUTHOR_PROJECT = 'clima_strat_comm_author_project'
 def run():
     authors = ClimateAuthor.objects.all()
     for author in authors:
+        lang = LANGUAGE.ENGLISH
+        if author.language == 'de':
+            lang = LANGUAGE.GERMAN
         download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
-                               query_string="(\"climate change\" OR Klimawandel) from:" + author.twitter_account,
-                               language=LANGUAGE.GERMAN)
-
+                               query_string="(\"climate change\" OR Klimawandel OR \"climate justice\" OR Klimagerechtigkeit) from:" + author.twitter_account,
+                               language=lang)

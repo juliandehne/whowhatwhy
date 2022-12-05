@@ -38,7 +38,7 @@ activists:
   - activist:
       name: Kaffeecup
       twitter_account: kaffeecup
-rganisations:
+organisations:
   - organisation:
       name: Greenpeace
       twitter_account: greenpeace_de
@@ -214,6 +214,10 @@ rganisations:
       name: Alle Dörfer Bleiben
       twitter_account: AlleDoerfer
       governmental: 'false'
+  - organisation:
+      name: Letzte Generation
+      twitter_account: AufstandLastGen
+      governmental: 'false'
 journalists:
   - journalist:
       name: Kurt Stukenberg
@@ -327,16 +331,13 @@ politicians:
       twitter_account: Hornschild
       party: Klimaliste Erlangen
   - politician:
-      name: Klaus Müller
-      twitter_account: Klaus_Mueller
-      party: Bündnis 90/Die Grünen
+      name: Leonore Gewessler
+      twitter_account: lgewessler
+      party: Die Grünen
 scientists:
   - scientist:
       name: Volker Quaschning
       twitter_account: VQuaschning
-  - scientist:
-      name: Stefan Rahmstorf
-      twitter_account: rahmstorf
   - scientist:
       name: Özden Terli
       twitter_account: TerliWetter

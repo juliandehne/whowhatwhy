@@ -216,16 +216,16 @@ def update_is_climate_author(names):
 def set_climate_author_type():
     climate_authors = TweetAuthor.objects.filter(is_climate_author=True).all()
     for author in climate_authors:
-        author_name = author.name
-        cl_authors = ClimateAuthor.objects.filter(name=author_name).all()
+        author_screen_name = author.screen_name
+        cl_authors = ClimateAuthor.objects.filter(twitter_account=author_screen_name).all()
         for cl_author in cl_authors:
             author_type = cl_author.type
-        if author_type == 'organisation' and not cl_author.governmental:
-            author.climate_author_type = CLIMATEAUTHOR.NGO
-            author.save()
-        else:
-            author.climate_author_type = author_type
-            author.save()
+            if author_type == 'organisation' and not cl_author.governmental:
+                author.climate_author_type = CLIMATEAUTHOR.NGO
+                author.save()
+            else:
+                author.climate_author_type = author_type
+                author.save()
 
 
 
