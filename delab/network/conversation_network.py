@@ -281,7 +281,8 @@ def compute_author_interaction_graph(conversation_id):
                 for reply_author, _, in_attr in in_edges:
                     if in_attr["label"] == "author_of":
                         assert reply_author in author_ids
-                        G2.add_edge(a, reply_author)
+                        if a != reply_author:
+                            G2.add_edge(a, reply_author)
 
     return G2
 

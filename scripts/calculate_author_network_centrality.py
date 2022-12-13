@@ -7,7 +7,7 @@ from random import Random
 import networkx as nx
 
 from delab.api.api_util import get_all_conversation_ids
-from delab.models import Tweet
+from delab.models import Tweet, ConversationAuthorMetrics
 from delab.network.conversation_network import compute_author_interaction_graph, get_root_author, \
     paint_bipartite_author_graph, compute_author_graph
 from matplotlib import pyplot as plt
@@ -43,6 +43,24 @@ def run():
                     width=0.75,
                     edgecolors='gray')
             plt.show(block=False)
+
+        katz_centrality = nx.katz_centrality(author_interaction_graph)
+        try:
+            betweenness_centrality = nx.betweenness_centrality(author_interaction_graph)
+        except ValueError:
+            betweenness_centrality = {}
+
+        author_ids = set(
+            Tweet.objects.filter(conversation_id=conversation_id).values_list("author_id", flat=True).all())
+        for author_id in author_ids:
+            closeness_centrality = nx.closeness_centrality(author_interaction_graph, author_id)
+
+            metric = ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id).filter(
+                author__twitter_id=author_id).get()
+            metric.closeness_centrality = closeness_centrality
+            metric.betweenness_centrality = betweenness_centrality.get(author_id, None)
+            metric.katz_centrality = katz_centrality.get(author_id, None)
+            metric.save(update_fields=["closeness_centrality", "betweenness_centrality", "katz_centrality"])
 
         if debug:
             break
