@@ -1,10 +1,12 @@
 import logging
+from itertools import combinations
 from time import sleep
 
 import django
+import matplotlib.pyplot as plt
 import networkx as nx
 from django.db.models import Exists, OuterRef
-from matplotlib import pyplot as plt
+from networkx.drawing.nx_pydot import graphviz_layout
 
 from delab.corpus.download_author_information import download_authors
 from delab.delab_enums import PLATFORM
@@ -13,10 +15,6 @@ from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from django_project.settings import performance_conversation_max_size
 from util.abusing_lists import batch
-import matplotlib.pyplot as plt
-import networkx as nx
-import pydot
-from networkx.drawing.nx_pydot import graphviz_layout
 
 logger = logging.getLogger(__name__)
 
@@ -260,6 +258,31 @@ def compute_author_graph_helper(G, conversation_id):
     for result_pair in author_tweet_pairs:
         G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
         G2.add_edge(result_pair.author_id, result_pair.twitter_id, label="author_of")
+    return G2
+
+
+def compute_author_interaction_graph(conversation_id):
+    author_ids = set(Tweet.objects.filter(conversation_id=conversation_id).values_list("author_id", flat=True).all())
+    # author_ids = [str(a) for a in author_ids]
+    G = compute_author_graph(conversation_id)
+    # author_graph_network = nx.projected_graph(G, author_ids)
+
+    G2 = nx.DiGraph()
+    G2.add_nodes_from(author_ids)
+
+    # author_pairs = combinations(author_ids, 2)
+    for a in author_ids:
+        tw1_out_edges = G.out_edges(a, data=True)
+        for _, tw1, out_attr in tw1_out_edges:
+            tw2_out_edges = G.out_edges(tw1, data=True)
+            for _, tw2, _ in tw2_out_edges:
+                in_edges = G.in_edges(tw2, data=True)
+                # since target already has a source, there can only be in-edges of type author_of
+                for reply_author, _, in_attr in in_edges:
+                    if in_attr["label"] == "author_of":
+                        assert reply_author in author_ids
+                        G2.add_edge(a, reply_author)
+
     return G2
 
 

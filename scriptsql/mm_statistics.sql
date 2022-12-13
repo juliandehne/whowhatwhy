@@ -25,4 +25,7 @@ where d.id not in (Select mod_candidate_id from delab_moderationrating where mod
 union
 (select count(d2.id) themtocode from delab_moderationcandidate2 d2
 where d2.id not in (Select mod_candidate_id from delab_moderationrating where mod_coder_id <> 1)
-    and d2.id in (Select mod_candidate_id from delab_moderationrating where mod_coder_id = 1))
+    and d2.id in (Select mod_candidate_id from delab_moderationrating where mod_coder_id = 1));
+
+
+select count(*) from delab_moderationrating;

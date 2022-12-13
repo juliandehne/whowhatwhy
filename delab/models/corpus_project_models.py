@@ -222,6 +222,9 @@ class ConversationAuthorMetrics(models.Model):
     pb_vision = models.FloatField(null=True)
     n_posts = models.IntegerField()
     is_root_author = models.BooleanField()
+    closeness_centrality = models.FloatField(null=True)
+    betweenness_centrality = models.FloatField(null=True)
+    katz_centrality = models.FloatField(null=True)
 
     class Meta:
         unique_together = ('conversation_id', 'author')
