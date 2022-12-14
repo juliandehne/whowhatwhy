@@ -12,12 +12,14 @@ from delab.network.conversation_network import compute_author_interaction_graph,
     paint_bipartite_author_graph, compute_author_graph
 from matplotlib import pyplot as plt
 
-debug = True
+debug = False
 
 
 def run():
     randomizer = Random()
     conversation_ids = get_all_conversation_ids()
+    calculated_ids = set(ConversationAuthorMetrics.objects.filter(katz_centrality__isnull=False).values_list("conversation_id", flat=True))
+    conversation_ids = list(set(conversation_ids) - calculated_ids)
     randomizer.shuffle(conversation_ids)
     count = 0
     records = []
@@ -54,13 +56,14 @@ def run():
             Tweet.objects.filter(conversation_id=conversation_id).values_list("author_id", flat=True).all())
         for author_id in author_ids:
             closeness_centrality = nx.closeness_centrality(author_interaction_graph, author_id)
-
-            metric = ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id).filter(
-                author__twitter_id=author_id).get()
-            metric.closeness_centrality = closeness_centrality
-            metric.betweenness_centrality = betweenness_centrality.get(author_id, None)
-            metric.katz_centrality = katz_centrality.get(author_id, None)
-            metric.save(update_fields=["closeness_centrality", "betweenness_centrality", "katz_centrality"])
+            if ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id).filter(
+                    author__twitter_id=author_id).exists():
+                metric = ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id).filter(
+                    author__twitter_id=author_id).get()
+                metric.closeness_centrality = closeness_centrality
+                metric.betweenness_centrality = betweenness_centrality.get(author_id, None)
+                metric.katz_centrality = katz_centrality.get(author_id, None)
+                metric.save(update_fields=["closeness_centrality", "betweenness_centrality", "katz_centrality"])
 
         if debug:
             break
