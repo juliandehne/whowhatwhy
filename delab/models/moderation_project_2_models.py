@@ -59,7 +59,8 @@ class ModerationRating(models.Model):
 
     relabel_count = models.IntegerField(default=0, help_text="the number of times this rating was changed")
     # recoded = models.BooleanField
-
+    breaks_social_norm_badly = models.BooleanField(default=False,
+                                                   help_text="This should be set to true if the tweet would be rated as moderating except for the fact that it is breaking social norms badly")
 
     def get_absolute_url(self):
         return reverse('delab-label-moderation2-proxy')
