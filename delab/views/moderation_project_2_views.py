@@ -41,7 +41,7 @@ def moderation2_label_proxy(request):
 
 class ModerationLabelView2(LoginRequiredMixin, CreateView, SuccessMessageMixin):
     model = ModerationRating
-    fields = ["u_mod_rating", "u_moderating_part"]
+    fields = ["u_mod_rating", "u_moderating_part", "breaks_social_norm_badly"]
 
     def get_initial(self):
         initial = super().get_initial()
@@ -112,7 +112,7 @@ def moderation2_relabel_proxy(request):
 class ModerationRelabelView(LoginRequiredMixin, UpdateView, SuccessMessageMixin):
     model = ModerationRating
     template_name = "delab/moderationrating_update_form.html"
-    fields = ["u_mod_rating", "u_moderating_part"]
+    fields = ["u_mod_rating", "u_moderating_part", "breaks_social_norm_badly"]
 
     def get_success_url(self):
         return reverse('delab-relabel-moderation2-proxy')
