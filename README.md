@@ -169,3 +169,6 @@ For a closer look, go to the [wiki page](https://github.com/juliandehne/delab/wi
 - delab/corpus contains the logic for downloading conversations in social media, espc. twitter
 - delab/nce contains the important logic for the basic prototype that answers intolerant tweets
 
+# users
+
+- add valentin to github
