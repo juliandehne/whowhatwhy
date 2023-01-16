@@ -269,3 +269,12 @@ class Conversation(models.Model):
     depth = models.IntegerField()
     branching_factor = models.FloatField()
     root_dominance = models.FloatField()
+
+
+class Mentions(models.Model):
+    # mentioner = models.ForeignKey(TweetAuthor, related_name="mentioner", on_delete=models.DO_NOTHING)
+    mentionee = models.ForeignKey(TweetAuthor, related_name="mentionee", on_delete=models.DO_NOTHING)
+    conversation_id = models.BigIntegerField()
+    tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
+
+

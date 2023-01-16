@@ -2,6 +2,7 @@ from django.utils.encoding import smart_text
 from django_pandas.io import read_frame
 from rest_framework import renderers
 
+from delab.delab_enums import PLATFORM
 from delab.models import Tweet
 
 
@@ -48,6 +49,14 @@ def get_all_conversation_ids(topic=None):
             "conversation_id",
             flat=True).all()
     result = list(result)
+    return result
+
+
+def get_all_twitter_conversation_ids():
+    result = Tweet.objects.filter(language__in=["en", "de"], platform=PLATFORM.TWITTER).distinct(
+        "conversation_id").values_list(
+        "conversation_id",
+        flat=True).all()
     return result
 
 
