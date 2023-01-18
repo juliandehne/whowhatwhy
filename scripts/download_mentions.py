@@ -1,5 +1,6 @@
 from delab.api.api_util import get_all_twitter_conversation_ids
 from delab.corpus.download_conversations_twitter import download_conversation_as_tree
+from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.models import Mentions, TweetAuthor, Tweet
 from delab.tw_connection_util import DelabTwarc
 
@@ -10,7 +11,10 @@ def run():
     c_with_downloaded_mentions = set(Mentions.objects.values_list("conversation_id", flat=True))
     conversation_ids = conversation_ids - c_with_downloaded_mentions
     for c_id in conversation_ids:
-        c_tree = download_conversation_as_tree(twarc, c_id, 1000000, root_data=None)
+        try:
+            c_tree = download_conversation_as_tree(twarc, c_id, 500, root_data=None)
+        except ConversationNotInRangeException:
+            continue
         mentions_map = retrieve_mentions(c_tree)
         for tweet_id, mentionee_ids in mentions_map.items():
             for mentionee_id in mentionee_ids:
