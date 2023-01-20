@@ -12,6 +12,7 @@ from delab.corpus.download_author_information import download_authors
 from delab.delab_enums import PLATFORM
 from delab.models import Tweet, TweetAuthor, FollowerNetwork, Mentions
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
+from delab.network.network_exceptions import ReplyGraphException
 from delab.tw_connection_util import DelabTwarc
 from django_project.settings import performance_conversation_max_size
 from util.abusing_lists import batch
@@ -244,10 +245,20 @@ def get_nx_conversation_tree(conversation_id, merge_subsequent=False):
 
 def get_mention_graph(conversation_id):
     g = compute_author_graph(conversation_id=conversation_id)
+
+    nodes = list(g.nodes(data=True))
+    if len(nodes) == 0:
+        raise ReplyGraphException(message="mention graph is malformed: no nodes")
+    for node in nodes:
+        if 'subset' not in node[1]:
+            raise ReplyGraphException(message="mention graph is malformed: subsets are not provided")
+
+    conversational_authors = [c for c, a in g.nodes(data=True) if a['subset'] == GRAPH.SUBSETS.AUTHORS]
     mentions = Mentions.objects.filter(conversation_id=conversation_id).all()
     for mention in mentions:
         author = mention.tweet.author_id
-        g.add_edge(author, mention.mentionee_id, label=GRAPH.LABELS.MENTIONS)
+        if author in conversational_authors and mention.mentionee.twitter_id in conversational_authors:
+            g.add_edge(author, mention.mentionee.twitter_id, label=GRAPH.LABELS.MENTIONS)
     return g
 
 
@@ -276,10 +287,10 @@ def compute_author_graph(conversation_id: int):
 def compute_author_graph_helper(G, conversation_id):
     author_tweet_pairs = Tweet.objects.filter(conversation_id=conversation_id).only("twitter_id", "author_id")
     G2 = nx.MultiDiGraph()
-    G2.add_nodes_from(G.nodes(data=True), subset="tweets")
-    G2.add_edges_from(G.edges(data=True), label="parent_of")
+    G2.add_nodes_from(G.nodes(data=True), subset=GRAPH.SUBSETS.TWEETS)
+    G2.add_edges_from(G.edges(data=True), label=GRAPH.LABELS.PARENT_OF)
     for result_pair in author_tweet_pairs:
-        G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
+        G2.add_node(result_pair.author_id, author=result_pair.author_id, subset=GRAPH.SUBSETS.AUTHORS)
         G2.add_edge(result_pair.author_id, result_pair.twitter_id, label=GRAPH.LABELS.AUTHOR_OF)
     return G2
 
