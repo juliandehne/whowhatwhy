@@ -196,12 +196,11 @@ def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
             nodes.append(row.twitter_id)
             G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
             if row.tn_parent_id is not None:
-                if row.tn_parent_id not in nodes:
+                if row.tn_parent_id not in nodes and row.tn_parent_id not in to_eliminate_nodes:
                     logger.error("conversation {} has no root_node".format(conversation_id))
-                assert row.tn_parent_id in nodes
                 if row.twitter_id in changed_nodes:
                     new_parent = changed_nodes[row.twitter_id]
-                    if new_parent is not None:
+                    if new_parent in nodes:
                         edges.append((new_parent, row.twitter_id))
                     else:
                         G.remove_node(row.twitter_id)
