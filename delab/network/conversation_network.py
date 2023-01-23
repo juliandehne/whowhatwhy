@@ -1,37 +1,24 @@
 import logging
-from itertools import combinations
 from time import sleep
 
 import django
-import matplotlib.pyplot as plt
 import networkx as nx
 from django.db.models import Exists, OuterRef
-from networkx.drawing.nx_pydot import graphviz_layout
+from matplotlib import pyplot as plt
 
 from delab.corpus.download_author_information import download_authors
 from delab.delab_enums import PLATFORM
-from delab.models import Tweet, TweetAuthor, FollowerNetwork, Mentions
+from delab.models import Tweet, TweetAuthor, FollowerNetwork
 from delab.network.DjangoTripleDAO import DjangoTripleDAO
-from delab.network.network_exceptions import ReplyGraphException
 from delab.tw_connection_util import DelabTwarc
 from django_project.settings import performance_conversation_max_size
 from util.abusing_lists import batch
+import matplotlib.pyplot as plt
+import networkx as nx
+import pydot
+from networkx.drawing.nx_pydot import graphviz_layout
 
 logger = logging.getLogger(__name__)
-
-
-class GRAPH:
-    class ATTRIBUTES:
-        CREATED_AT = "created_at"
-
-    class LABELS:
-        MENTIONS = "mentions"
-        PARENT_OF = "parent_of"
-        AUTHOR_OF = "author_of"
-
-    class SUBSETS:
-        TWEETS = "tweets"
-        AUTHORS = "authors"
 
 
 def download_twitter_follower(levels, n_conversations=-1):
@@ -209,12 +196,11 @@ def get_nx_conversation_graph(conversation_id, merge_subsequent=False):
             nodes.append(row.twitter_id)
             G.add_node(row.twitter_id, id=row.id, created_at=row.created_at)
             if row.tn_parent_id is not None:
-                if row.tn_parent_id not in nodes:
+                if row.tn_parent_id not in nodes and row.tn_parent_id not in to_eliminate_nodes:
                     logger.error("conversation {} has no root_node".format(conversation_id))
-                assert row.tn_parent_id in nodes
                 if row.twitter_id in changed_nodes:
                     new_parent = changed_nodes[row.twitter_id]
-                    if new_parent is not None:
+                    if new_parent in nodes:
                         edges.append((new_parent, row.twitter_id))
                     else:
                         G.remove_node(row.twitter_id)
@@ -243,25 +229,6 @@ def get_nx_conversation_tree(conversation_id, merge_subsequent=False):
     return tree
 
 
-def get_mention_graph(conversation_id):
-    g = compute_author_graph(conversation_id=conversation_id)
-
-    nodes = list(g.nodes(data=True))
-    if len(nodes) == 0:
-        raise ReplyGraphException(message="mention graph is malformed: no nodes")
-    for node in nodes:
-        if 'subset' not in node[1]:
-            raise ReplyGraphException(message="mention graph is malformed: subsets are not provided")
-
-    conversational_authors = [c for c, a in g.nodes(data=True) if a['subset'] == GRAPH.SUBSETS.AUTHORS]
-    mentions = Mentions.objects.filter(conversation_id=conversation_id).all()
-    for mention in mentions:
-        author = mention.tweet.author_id
-        if author in conversational_authors and mention.mentionee.twitter_id in conversational_authors:
-            g.add_edge(author, mention.mentionee.twitter_id, label=GRAPH.LABELS.MENTIONS)
-    return g
-
-
 def get_tweet_subgraph(conversation_graph):
     nodes = (
         node
@@ -287,37 +254,11 @@ def compute_author_graph(conversation_id: int):
 def compute_author_graph_helper(G, conversation_id):
     author_tweet_pairs = Tweet.objects.filter(conversation_id=conversation_id).only("twitter_id", "author_id")
     G2 = nx.MultiDiGraph()
-    G2.add_nodes_from(G.nodes(data=True), subset=GRAPH.SUBSETS.TWEETS)
-    G2.add_edges_from(G.edges(data=True), label=GRAPH.LABELS.PARENT_OF)
+    G2.add_nodes_from(G.nodes(data=True), subset="tweets")
+    G2.add_edges_from(G.edges(data=True), label="parent_of")
     for result_pair in author_tweet_pairs:
-        G2.add_node(result_pair.author_id, author=result_pair.author_id, subset=GRAPH.SUBSETS.AUTHORS)
-        G2.add_edge(result_pair.author_id, result_pair.twitter_id, label=GRAPH.LABELS.AUTHOR_OF)
-    return G2
-
-
-def compute_author_interaction_graph(conversation_id):
-    author_ids = set(Tweet.objects.filter(conversation_id=conversation_id).values_list("author_id", flat=True).all())
-    # author_ids = [str(a) for a in author_ids]
-    G = compute_author_graph(conversation_id)
-    # author_graph_network = nx.projected_graph(G, author_ids)
-
-    G2 = nx.DiGraph()
-    G2.add_nodes_from(author_ids)
-
-    # author_pairs = combinations(author_ids, 2)
-    for a in author_ids:
-        tw1_out_edges = G.out_edges(a, data=True)
-        for _, tw1, out_attr in tw1_out_edges:
-            tw2_out_edges = G.out_edges(tw1, data=True)
-            for _, tw2, _ in tw2_out_edges:
-                in_edges = G.in_edges(tw2, data=True)
-                # since target already has a source, there can only be in-edges of type author_of
-                for reply_author, _, in_attr in in_edges:
-                    if in_attr["label"] == GRAPH.LABELS.AUTHOR_OF:
-                        assert reply_author in author_ids
-                        if a != reply_author:
-                            G2.add_edge(a, reply_author)
-
+        G2.add_node(result_pair.author_id, author=result_pair.author_id, subset="authors")
+        G2.add_edge(result_pair.author_id, result_pair.twitter_id, label="author_of")
     return G2
 
 
@@ -365,7 +306,7 @@ def draw_author_conversation_dist(conversation_id):
 def paint_bipartite_author_graph(G2, root_node):
     # Specify the edges you want here
     red_edges = [(source, target, attr) for source, target, attr in G2.edges(data=True) if
-                 attr['label'] == GRAPH.LABELS.AUTHOR_OF]
+                 attr['label'] == 'author_of']
     # edge_colours = ['black' if edge not in red_edges else 'red'
     #                for edge in G2.edges()]
     black_edges = [edge for edge in G2.edges(data=True) if edge not in red_edges]
@@ -398,7 +339,7 @@ def paint_reply_graph(conversation_graph: nx.DiGraph):
 
 def add_attributes_to_plot(conversation_graph, pos, tree):
     labels = dict()
-    names = nx.get_node_attributes(conversation_graph, GRAPH.ATTRIBUTES.CREATED_AT)
+    names = nx.get_node_attributes(conversation_graph, 'created_at')
     for node in conversation_graph.nodes:
         labels[node] = f"{names[node]}\n{node}"
     nx.draw_networkx_labels(tree, labels=labels, pos=pos)
