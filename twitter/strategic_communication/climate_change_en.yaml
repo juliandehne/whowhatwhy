@@ -51,8 +51,26 @@ journalists:
       name: Benji Jones
       twitter_account: BenjiSJones
   - journalist:
+      name: Dana Nuccitelli
+      twitter_account: dana1981
+  - journalist:
       name: Simon Evans
       twitter_account: DrSimEvans
+  - journalist:
+      name: Assaad Razzouk
+      twitter_account: AssaadRazzouk
+  - journalist:
+      name: Rowan Hooper
+      twitter_account: rowhoop
+  - journalist:
+      name: Robin Lloyd
+      twitter_account: RobinLloyd99
+  - journalist:
+      name: Carl Zimmer
+      twitter_account: edyong209
+  - journalist:
+      name: Ed Yong
+      twitter_account: carlzimmer
 organisations:
   - organisation:
       name: Greenpeace
@@ -205,6 +223,12 @@ politicians:
   - politician:
       name: Graham Staurt MP
       twitter_account: grahamstuart
+  - politician:
+      name: Ilhan Omar
+      twitter_account: IlhanMN
+  - politician:
+      name: Lori Trahan
+      twitter_account: RepLoriTrahan
 scientists:
   - scientist:
       name: Prof Michael E. Mann
@@ -233,6 +257,24 @@ scientists:
   - scientist:
       name: Stefan Rahmstorf
       twitter_account: rahmstorf
-
-
-
+  - scientist:
+      name: Zeke Hausfather
+      twitter_account: hausfath
+  - scientist:
+      name: Ken Caldeira
+      twitter_account: KenCaldeira
+  - scientist:
+      name: NaomiOreskes
+      twitter_account: NaomiOreskes
+  - scientist:
+      name: Ed Hawkins
+      twitter_account: ed_hawkins
+  - scientist:
+      name: Peter Gleick
+      twitter_account: PeterGleick
+  - scientist:
+      name: Prof. Jason Box
+      twitter_account: climate_ice
+  - scientist:
+      name: Eric Topol
+      twitter_account: EricTopol
