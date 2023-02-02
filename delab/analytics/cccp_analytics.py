@@ -18,6 +18,7 @@ In this file measures to compute central, comprehensive and consistent author pa
 are bundled.
 """
 
+
 def calculate_conversation_author_metrics():
     """
     This computes the available measures like centrality or number of posts aggregated on the level of

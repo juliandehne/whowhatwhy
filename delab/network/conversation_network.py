@@ -2,9 +2,10 @@ import logging
 from time import sleep
 
 import django
+import matplotlib.pyplot as plt
 import networkx as nx
 from django.db.models import Exists, OuterRef
-from matplotlib import pyplot as plt
+from networkx.drawing.nx_pydot import graphviz_layout
 
 from delab.corpus.download_author_information import download_authors
 from delab.delab_enums import PLATFORM
@@ -13,10 +14,6 @@ from delab.network.DjangoTripleDAO import DjangoTripleDAO
 from delab.tw_connection_util import DelabTwarc
 from django_project.settings import performance_conversation_max_size
 from util.abusing_lists import batch
-import matplotlib.pyplot as plt
-import networkx as nx
-import pydot
-from networkx.drawing.nx_pydot import graphviz_layout
 
 logger = logging.getLogger(__name__)
 
