@@ -26,15 +26,15 @@ def run():
             lang = LANGUAGE.GERMAN
             download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
                                    query_string=words_de + "from:" + author.twitter_account,
-                                   language=lang)
+                                   language=lang, recent=False)
             download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
                                    query_string=words_de_unclear + "from:" + author.twitter_account,
-                                   language=lang)
+                                   language=lang, recent=False)
 
         else:
             download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
                                    query_string= words_en + "from:" + author.twitter_account,
-                                   language=lang)
+                                   language=lang, recent=False)
             download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
                                    query_string=words_en_unclear + "from:" + author.twitter_account,
-                                   language=lang)
+                                   language=lang, recent=False)
