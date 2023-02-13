@@ -3,6 +3,7 @@ from yaml.loader import SafeLoader
 
 from delab.corpus.download_conversations_proxy import download_conversations
 from delab.delab_enums import LANGUAGE, PLATFORM
+from delab.models import ClimateAuthor
 
 """ This is a django runscript, it can be started in the django home directory with
     $ python manage.py runscript [filename_no_ending]    
@@ -12,27 +13,28 @@ CLIMATE_AUTHOR_PROJECT = 'clima_strat_comm_author_project'
 
 
 def run():
-    # download_conversations('Klimawandel',read_yaml('ger'),
-    #                      language=LANGUAGE.GERMAN, platform= PLATFORM.TWITTER)
-    download_conversations(CLIMATE_AUTHOR_PROJECT, read_yaml('en'), language=LANGUAGE.ENGLISH,
-                           platform=PLATFORM.TWITTER)
+    words_en = "(\"climate change\" OR \"climate justice\" OR \"climate activism\" OR \"climate activist\" OR \"global warming\"OR \"greenhouse effect\" OR \"air pollution\" OR \"emissions\" OR \"climate crisis\")"
 
+    words_de = "(Klimawandel OR Klimagerechtigkeit OR Klimaktivismus OR Klimaaktivist OR Erderwärmung OR Klimakatastrophe OR Umweltverschmutzung OR Luftverschmutzung OR \"Zwei Grad Ziel\" OR Treibhauseffekt OR Emissionen OR Klimakrise)"
 
-def read_yaml(lang):
-    if lang == 'ger':
-        with open('twitter/strategic_communication/climate_change.yaml') as file:
-            data = yaml.load(file, Loader=SafeLoader)
-            accounts = "Klimawandel ("
-    else:
-        with open('twitter/strategic_communication/climate_change_en.yaml') as file:
-            data = yaml.load(file, Loader=SafeLoader)
-            accounts = "\"climate change\" ("
-    for key in data:
-        data2 = data[key]
-        for key2 in data2:
-            for key3 in key2:
-                values = list(key2[key3].values())
-                account_name = (values[1])
-                if account_name is not None and len(account_name) > 0:
-                    accounts += "from:" + account_name + " OR "
-    return accounts[:-4] + ")"
+    words_de_unclear = "(Nachhaltigkeit OR Luftqualität OR Biodiversität) KLima "
+    words_en_unclear = "(sustainability OR \"air qualitiy\" OR pollution OR biodiversity) climate "
+    authors = ClimateAuthor.objects.all()
+    for author in authors:
+        lang = LANGUAGE.ENGLISH
+        if author.language == 'de':
+            lang = LANGUAGE.GERMAN
+            download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
+                                   query_string=words_de + "from:" + author.twitter_account,
+                                   language=lang, recent=False)
+            download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
+                                   query_string=words_de_unclear + "from:" + author.twitter_account,
+                                   language=lang, recent=False)
+
+        else:
+            download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
+                                   query_string= words_en + "from:" + author.twitter_account,
+                                   language=lang, recent=False)
+            download_conversations(topic_string=CLIMATE_AUTHOR_PROJECT,
+                                   query_string=words_en_unclear + "from:" + author.twitter_account,
+                                   language=lang, recent=False)

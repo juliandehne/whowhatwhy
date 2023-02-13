@@ -26,7 +26,7 @@ def calculate_conversation_author_metrics():
     """
     conversation_ids = set(get_all_conversation_ids())
     to_compute_conversation_ids_flows = conversation_ids - set(
-        ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
+       ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
     count = 0
     for conversation_id in to_compute_conversation_ids_flows:
         calculate_author_metrics(conversation_id)

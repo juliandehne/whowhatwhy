@@ -67,13 +67,10 @@ class MODERATION(models.TextChoices):
     NO_NEED = "no need"
 
 
-class ORGANISATION(models.TextChoices):
-    FRIDAYS_FOR_FUTURE = "fff"
-    GREENPEACE = "greenpeace"
-    GOVERNMENTAL = "governmental"
-    OTHER = "other"
-
-
-class DUOFLOW_METRIC(models.TextChoices):
-    TOXICITY = "toxicity"
-    SENTIMENT = "sentiment"
+class CLIMATEAUTHOR(models.TextChoices):
+    ORGANISATION = "organisation"
+    NGO = "non-governmental organisation"
+    JOURNALIST = "journalist"
+    ACTIVIST = "activist"
+    POLITICIAN = "politician"
+    SCIENTIST = "scientist"

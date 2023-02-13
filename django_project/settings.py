@@ -16,8 +16,6 @@ import os
 import pathlib
 import sys
 
-from delab.delab_enums import DUOFLOW_METRIC
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -278,10 +276,9 @@ LOGGING = {
 
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
-MAX_CANDIDATES = 4000
-MAX_CANDIDATES_REDDIT = 100
+MAX_CANDIDATES = 850
 MIN_CONVERSATION_LENGTH = 5
-MAX_CONVERSATION_LENGTH = 500  # tested for 300
+MAX_CONVERSATION_LENGTH = 300  # tested for 300
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
 
@@ -292,9 +289,8 @@ min_intolerance_answer_coders_needed = 2
 
 performance_conversation_max_size = 100
 
-MAX_CANDIDATES_DUO_FLOW_ANALYSIS = 5000
-MAX_DUO_FLOWS_FOR_ANALYSIS = 20
-CURRENT_DUO_FLOW_METRIC = DUOFLOW_METRIC.SENTIMENT
+MAX_CANDIDATES_DUO_FLOW_ANALYSIS = 50
+MAX_DUO_FLOWS_FOR_ANALYSIS = 10
 
 MAX_CCCP_CONVERSATION_CANDIDATES = 1000
 CCCP_N_LARGEST = 10

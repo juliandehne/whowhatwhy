@@ -20,7 +20,21 @@ activists:
   - activist:
       name: Rebecca Solnit
       twitter_account: RebeccaSolnit
-
+  - activist:
+      name: Frankie The Dino
+      twitter_account: frankiethedino
+  - activist:
+      name: Ketan Joshi
+      twitter_account: KetanJO
+  - activist:
+      name: John Moffitt
+      twitter_account: JohnRMoffitt
+  - activist:
+      name: Matthew Todd
+      twitter_account: MrMatthewTodd
+  - activist:
+      name: Climate Dad
+      twitter_account: ClimateDad77
 journalists:
   - journalist:
       name: Somini Sengupta
@@ -30,6 +44,33 @@ journalists:
       name: Richard Black
       twitter_account: _richardblack
       medium: freelance
+  - journalist:
+      name: Naomi Klein
+      twitter_account: NaomiAKlein
+  - journalist:
+      name: Benji Jones
+      twitter_account: BenjiSJones
+  - journalist:
+      name: Dana Nuccitelli
+      twitter_account: dana1981
+  - journalist:
+      name: Simon Evans
+      twitter_account: DrSimEvans
+  - journalist:
+      name: Assaad Razzouk
+      twitter_account: AssaadRazzouk
+  - journalist:
+      name: Rowan Hooper
+      twitter_account: rowhoop
+  - journalist:
+      name: Robin Lloyd
+      twitter_account: RobinLloyd99
+  - journalist:
+      name: Carl Zimmer
+      twitter_account: edyong209
+  - journalist:
+      name: Ed Yong
+      twitter_account: carlzimmer
 organisations:
   - organisation:
       name: Greenpeace
@@ -43,7 +84,123 @@ organisations:
   - organisation:
       name: UN Climate Change
       twitter_account: UNFCCC
-      gouvernmental: 'true'
+      governmental: 'true'
+  - organisation:
+      name: MoEF&CC
+      twitter_account: moefcc
+      governmental: 'true'
+  - organisation:
+      name: UN Development
+      twitter_account: UNDP
+      governmental: 'true'
+  - organisation:
+      name: UN Biodiversity
+      twitter_account: UNBiodiversity
+      governmental: 'true'
+  - organisation:
+      name: IPCC
+      twitter_account: IPCC_CH
+      governmental: 'true'
+  - organisation:
+      name: COP26
+      twitter_account: COP26
+      governmental: 'true'
+  - organisation:
+      name: UN Climate Change:Learn
+      twitter_account: uncclearn
+      governmental: 'true'
+  - organisation:
+      name: Environment Canada
+      twitter_account: environmentca
+      governmental: 'true'
+  - organisation:
+      name: COP27
+      twitter_account: COP27P
+      governmental: 'true'
+  - organisation:
+      name: Ministry of Environment & Climate Change
+      twitter_account: MoECC_Somalia
+      governmental: 'true'
+  - organisation:
+      name: Ministry of Climate Change, Govt of Pakistan
+      twitter_account: ClimateChangePK
+      governmental: 'true'
+  - organisation:
+      name: UNDP Climate
+      twitter_account: UNDPClimate
+      governmental: 'true'
+  - organisation:
+      name: UN Environment Programme
+      twitter_account: UNEP
+      governmental: 'true'
+  - organisation:
+      name: Global Goals
+      twitter_account: GlobalGoalsUN
+      governmental: 'true'
+  - organisation:
+      name: UN Land and Drought
+      twitter_account: UNCCD
+      governmental: 'true'
+  - organisation:
+      name: UN Land and Drought
+      twitter_account: UNCCD
+      governmental: 'true'
+  - organisation:
+      name: UN DESA Sustainable Development
+      twitter_account: SustDev
+      governmental: 'true'
+  - organisation:
+      name: EU Climate Action
+      twitter_account: EUClimateAction
+      governmental: 'true'
+  - organisation:
+      name: EU EnvironmentAgency
+      twitter_account: EUEnvironment
+      governmental: 'true'
+  - organisation:
+      name: EU Enviroment
+      twitter_account: EU_ENV
+      governmental: 'true'
+  - organisation:
+      name: LIFE Programme
+      twitter_account: LIFEprogramme
+      governmental: 'true'
+  - organisation:
+      name: CINEA
+      twitter_account: cinea_eu
+      governmental: 'true'
+  - organisation:
+      name: EUScience&Innovation🇪🇺
+      twitter_account: EUScienceInnov
+      governmental: 'true'
+  - organisation:
+      name: Energy4Europe
+      twitter_account: Energy4Europe
+      governmental: 'true'
+  - organisation:
+      name: EEB
+      twitter_account: Green_Europe
+      governmental: 'true'
+  - organisation:
+      name: CAN EUROPE
+      twitter_account: CANEurope
+      governmental: 'false'
+  - organisation:
+      name: Climate Action Network International (CAN)
+      twitter_account: CANIntl
+      governmental: 'false'
+  - organisation:
+      name: PA Department of Environmental ProtectionU.S. EPA
+      twitter_account: PennsylvaniaDEP
+      governmental: 'false'
+  - organisation:
+      name: U.S. EPA
+      twitter_account: EPA
+      governmental: 'false'
+  - organisation:
+      name: Extinction Rebellion
+      twitter_account: ExtinctionR
+      governmental: 'false'
 politicians:
   - politician:
       name: Patricia Espinosa C.
@@ -54,6 +211,24 @@ politicians:
   - politician:
       name: Wolfgang Ischinger
       twitter_account: ischinger
+  - politician:
+      name: Alexandria Ocasio-Cortez
+      twitter_account: AOC
+  - politician:
+      name: Bernie Sanders
+      twitter_account: SenSanders
+  - politician:
+      name: Kamala Harris
+      twitter_account: KamalaHarris
+  - politician:
+      name: Graham Staurt MP
+      twitter_account: grahamstuart
+  - politician:
+      name: Ilhan Omar
+      twitter_account: IlhanMN
+  - politician:
+      name: Lori Trahan
+      twitter_account: RepLoriTrahan
 scientists:
   - scientist:
       name: Prof Michael E. Mann
@@ -62,14 +237,44 @@ scientists:
       name: Ulf Moslener
       twitter_account: UlfMoslener
   - scientist:
-      name:
-      twitter_account:
+      name: Prof. Katharine Hayhoe
+      twitter_account: KHayhoe
   - scientist:
-      name:
-      twitter_account:
+      name: Dr. Robert Rohde
+      twitter_account: RARohde
   - scientist:
-      name:
-      twitter_account:
-
-
-
+      name: Peter Sinclair
+      twitter_account: PeterWSinclair
+  - scientist:
+      name: Peter Kalmus
+      twitter_account: ClimateHuman
+  - scientist:
+      name: Dr. Merritt Turetsky
+      twitter_account: queenofpeat
+  - scientist:
+      name: Dr. Leah Stokes
+      twitter_account: leahstokes
+  - scientist:
+      name: Stefan Rahmstorf
+      twitter_account: rahmstorf
+  - scientist:
+      name: Zeke Hausfather
+      twitter_account: hausfath
+  - scientist:
+      name: Ken Caldeira
+      twitter_account: KenCaldeira
+  - scientist:
+      name: NaomiOreskes
+      twitter_account: NaomiOreskes
+  - scientist:
+      name: Ed Hawkins
+      twitter_account: ed_hawkins
+  - scientist:
+      name: Peter Gleick
+      twitter_account: PeterGleick
+  - scientist:
+      name: Prof. Jason Box
+      twitter_account: climate_ice
+  - scientist:
+      name: Eric Topol
+      twitter_account: EricTopol
