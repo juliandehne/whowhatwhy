@@ -46,7 +46,8 @@ def compute_flow_picture(flow_name, df):
     image_path = os.path.join(ConversationFlow.image.field.upload_to, str(flow_name) + ".jpg")
     download_path = os.path.join(settings.MEDIA_ROOT, image_path)
     logging.debug("saving the conversation_flow_pic to {}".format(download_path))
-    plot.figure.show()
+    # plot.figure.show()
+    # plot.figure.close()
     if os.path.isfile(download_path):
         os.remove(download_path)
     plot.figure.savefig(download_path, format="jpg")

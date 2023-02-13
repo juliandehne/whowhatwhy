@@ -39,7 +39,6 @@ def run():
     # download_network_structures(repeat=Task.WEEKLY)
     # download_moderating_tweets(repeat=Task.WEEKLY)
     download_intolerant_tweets(repeat=Task.WEEKLY)
-
-    update_toxic_values()
+    # update_toxic_values()
 
 

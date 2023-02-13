@@ -6,7 +6,7 @@ from django.db.models import UniqueConstraint
 from django.urls import reverse
 
 from delab.delab_enums import VERSION, PLATFORM, LANGUAGE, Likert, NETWORKRELS, \
-    TWEET_RELATIONSHIPS, MODERATION
+    TWEET_RELATIONSHIPS, MODERATION, DUOFLOW_METRIC
 
 SIMPLE_REQUEST_VALIDATOR = RegexValidator("(^\#[a-zäöüA-ZÖÄÜ]+(\ \#[a-zA-ZÖÄÜ]+)*$)",
                                           'Please enter hashtags seperated by spaces!')
@@ -156,7 +156,6 @@ class Tweet(models.Model):
                                             "send to twitter!")
     was_query_candidate = models.BooleanField(default=False)
 
-    # is_climate_author = models.BooleanField(null=True, default=False)
 
     class Meta:
         verbose_name = 'Tweet'
@@ -224,6 +223,9 @@ class ConversationAuthorMetrics(models.Model):
     pb_vision = models.FloatField(null=True)
     n_posts = models.IntegerField()
     is_root_author = models.BooleanField()
+    closeness_centrality = models.FloatField(null=True)
+    betweenness_centrality = models.FloatField(null=True)
+    katz_centrality = models.FloatField(null=True)
 
     class Meta:
         unique_together = ('conversation_id', 'author')
@@ -268,6 +270,15 @@ class Conversation(models.Model):
     depth = models.IntegerField()
     branching_factor = models.FloatField()
     root_dominance = models.FloatField()
+
+
+class Mentions(models.Model):
+    # mentioner = models.ForeignKey(TweetAuthor, related_name="mentioner", on_delete=models.DO_NOTHING)
+    mentionee = models.ForeignKey(TweetAuthor, related_name="mentionee", on_delete=models.DO_NOTHING)
+    conversation_id = models.BigIntegerField()
+    tweet = models.ForeignKey(Tweet, on_delete=models.DO_NOTHING)
+
+
 
 
 class ClimateAuthor(models.Model):

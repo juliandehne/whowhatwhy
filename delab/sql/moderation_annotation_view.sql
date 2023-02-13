@@ -1,1 +1,0 @@
-Select * from delab_moderationcandidate2 mc join delab_tweet

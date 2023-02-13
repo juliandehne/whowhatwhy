@@ -13,6 +13,11 @@ from django_project.settings import MAX_CCCP_CONVERSATION_CANDIDATES, CCCP_N_LAR
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
+"""
+In this file measures to compute central, comprehensive and consistent author participation (cccp)
+are bundled.
+"""
+
 
 def calculate_conversation_author_metrics():
     """

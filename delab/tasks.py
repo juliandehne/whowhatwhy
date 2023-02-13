@@ -11,6 +11,7 @@ from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
 from .network.conversation_network import download_twitter_follower
+from .sentiment.sentiment_classification import update_tweet_sentiments
 from .toxicity.perspectives import compute_toxicity_for_text
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,9 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
                                "request_id": simple_request_id,
                                "language": language,
                                "max_data": max_data,
+                               "platform": platform,
                                "fast_mode": fast_mode,
-                               "platform": platform
+                               "recent": False
                                }
         if topic_string == MODTOPIC2_WEBSITE:
             download_param_dict["topic_string"] = MODTOPIC2
@@ -54,8 +56,8 @@ def download_conversations_scheduler(topic_string, platform, query_string, simpl
 
 @background(schedule=1)
 def update_author(simple_request_id=-1, platform=PLATFORM.TWITTER, fast_mode=False, language=LANGUAGE.ENGLISH):
-    update_authors(simple_request_id, platform)
     if not fast_mode:
+        update_authors(simple_request_id, platform=platform)
         update_author_timelines(simple_request_id, platform, language,
                                 verbose_name="timeline_download_{}".format(simple_request_id),
                                 schedule=timezone.now())
@@ -71,7 +73,6 @@ def update_author_timelines(simple_request_id=-1, platform=PLATFORM.TWITTER, lan
 
 @background(schedule=1)
 def update_sentiments(simple_request_id=-1, language=LANGUAGE.ENGLISH):
-    from .sentiment.sentiment_classification import update_tweet_sentiments
     update_tweet_sentiments(simple_request_id, language)
     update_flows(simple_request_id=simple_request_id, verbose_name="flow_analysis_{}".format(simple_request_id),
                  schedule=timezone.now())

@@ -9,6 +9,7 @@ from delab.network.conversation_network import get_nx_conversation_graph, get_ro
 
 def author_centrality(conversation_id):
     """
+    computes a list of records with the centrality scores of authors for a given conversation
     :param conversation_id: the id of the conversation
     :return: a list of dictionaries in the form of
      [{author:"author":author_id, "centrality_score":score_value, "conversation_id": conversation_id}]

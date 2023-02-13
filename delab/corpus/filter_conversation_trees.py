@@ -14,7 +14,6 @@ def get_conversation_trees(topic: str, conversation_id=None):
     """
     :param topic: the topic string
     :param conversation_id:  the conversation id
-    :param conversation_filter: a utility class for filtering the conversations
     :return:
     """
     return convert_to_conversation_trees(conversation_id, topic)
