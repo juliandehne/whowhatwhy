@@ -278,7 +278,7 @@ LOGGING = {
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
 MAX_CANDIDATES = 850
 MIN_CONVERSATION_LENGTH = 5
-MAX_CONVERSATION_LENGTH = 300  # tested for 300
+MAX_CONVERSATION_LENGTH = 500000
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
 

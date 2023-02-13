@@ -107,6 +107,78 @@ organisations:
       twitter_account: fff_kassel
       governmental: 'false'
   - organisation:
+      name: Fridays for Future Baden-Würtemberg
+      twitter_account: fff_bw
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Freiburg
+      twitter_account: F4F_Freiburg
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Bodensee
+      twitter_account: fff_bodensee
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Karlsruhe
+      twitter_account: FFF_Karlsruhe
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Konztanz
+      twitter_account: knforfuture
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Stuttgart
+      twitter_account: fffstuttgart
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Tübingen
+      twitter_account: fff_tuebingen
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Bayern
+      twitter_account: fff_bayern
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Dachau
+      twitter_account: FFF_Dachau
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future München
+      twitter_account: fff_muc
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Nürnberg
+      twitter_account: FFFNuernberg
+      governmental: 'false'
+  - organisation:
+      name: FfF Regensburg
+      twitter_account: fff_regensburg
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Berlin
+      twitter_account: FFF_Berlin
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Potsdam
+      twitter_account: FFFPotsdam
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Hamburg
+      twitter_account: fff_hamburg
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Backnang
+      twitter_account: FridaysForBK
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Amberg
+      twitter_account: fffamberg
+      governmental: 'false'
+  - organisation:
+      name: Fridays for Future Lindau
+      twitter_account: FffLindau
+      governmental: 'false'
+  - organisation:
       name: Scientists for Future Leipzig
       twitter_account: S4F_Leipzig
       governmental: 'false'

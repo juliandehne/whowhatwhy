@@ -124,12 +124,12 @@ def filter_conversations(twarc,
 
                 # apply the conversation filter
                 if conversation_filter is not None:
-                    root_node = conversation_filter(root_node)
+                        root_node = conversation_filter(root_node)
 
                 # skip the processing if there was a problem with constructing the conversation tree
                 if root_node is None:
-                    logger.error("found conversation_id that could not be processed")
-                    continue
+                        logger.error("found conversation_id that could not be processed")
+                        continue
                 else:
                     # some communication code in order to see what kinds of trees are being downloaded
                     flat_tree_size = root_node.flat_size()

@@ -209,9 +209,6 @@ politicians:
       name: Rasmus Andresen
       twitter_account: RasmusAndresen
   - politician:
-      name: Wolfgang Ischinger
-      twitter_account: ischinger
-  - politician:
       name: Alexandria Ocasio-Cortez
       twitter_account: AOC
   - politician:
