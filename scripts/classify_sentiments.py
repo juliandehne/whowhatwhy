@@ -11,7 +11,7 @@ from delab.toxicity.perspectives import compute_toxicity_for_text
 def run(*args):
     # some_test_cases(args)
 
-    # update_tweet_sentiments()
+    update_tweet_sentiments()
     # update_tweet_sentiments(language=LANGUAGE.GERMAN)
     compute_toxicity_for_text()
 

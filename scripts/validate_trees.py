@@ -7,8 +7,7 @@ from delab.models import Tweet
 
 def run():
     # validate foreign keys exist
-    # validate_foreign_keys()
-
+    validate_foreign_keys()
     validate_cycles()
 
 

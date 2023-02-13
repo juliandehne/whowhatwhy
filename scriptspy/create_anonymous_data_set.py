@@ -4,12 +4,14 @@ import pandas.io.sql as psql
 import uuid
 
 connection = pg.connect("host=localhost dbname=postgres user=postgres password=postgres")
-query = "SELECT conversation_id as tree_id, id as post_id, tn_parent_id as parent_id, author_id, created_at, text, platform from delab_tweet"
+query = "SELECT conversation_id as tree_id, id as post_id, tn_parent_id as parent_id," \
+        " author_id, created_at, text, platform, sentiment_value, toxic_value" \
+        " from delab_tweet"
+
+# from delab_tweet where sentiment_value is not NULL and toxic_value is not NULL" \
 
 
 # creating the dictionary
-
-
 def replace_values(df, replace_dict):
     for col in df.columns:
         df[col].replace(replace_dict, inplace=True)
@@ -36,31 +38,35 @@ print("reading in chunks")
 chunk_size = 10000
 result = pd.DataFrame()
 counter = 0
+id_dict = {}
 for df_trees_chunk in read_chunks(connection, chunk_size):
     # df_trees = psql.read_sql(query, connection)
     try:
         if df_trees_chunk.empty is False:
             post_ids = df_trees_chunk.post_id
-            id_dict = dict([(post_id, uuid.uuid1(post_id)) for post_id in post_ids])
+            parent_ids = df_trees_chunk.parent_id
+            id_dict_tmp2 = dict([(post_id, uuid.uuid1(post_id)) for post_id in parent_ids])
+            id_dict_tmp = dict([(post_id, uuid.uuid1(post_id)) for post_id in post_ids])
+            for key, value in id_dict_tmp.items():
+                if key not in id_dict:
+                    id_dict[key] = value
+            for key, value in id_dict_tmp2.items():
+                if key not in id_dict:
+                    id_dict[key] = value
             # print("processed {} chunks".format(counter))
             chunk = replace_values(df_trees_chunk, id_dict)
             result = pd.concat([result, chunk], ignore_index=True)
     except NameError:
         pass
 
-# df_trees.replace(id_dict, inplace=True)
-# cassert len(result.index) > 10000
 print("replaced ids with anonymous alternatives")
 
+result['text'] = result['text'].apply(len)
 
 df_trees_twitter = result[result["platform"] == "twitter"]
-df_trees_twitter = df_trees_twitter.drop(["platform", "text"], axis=1)
 df_trees_twitter.to_pickle("dataset_twitter_no_text.pkl")
 
-print(df_trees_twitter.head(3))
-
 df_trees_reddit = result[result["platform"] == "reddit"]
-df_trees_reddit = df_trees_reddit.drop(["platform", "text"], axis=1)
 df_trees_reddit.to_pickle("dataset_reddit_no_text.pkl")
 
-print(df_trees_reddit.head(3))
+print("created_anonymous datasets with sentiment values")
