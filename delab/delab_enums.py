@@ -74,3 +74,8 @@ class CLIMATEAUTHOR(models.TextChoices):
     ACTIVIST = "activist"
     POLITICIAN = "politician"
     SCIENTIST = "scientist"
+
+
+class DUOFLOW_METRIC(models.TextChoices):
+    SENTIMENT = "sentiment"
+    toxicity = "toxicity"

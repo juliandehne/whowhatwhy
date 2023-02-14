@@ -276,11 +276,17 @@ LOGGING = {
 
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
-MAX_CANDIDATES = 850
-MIN_CONVERSATION_LENGTH = 5
-MAX_CONVERSATION_LENGTH = 300  # tested for 300
+MAX_CANDIDATES = 10000
+MIN_CONVERSATION_LENGTH = 10
+MAX_CONVERSATION_LENGTH = 500  # tested for 300
+
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
+MAX_CANDIDATES_REDDIT = 300
+MAX_CANDIDATES_TWITTER = 850
+
+CURRENT_DUO_FLOW_METRIC = "sentiment"
+
 
 # the number of people that need to label a tweet as intolerant for it to be labeled correctly
 min_intolerance_coders_needed = 2
