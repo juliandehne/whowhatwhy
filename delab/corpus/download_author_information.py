@@ -6,6 +6,7 @@ import time
 
 from django.db import IntegrityError
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 from delab.delab_enums import PLATFORM, CLIMATEAUTHOR, LANGUAGE
 from delab.models import Tweet, TweetAuthor, ClimateAuthor
@@ -57,10 +58,10 @@ def update_authors(simple_request_id=-1, topic: str = None, platform=PLATFORM.TW
 
 def download_authors(author_ids):
     twarc = DelabTwarc()
-    new_authors = repair_fk_tweet_authors(author_ids)
+    #new_authors = repair_fk_tweet_authors(author_ids) #-->lange Laufzeit, weil Datenbankzugriff in Schleife
     # batch processing means breaking down a big loop
     # in smaller loops
-    author_batches = batch(new_authors, 99)
+    author_batches = batch(author_ids, 99)
     for author_batch in author_batches:
         download_user_batch(author_batch, twarc)
 
@@ -100,7 +101,7 @@ def download_user_batch(author_batch, twarc):
     """
     # downloads the author data like names
     users = twarc.user_lookup(users=author_batch)
-
+    print("downlaoding user batch")
     for user_batch in users:
         if "data" in user_batch:
             # iterate through the author data
@@ -124,6 +125,9 @@ def download_user_batch(author_batch, twarc):
 
                 except IntegrityError:
                     logger.error("author already exists")
+                except ValidationError:
+                    print(ValidationError)
+
 
                 # except Exception as e:
                 # Normally the API does this, too

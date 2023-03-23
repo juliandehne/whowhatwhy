@@ -1,4 +1,5 @@
 import django.db.utils
+import networkx
 import networkx as nx
 import pandas as pd
 
@@ -6,10 +7,11 @@ from delab.analytics.author_centrality import author_centrality
 from delab.api.api_util import get_all_conversation_ids
 from delab.api.api_util import get_author_tweet_map
 from delab.corpus.filter_conversation_trees import get_well_structured_conversation_ids
-from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor
+from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor, Tweet
 from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
 from django_project.settings import MAX_CCCP_CONVERSATION_CANDIDATES, CCCP_N_LARGEST
+from datetime import datetime
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
@@ -25,16 +27,49 @@ def calculate_conversation_author_metrics():
     single authors and conversations
     """
     conversation_ids = set(get_all_conversation_ids())
-    to_compute_conversation_ids_flows = conversation_ids - set(
-       ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
+    to_compute_conversation_ids = conversation_ids - set(
+        ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
     count = 0
-    for conversation_id in to_compute_conversation_ids_flows:
-        calculate_author_metrics(conversation_id)
-        count += 1
-        print("computed {}/{} conversation author metrics".format(count, len(conversation_ids)))
+    n_count_dict = create_n_count_dict()
+
+    for conversation_id in to_compute_conversation_ids:
+        try:
+            if Tweet.objects.filter(conversation_id=conversation_id).count() <= 5000:
+                calculate_author_metrics(conversation_id, n_count_dict)
+                count += 1
+                print("computed {}/{} conversation author metrics".format(count, len(to_compute_conversation_ids)))
+        except networkx.exception.NetworkXNoPath as no_path_error:
+            print("no_path_error")
 
 
-def calculate_author_metrics(conversation_id):
+def create_n_count_dict():
+    n_count_dict = {}
+
+    conversation_ids_passed = set()
+    conversation_author_pairs_passed = set()
+    tweets = Tweet.objects.only("conversation_id", "author_id")
+    for tweet in tweets:
+        conversation_id = tweet.conversation_id
+        author_id = tweet.author_id
+        # case 1: conversation is looked at first time
+        if conversation_id not in conversation_ids_passed:
+            conversation_ids_passed.add(conversation_id)
+            n_count_dict[(conversation_id, author_id)] = 1
+        else:
+            # if conversation has been encountered current pair is looked at
+            current_pair = (conversation_id, author_id)
+            if current_pair not in conversation_author_pairs_passed:
+                # if current pair has not been seen the current pair is initialized as 1
+                conversation_author_pairs_passed.add(current_pair)
+                n_count_dict[current_pair] = 1
+            else:
+                # if current pair exists then it is incremented by 1
+                current_count = n_count_dict[current_pair]
+                n_count_dict[current_pair] = current_count + 1
+    return n_count_dict
+
+
+def calculate_author_metrics(conversation_id, n_count_dict):
     try:
         author2Centrality = {}
         records = author_centrality(conversation_id)
@@ -49,12 +84,15 @@ def calculate_author_metrics(conversation_id):
             else:
                 author2Centrality[author] = centrality_score
 
+        print(len(author2Centrality))
         for author in author2Centrality.keys():
+
             if ConversationAuthorMetrics.objects.filter(conversation_id=conversation_id,
                                                         author__twitter_id=author).exists():
                 continue
-            n_posts = calculate_n_posts(author,
-                                        conversation_id)
+
+            n_posts = n_count_dict[(conversation_id, author)]
+
             centrality_score = author2Centrality[author] / n_posts
             is_root_author_v = is_root_author(author,
                                               conversation_id)
@@ -92,6 +130,8 @@ def compute_all_cccp_authors():
     for measure in MEASURES:
         candidate_list = compute_cccp_candidate_authors(df, measure=measure)
         for conversation_id, author_id in candidate_list:
+            if Tweet.objects.filter(conversation_id=conversation_id).count() > 5000:
+                continue
             if measure in measure_authors_dictionary:
                 current_author_list = measure_authors_dictionary[measure]
                 current_author_list.append(author_id)
@@ -271,3 +311,8 @@ def calculate_author_baseline_visions(conversation_id):
         baseline = author2baseline[author]
         assert 0 <= baseline <= 1
     return author2baseline
+
+
+def compute_missing_authors(conversation_id, n_count_dict):
+    calculate_author_metrics(conversation_id, n_count_dict)
+
