@@ -4,9 +4,10 @@ import pandas.io.sql as psql
 import uuid
 
 connection = pg.connect("host=localhost dbname=postgres user=postgres password=postgres")
-query = "SELECT conversation_id as tree_id, id as post_id, tn_parent_id as parent_id," \
+query = "SELECT conversation_id as tree_id, twitter_id as post_id, tn_parent_id as parent_id," \
         " author_id, created_at, text, platform, sentiment_value, toxic_value" \
         " from delab_tweet"
+
 
 # from delab_tweet where sentiment_value is not NULL and toxic_value is not NULL" \
 
@@ -34,6 +35,11 @@ def read_chunks(conn, chunk_size):
     yield pd.DataFrame()
 
 
+def obfuscate_post_id(id):
+    # return uuid.uuid1(post_id)
+    return id
+
+
 print("reading in chunks")
 chunk_size = 10000
 result = pd.DataFrame()
@@ -45,8 +51,8 @@ for df_trees_chunk in read_chunks(connection, chunk_size):
         if df_trees_chunk.empty is False:
             post_ids = df_trees_chunk.post_id
             parent_ids = df_trees_chunk.parent_id
-            id_dict_tmp2 = dict([(post_id, uuid.uuid1(post_id)) for post_id in parent_ids])
-            id_dict_tmp = dict([(post_id, uuid.uuid1(post_id)) for post_id in post_ids])
+            id_dict_tmp2 = dict([(post_id, obfuscate_post_id(post_id)) for post_id in parent_ids])
+            id_dict_tmp = dict([(post_id, obfuscate_post_id(post_id)) for post_id in post_ids])
             for key, value in id_dict_tmp.items():
                 if key not in id_dict:
                     id_dict[key] = value
@@ -61,12 +67,14 @@ for df_trees_chunk in read_chunks(connection, chunk_size):
 
 print("replaced ids with anonymous alternatives")
 
+result.to_pickle("dataset_both_with_text.pkl")
+
 result['text'] = result['text'].apply(len)
 
 df_trees_twitter = result[result["platform"] == "twitter"]
-df_trees_twitter.to_pickle("dataset_twitter_no_text.pkl")
+# df_trees_twitter.to_pickle("dataset_twitter_no_text.pkl")
 
 df_trees_reddit = result[result["platform"] == "reddit"]
-df_trees_reddit.to_pickle("dataset_reddit_no_text.pkl")
+# df_trees_reddit.to_pickle("dataset_reddit_no_text.pkl")
 
 print("created_anonymous datasets with sentiment values")
