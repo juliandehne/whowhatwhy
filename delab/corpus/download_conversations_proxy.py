@@ -5,6 +5,7 @@ from .download_conversations_reddit import search_r_all
 from .download_conversations_twitter import download_conversations_tw
 from .download_timelines_reddit import download_timelines_reddit
 from .download_timelines_twitter import update_timelines_twitter
+from .download_conversations_mastodon import download_conversation_mstd
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +49,11 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
                                   conversation_filter=conversation_filter,
                                   tweet_filter=tweet_filter, platform=platform,
                                   recent=recent)
-    else:
+    elif platform == PLATFORM.REDDIT:
         search_r_all(query_string, request_id, topic_string, tweet_filter=tweet_filter)
+    elif platform == PLATFORM.MASTODON:
+        download_conversation_mstd(query=query_string)
+
 
 
 def download_timelines(simple_request_id, platform: PLATFORM):

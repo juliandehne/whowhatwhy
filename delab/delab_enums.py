@@ -13,6 +13,7 @@ class VERSION(models.TextChoices):
 class PLATFORM(models.TextChoices):
     REDDIT = "reddit"
     TWITTER = "twitter"
+    MASTODON ="mastodon"
     DELAB = "delab"
 
 
