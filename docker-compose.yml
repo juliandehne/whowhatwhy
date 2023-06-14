@@ -15,7 +15,7 @@ services:
 
   migrate:
     image: delab-server
-    command: bash -c "python manage.py makemigrations blog delab users && python manage.py migrate --noinput && python manage.py createsuperuser --noinput"
+    command: bash -c "python manage.py makemigrations blog delab users mt_study && python manage.py migrate --noinput && python manage.py createsuperuser --noinput"
     volumes:
       - ./logs/migrate:/code/logs
       - ./database/migrations/delab:/code/delab/migrations

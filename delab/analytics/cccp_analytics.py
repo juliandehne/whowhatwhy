@@ -9,13 +9,14 @@ from delab.corpus.filter_conversation_trees import get_well_structured_conversat
 from delab.models.corpus_project_models import ConversationAuthorMetrics, TweetAuthor
 from delab.models.corpus_project_models import Tweet
 from delab.network.conversation_network import get_nx_conversation_graph, get_root
-from django_project.settings import MAX_CCCP_CONVERSATION_CANDIDATES, CCCP_N_LARGEST
+from django_project.settings import CCCP_N_LARGEST
 
 MEASURES = ["repetition_prob", "baseline_vision", "centrality", "mean"]
 
 """
 In this file measures to compute central, comprehensive and consistent author participation (cccp)
 are bundled.
+TODO: replace this with references to delab_tree library
 """
 
 
@@ -26,7 +27,7 @@ def calculate_conversation_author_metrics():
     """
     conversation_ids = set(get_all_conversation_ids())
     to_compute_conversation_ids_flows = conversation_ids - set(
-       ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
+        ConversationAuthorMetrics.objects.values_list("conversation_id", flat=True))
     count = 0
     for conversation_id in to_compute_conversation_ids_flows:
         calculate_author_metrics(conversation_id)

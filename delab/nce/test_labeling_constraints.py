@@ -3,8 +3,8 @@ import random
 
 from django.contrib.auth.models import User
 
-from delab.corpus.download_conversations import save_tree_to_db
 from delab.TwConversationTree import TreeNode
+from delab.corpus.download_conversations_twitter import save_tree_to_db
 from delab.models import Tweet, TwTopic, SimpleRequest, TWCandidateIntolerance, TWIntoleranceRating
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.nce.download_intolerant_tweets import download_terrible_tweets
@@ -14,11 +14,10 @@ The idea is that this script provides a fake conversation to test the labeling p
 """
 
 
-def run():
+def test_labeling_constraints():
     clean = True  # delete old fake data
     create = True  # create new fake data
     rank_them = True  # non-fake data to make it clearer
-
     topic_string = "fake_conversations"
     # create the topic and save it to the db
     topic, created = TwTopic.objects.get_or_create(
@@ -28,12 +27,10 @@ def run():
         title="creating faking conversations",
         topic=topic
     )
-
     if clean:
         TWCandidateIntolerance.objects.filter(tweet__topic__title=topic_string).delete()
         Tweet.objects.filter(topic__title=topic_string).delete()
         Tweet.objects.filter(topic__title=topic_string).delete()
-
     if create:
         tree = create_conversation(lang=LANGUAGE.GERMAN)
         # print(tree.to_string())

@@ -1,2 +1,0 @@
-searchtweets-v2==1.0.7
-searchtweets==1.7.6

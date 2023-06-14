@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'delab.apps.DelabConfig',
+    'mt_study.apps.MtStudyConfig',
     'blog.apps.BlogConfig',
     'users.apps.UsersConfig',
     'background_task',
