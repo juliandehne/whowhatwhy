@@ -2,7 +2,7 @@ import networkx as nx
 import pandas as pd
 from django.forms.models import model_to_dict
 
-from delab.TwConversationTree import TreeNode
+from delab_trees.recursive_tree.recursive_tree import TreeNode
 
 from delab.corpus.filter_sequences import get_conversation_flows
 from delab.models import Tweet, Conversation

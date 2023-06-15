@@ -3,7 +3,7 @@ import random
 
 from django.contrib.auth.models import User
 
-from delab.TwConversationTree import TreeNode
+from delab_trees.recursive_tree.recursive_tree import TreeNode
 from delab.corpus.download_conversations_twitter import save_tree_to_db
 from delab.models import Tweet, TwTopic, SimpleRequest, TWCandidateIntolerance, TWIntoleranceRating
 from delab.delab_enums import PLATFORM, LANGUAGE
