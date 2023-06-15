@@ -29,22 +29,12 @@ def convert_to_conversation_trees(conversation_id=None, topic=None):
     objects = Tweet.objects.select_related("tw_author")
 
     if conversation_id is not None:
-        if topic is not None:
-            roots_as_record = [author_tweet_to_records(tweet) for tweet in
-                               objects.filter(tn_parent_id__isnull=True,
-                                              conversation_id=conversation_id,
-                                              topic__title=topic).all()]
-            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
-                                   objects.filter(tn_parent_id__isnull=False,
-                                                  topic__title=topic,
-                                                  conversation_id=conversation_id).order_by('-created_at').all()]
-        else:
-            roots_as_record = [author_tweet_to_records(tweet) for tweet in
-                               objects.filter(tn_parent_id__isnull=True,
-                                              conversation_id=conversation_id).all()]
-            not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
-                                   objects.filter(tn_parent_id__isnull=False,
-                                                  conversation_id=conversation_id).order_by('-created_at').all()]
+        roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                           objects.filter(tn_parent_id__isnull=True,
+                                          conversation_id=conversation_id).all()]
+        not_roots_as_record = [author_tweet_to_records(tweet) for tweet in
+                               objects.filter(tn_parent_id__isnull=False,
+                                              conversation_id=conversation_id).order_by('-created_at').all()]
     else:
         if topic is not None:
             roots_as_record = [author_tweet_to_records(tweet) for tweet in
@@ -72,6 +62,13 @@ def author_tweet_to_records(tweet):
 
 
 def reconstruct_trees_from_records(not_roots_as_rec, roots_as_rec):
+    """
+    builds TwConversationTrees from two lists. The list of root posts and the other posts that need to be
+    added recursively
+    @param not_roots_as_rec:
+    @param roots_as_rec:
+    @return:
+    """
     trees_roots = {}
     not_roots = {}
     for root_data in roots_as_rec:
@@ -124,6 +121,11 @@ def solve_orphans(orphans, tree_node):
 
 
 def get_conversation_root_as_data(conversation_id):
+    """
+    gets the root post of a conversation as twitter style dataset
+    @param conversation_id:
+    @return:
+    """
     tweet = Tweet.objects.filter(conversation_id=conversation_id, tn_parent__isnull=True).get()
     result = {"text": tweet.text, "created_at": tweet.created_at, "id": tweet.twitter_id, "author_id": tweet.author_id,
               "conversation_id": tweet.conversation_id, "lang": tweet.language}
