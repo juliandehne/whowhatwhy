@@ -1,13 +1,10 @@
-import datetime
-import random
-
 from django.contrib.auth.models import User
 
-from delab_trees.recursive_tree.recursive_tree import TreeNode
-from delab.corpus.download_conversations_twitter import save_tree_to_db
+from delab.corpus.twitter.download_conversations_twitter import save_tree_to_db
 from delab.models import Tweet, TwTopic, SimpleRequest, TWCandidateIntolerance, TWIntoleranceRating
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.nce.download_intolerant_tweets import download_terrible_tweets
+from delab_trees.test_data_manager import get_example_conversation_tree
 
 """
 The idea is that this script provides a fake conversation to test the labeling pipeline
@@ -32,9 +29,9 @@ def test_labeling_constraints():
         Tweet.objects.filter(topic__title=topic_string).delete()
         Tweet.objects.filter(topic__title=topic_string).delete()
     if create:
-        tree = create_conversation(lang=LANGUAGE.GERMAN)
+        tree = get_example_conversation_tree(lang=LANGUAGE.GERMAN)
         # print(tree.to_string())
-        tree_en = create_conversation(lang=LANGUAGE.ENGLISH)
+        tree_en = get_example_conversation_tree(lang=LANGUAGE.ENGLISH)
         # print(tree.to_string())
         save_tree_to_db(tree_en, topic, simple_request, 1, platform=PLATFORM.DELAB)
         save_tree_to_db(tree, topic, simple_request, 2, platform=PLATFORM.DELAB)

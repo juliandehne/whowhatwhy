@@ -7,7 +7,7 @@ import networkx as nx
 from django.db.models import Exists, OuterRef
 from networkx.drawing.nx_pydot import graphviz_layout
 
-from delab.corpus.download_author_information import download_authors
+from delab.corpus.twitter.download_author_information import download_authors
 from delab.delab_enums import PLATFORM
 from delab.models import Tweet, TweetAuthor, FollowerNetwork
 from delab.network.DjangoTripleDAO import DjangoTripleDAO

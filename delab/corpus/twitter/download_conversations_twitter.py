@@ -23,8 +23,9 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
                               recent=True,
                               max_conversation_length=MAX_CONVERSATION_LENGTH,
                               min_conversation_length=MIN_CONVERSATION_LENGTH,
-                              max_number_of_candidates=MAX_CANDIDATES):
+                              max_number_of_candidates=MAX_CANDIDATES, persist=True):
     """
+     @param persist: store the downloaded trees in db
      @param recent: use the recent api from twitter which is faster and more current
      @param conversation_filter: this takes on a partial function that rejects a TWConversationTree based on some criteria
                                  before saving it
@@ -65,7 +66,7 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
                                      tweet_filter=tweet_filter, recent=recent,
                                      max_conversation_length=max_conversation_length,
                                      min_conversation_length=min_conversation_length,
-                                     max_number_of_candidates=max_number_of_candidates)
+                                     max_number_of_candidates=max_number_of_candidates, persist=persist)
                 logger.debug("FINISHED combination {}/{}".format(combination_counter, combinations_l))
     else:
         # in case max_data is false we don't compute the powerset of the hashtags
@@ -73,7 +74,7 @@ def download_conversations_tw(topic_string, query_string, request_id=-1, languag
                              conversation_filter=conversation_filter,
                              tweet_filter=tweet_filter, recent=recent, max_conversation_length=max_conversation_length,
                              min_conversation_length=min_conversation_length,
-                             max_number_of_candidates=max_number_of_candidates)
+                             max_number_of_candidates=max_number_of_candidates, persist=persist)
 
 
 def filter_conversations(twarc,
@@ -86,8 +87,9 @@ def filter_conversations(twarc,
                          language=LANGUAGE.ENGLISH,
                          max_number_of_candidates=MAX_CANDIDATES,
                          conversation_filter=None,
-                         tweet_filter=None, recent=True):
+                         tweet_filter=None, recent=True, persist=True):
     """
+    @param persist:
     @see download_conversations_tw
     @param twarc:
     @param query:
