@@ -129,6 +129,7 @@ venv/
 
 /twitter/secret/*
 /twitter/migrations/*
+/mastodon/*
 
 /blog/migrations/*
 /delab/migrations/*
