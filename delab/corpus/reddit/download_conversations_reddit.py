@@ -102,7 +102,14 @@ def save_reddit_node(node: TreeNode, comment_dict, simple_request, topic, tweetf
 def compute_reddit_tree(comments, submission):
     comment_dict = {}  # keys are the comment/submission ids and values are the praw objects associate
     # root node
-    data = {"conversation_id": submission.fullname, "id": submission.fullname}
+    author_id, author_name = compute_author_id(submission)
+    data = {"conversation_id": submission.fullname,
+            "id": submission.fullname,
+            "tree_id": submission.fullname,
+            "post_id": submission.fullname,
+            "text": submission.title + "\n" + submission.selftext,
+            "author_id": author_id,
+            "tw_author__name": author_name}
     root = TreeNode(data, submission.fullname)
     comment_dict[submission.fullname] = submission
     orphans = []
@@ -128,15 +135,19 @@ def compute_reddit_tree(comments, submission):
 
 def sort_comments_for_db(submission):
     submission.comments.replace_more(limit=None)
-    comments: list = submission.comments.list()
+    result = []
+    for comment in submission.comments.list():
+        result.append(comment)
+    if len(result) > 3:
+        pass
     # l_original_comments = len(comments)
     # missing = [comment for comment in comments if hasattr(comment, 'MISSING_COMMENT_MESSAGE')]
     # comments = [comment for comment in comments if not hasattr(comment, 'MISSING_COMMENT_MESSAGE')]
-    comments.sort(key=lambda x: x.created)
+    result.sort(key=lambda x: x.created)
     # logger.debug("{}/{} comments in tree are missing".format(len(missing), l_original_comments))
     # if len(comments) > 0:
     #    print("found tree")
-    return comments
+    return result
 
 
 def save_reddit_entry(comment, simple_request, topic, tweetfilter, conversation_id_check):
