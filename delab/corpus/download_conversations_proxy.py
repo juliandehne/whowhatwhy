@@ -56,7 +56,7 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     elif platform == PLATFORM.REDDIT:
         search_r_all(query_string, request_id, topic_string, tweet_filter=tweet_filter)
     elif platform == PLATFORM.MASTODON:
-        download_conversations_mstd(query=query_string)
+        download_conversations_mstd(query=query_string, topic=topic_string)
 
 
 def download_timelines(simple_request_id, platform: PLATFORM):

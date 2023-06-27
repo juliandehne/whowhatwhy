@@ -8,9 +8,9 @@ from delab.delab_enums import LANGUAGE, PLATFORM
 
 def run():
     download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
-                           language=LANGUAGE.GERMAN, platform=PLATFORM.MASTODON)
+                           language=LANGUAGE.GERMAN, platform=PLATFORM.TWITTER)
     download_conversations('Klimawandel', "(climate change) OR (earth warming)",
-                           language=LANGUAGE.ENGLISH, platform=PLATFORM.MASTODON)
+                           language=LANGUAGE.ENGLISH, platform=PLATFORM.TWITTER)
     # download_conversations('Klimawandel', "Klimawandel OR (Klima Wandel) OR (Erderwärmung)",
     # language=LANGUAGE.GERMAN, platform=PLATFORM.REDDIT)
     # download_conversations('Klimawandel', "(climate change) OR (earth warming)",

@@ -20,7 +20,7 @@ def create():
     then save the necessary information in the file that is called
     """
 
-    with open("../twitter/secret/secret_mstd.yaml", 'r') as f:
+    with open("twitter/secret/secret_mstd.yaml", 'r') as f:
         access = yaml.safe_load(f)
 
     mastodon = Mastodon(client_id=access["client_id"],
@@ -32,8 +32,7 @@ def create():
 
 
 def download_conversations_to_search(query, mastodon, topic):
-    search_results = download_search(query=query, mastodon=mastodon)
-    statuses = search_results["statuses"]
+    statuses = download_timeline(query=query, mastodon=mastodon)
     contexts = []
     for status in statuses:
         if status in contexts:
@@ -48,22 +47,22 @@ def download_conversations_to_search(query, mastodon, topic):
         save_toots_as_tree(context=context, topic=topic, query=query, conversation_id=conversation_id)
 
 
-def download_search(query, mastodon):
-    search = mastodon.search(q=query, type='hashtags')
-    return search
+def download_timeline(query, mastodon):
+    timeline = mastodon.timeline_hashtag(hashtag=query)
+    return timeline
 
 
 def find_context(status, mastodon):
     context = {'origin': status}
-    context.update(mastodon.get_context(status["id"]))
+    context.update(mastodon.status_context(status["id"]))
     return context
 
 
 def get_conversation_id(context, mastodon):
-    last_toot = context["descendants"][-1]
-    last_toot_id = last_toot["id"]
-    conversation = mastodon.conversations(max_id=last_toot_id)
-    return conversation["id"]
+    first_toot_id = context["origin"]["id"]
+    conversation = mastodon.conversations(min_id=first_toot_id, limit=1)
+    print(conversation)
+    return 100 #Platzhalter
 
 
 def save_toots_as_tweets(context, conversation_id):
