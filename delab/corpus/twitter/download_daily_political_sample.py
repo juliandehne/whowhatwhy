@@ -60,7 +60,7 @@ def download_twitter_sample(query):
                 conversation_id = candidate["conversation_id"]
 
                 # download the other tweets from the conversation as a TWConversationTree
-                root_node = download_conversation_as_tree(twarc, conversation_id, 1000)
+                root_node = download_conversation_as_tree(twarc, conversation_id, max_replies=100)
 
                 # skip the processing if there was a problem with constructing the conversation tree
                 if root_node is None:
@@ -70,9 +70,14 @@ def download_twitter_sample(query):
                     # some communication code in order to see what kinds of trees are being downloaded
                     flat_tree_size = root_node.flat_size()
                     logger.debug("found tree with size: {}".format(flat_tree_size))
-                    logger.debug("found tree with depth: {}".format(root_node.compute_max_path_length()))
-                    downloaded_tweets += flat_tree_size
-                    downloaded_trees.append(root_node)
+                    depth = root_node.compute_max_path_length()
+                    logger.debug("found tree with depth: {}".format(depth))
+                    # maybe add this check to a later point but this is easy for now
+                    if depth > 5:
+                        downloaded_tweets += flat_tree_size
+                        downloaded_trees.append(root_node)
+                    else:
+                        n_dismissed_candidates += 1
             else:
                 n_dismissed_candidates += 1
         except ConversationNotInRangeException as ex:

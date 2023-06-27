@@ -60,7 +60,6 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
         download_conversations_mstd(query=query_string)
 
 
-
 def download_timelines(simple_request_id, platform: PLATFORM):
     if platform == PLATFORM.TWITTER:
         update_timelines_twitter(simple_request_id)
@@ -71,5 +70,7 @@ def download_timelines(simple_request_id, platform: PLATFORM):
 def download_daily_sample(topic_string, platform: PLATFORM, language=LANGUAGE.ENGLISH) -> list[DelabTree]:
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
+    if platform == platform.REDDIT:
+        return download_daily_rd_sample(topic_string=topic_string)
     else:
         raise NotImplementedError()
