@@ -5,7 +5,7 @@ from background_task import background
 from background_task.models import CompletedTask
 from background_task.models import Task
 from django.utils import timezone
-from delab.corpus.download_author_information import update_authors
+from delab.corpus.twitter.download_author_information import update_authors
 from delab.corpus.download_conversations_proxy import download_conversations, download_timelines
 from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE

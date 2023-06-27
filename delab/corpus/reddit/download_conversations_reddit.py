@@ -5,7 +5,7 @@ import prawcore
 import pytz
 from django.db import IntegrityError
 
-from delab.TwConversationTree import TreeNode
+from delab_trees.recursive_tree.recursive_tree import TreeNode
 from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE
