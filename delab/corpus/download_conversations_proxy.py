@@ -1,5 +1,6 @@
 import logging
 
+from delab.corpus.download_conversations_mastodon import download_conversations_mstd
 from delab.corpus.twitter.download_daily_political_sample import download_daily_political_sample
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab_trees import TreeManager
@@ -56,8 +57,8 @@ def download_conversations(topic_string, query_string, request_id=-1, language=L
     elif platform == PLATFORM.REDDIT:
         search_r_all(query_string, request_id, topic_string, tweet_filter=tweet_filter)
     elif platform == PLATFORM.MASTODON:
-        # download_conversation_mstd(query=query_string)
-        pass
+        download_conversations_mstd(query=query_string)
+
 
 
 def download_timelines(simple_request_id, platform: PLATFORM):
