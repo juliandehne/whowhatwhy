@@ -66,11 +66,14 @@ def download_timelines(simple_request_id, platform: PLATFORM):
         download_timelines_reddit(simple_request_id)
 
 
-def download_daily_sample(topic_string, platform: PLATFORM, language=LANGUAGE.ENGLISH, max_results=20) -> list[
-    DelabTree]:
+def download_daily_sample(topic_string,
+                          platform: PLATFORM,
+                          language=LANGUAGE.ENGLISH,
+                          max_results=20,
+                          persist=True) -> list[DelabTree]:
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
-        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results)
+        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results, persist=persist)
     else:
         raise NotImplementedError()

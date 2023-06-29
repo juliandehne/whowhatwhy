@@ -1,6 +1,8 @@
 from random import choice
 
-from delab.corpus.reddit.download_conversations_reddit import sort_comments_for_db, compute_reddit_tree
+from delab.corpus.download_conversations_util import set_up_topic_and_simple_request
+from delab.corpus.reddit.download_conversations_reddit import sort_comments_for_db, compute_reddit_tree, \
+    save_reddit_tree, store_computed_tree_in_db
 from delab.tw_connection_util import get_praw
 from delab_trees.delab_tree import DelabTree
 from django_project.settings import MAX_CONVERSATION_LENGTH_REDDIT, MIN_CONVERSATION_LENGTH
@@ -145,7 +147,7 @@ subreddits = [
 ]
 
 
-def download_daily_rd_sample(topic_string, max_results):
+def download_daily_rd_sample(topic_string, max_results, persist=True):
     result = []
     reddit = get_praw()
     subreddit_string = choice(subreddits)
@@ -161,8 +163,12 @@ def download_daily_rd_sample(topic_string, max_results):
         # print(root.to_string())
         if root.compute_max_path_length() > 4:
             tree = DelabTree.from_recursive_tree(root)
-            tree.validate(verbose=True)
+            tree.validate(verbose=False)
             result.append(tree)
+            if persist:
+                # store conversation in db
+                simple_request, topic = set_up_topic_and_simple_request(subreddit_string, -1, topic_string)
+                store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, None)
         if len(result) >= max_results:
             break
     return result

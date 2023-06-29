@@ -11,7 +11,8 @@ from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE
 from delab.models import TweetAuthor, Tweet, SimpleRequest, TwTopic
 from delab.tw_connection_util import get_praw
-from django_project.settings import MAX_CANDIDATES_REDDIT, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
+from django_project.settings import MAX_CANDIDATES_REDDIT, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH, \
+    MAX_CONVERSATION_LENGTH_REDDIT
 from util.abusing_strings import convert_to_hash
 
 """
@@ -39,12 +40,12 @@ def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: s
         if recent:
             for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=max_number_of_candidates,
                                                              sort="new"):
-                save_reddit_tree(simple_request, submission, topic, min_conversation_length=min_conversation_length,
-                                 max_conversation_length=max_conversation_length, tweetfilter=tweet_filter)
+                save_reddit_tree(simple_request, submission, topic, max_conversation_length=max_conversation_length,
+                                 min_conversation_length=min_conversation_length, tweetfilter=tweet_filter)
         else:
             for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=max_number_of_candidates):
-                save_reddit_tree(simple_request, submission, topic, min_conversation_length=min_conversation_length,
-                                 max_conversation_length=max_conversation_length, tweetfilter=tweet_filter)
+                save_reddit_tree(simple_request, submission, topic, max_conversation_length=max_conversation_length,
+                                 min_conversation_length=min_conversation_length, tweetfilter=tweet_filter)
 
     except prawcore.exceptions.Redirect:
         logger.error("reddit with this name does not exist")
@@ -65,7 +66,7 @@ def download_subreddit(sub_reddit_string, simple_request_id, topic_string=None):
         logger.error("reddit with this name does not exist")
 
 
-def save_reddit_tree(simple_request, submission, topic, max_conversation_length=MAX_CONVERSATION_LENGTH,
+def save_reddit_tree(simple_request, submission, topic, max_conversation_length=MAX_CONVERSATION_LENGTH_REDDIT,
                      min_conversation_length=MIN_CONVERSATION_LENGTH, tweetfilter=None):
     comments = sort_comments_for_db(submission)
 
@@ -74,16 +75,20 @@ def save_reddit_tree(simple_request, submission, topic, max_conversation_length=
         tree_size = root.flat_size()
         if min_conversation_length < tree_size < max_conversation_length:
             logger.debug("found suitable conversation in reddit with length {}".format(tree_size))
-            conversation_id = convert_to_hash(submission.fullname)
-            created = save_reddit_submission(submission, simple_request, topic, tweetfilter, conversation_id)
-            if created:
-                children = [child for child in root.children]
-                for child in children:
-                    save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter, conversation_id)
-            logger.debug(
-                "saved {} reddit posts to db".format(Tweet.objects.filter(conversation_id=conversation_id).count()))
+            store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, tweetfilter)
     else:
         logger.error("could not compute reddit_tree for conversation {}".format(submission))
+
+
+def store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, tweetfilter):
+    conversation_id = convert_to_hash(submission.fullname)
+    created = save_reddit_submission(submission, simple_request, topic, tweetfilter, conversation_id)
+    if created:
+        children = [child for child in root.children]
+        for child in children:
+            save_reddit_node(child, comment_dict, simple_request, topic, tweetfilter, conversation_id)
+    logger.debug(
+        "saved {} reddit posts to db".format(Tweet.objects.filter(conversation_id=conversation_id).count()))
 
 
 def save_reddit_node(node: TreeNode, comment_dict, simple_request, topic, tweetfilter, conversation_id_check):
@@ -103,10 +108,10 @@ def compute_reddit_tree(comments, submission):
     comment_dict = {}  # keys are the comment/submission ids and values are the praw objects associate
     # root node
     author_id, author_name = compute_author_id(submission)
-    data = {"conversation_id": submission.fullname,
-            "id": submission.fullname,
-            "tree_id": submission.fullname,
-            "post_id": submission.fullname,
+    data = {"conversation_id": convert_to_hash(submission.fullname),
+            "id": convert_to_hash(submission.fullname),
+            "tree_id": convert_to_hash(submission.fullname),
+            "post_id": convert_to_hash(submission.fullname),
             "text": submission.title + "\n" + submission.selftext,
             "author_id": author_id,
             "created_at": convert_time_stamp_to_django(submission),
@@ -122,9 +127,9 @@ def compute_reddit_tree(comments, submission):
         parent_id = comment.parent_id
         comment_author_id, comment_author_name = compute_author_id(submission)
         comment_data = {"conversation_id": comment.fullname,
-                        "id": comment.fullname,
-                        "tree_id": comment.fullname,
-                        "post_id": comment.fullname,
+                        "id": convert_to_hash(comment.fullname),
+                        "tree_id": convert_to_hash(comment.fullname),
+                        "post_id": convert_to_hash(comment.fullname),
                         "text": comment.body,
                         "author_id": comment_author_id,
                         "tw_author__name": comment_author_name,
