@@ -285,6 +285,8 @@ TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and
 MAX_CANDIDATES_REDDIT = 300
 MAX_CANDIDATES_TWITTER = 850
 
+MAX_CONVERSATION_LENGTH_REDDIT = 50
+
 CURRENT_DUO_FLOW_METRIC = "sentiment"
 
 
