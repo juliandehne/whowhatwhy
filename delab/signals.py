@@ -13,6 +13,7 @@ from delab.models import SimpleRequest, Tweet, TWIntoleranceRating, IntoleranceA
 from delab.nce.download_intolerant_tweets import INTOLERANCE_DICT
 from delab.tasks import download_conversations_scheduler
 from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
+from mt_study.logic.download_label_candidates import M_TURK_TOPIC
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ def process_simple_request(sender, instance, created, **kwargs):
     """
     logging.info("received signal from post_save {} for pk {}".format(timezone.now(), instance.pk))
 
-    scripted_topics = [MODTOPIC2, "TopicNotGiven", INTOLERANCE_DICT]
+    scripted_topics = [MODTOPIC2, "TopicNotGiven", INTOLERANCE_DICT, M_TURK_TOPIC]
     if created and instance.topic.title not in scripted_topics:
         # cleaned_hashtags = convert_request_to_hashtag_list(instance.title)
         download_conversations_scheduler(instance.topic.title,

@@ -108,7 +108,8 @@ def compute_reddit_tree(comments, submission):
     comment_dict = {}  # keys are the comment/submission ids and values are the praw objects associate
     # root node
     author_id, author_name = compute_author_id(submission)
-    data = {"conversation_id": convert_to_hash(submission.fullname),
+    conversation_id = convert_to_hash(submission.fullname)
+    data = {"conversation_id": conversation_id,
             "id": convert_to_hash(submission.fullname),
             "tree_id": convert_to_hash(submission.fullname),
             "post_id": convert_to_hash(submission.fullname),
@@ -126,7 +127,7 @@ def compute_reddit_tree(comments, submission):
         # parent_id = comment.parent_id.split("_")[1]
         parent_id = comment.parent_id
         comment_author_id, comment_author_name = compute_author_id(submission)
-        comment_data = {"conversation_id": comment.fullname,
+        comment_data = {"conversation_id": conversation_id,
                         "id": convert_to_hash(comment.fullname),
                         "tree_id": convert_to_hash(comment.fullname),
                         "post_id": convert_to_hash(comment.fullname),

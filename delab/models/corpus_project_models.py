@@ -252,6 +252,7 @@ class ConversationFlow(models.Model):
     flow_name = models.TextField(null=True, unique=True)
     conversation_id = models.BigIntegerField(null=True)
     longest = models.BooleanField(default=False)
+    sample_flow = models.DateField(null=True)
 
     @classmethod
     def create(cls, image, flow_name):

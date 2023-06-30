@@ -1,13 +1,19 @@
 import pickle
 import timeit
+from datetime import datetime
 from functools import partial
+
+from django.utils import timezone
+from twarc.command2 import tweet
 
 from delab.corpus.download_conversations_proxy import download_daily_sample
 
 from delab.delab_enums import PLATFORM
-from delab.models import Tweet
+from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
+from delab_trees.delab_post import DelabPost
 from delab_trees.delab_tree import DelabTree
+from delab_trees.flow_duos import compute_flow_name
 
 M_TURK_TOPIC = "mturk_candidate"
 
@@ -22,7 +28,7 @@ def download_mturk_sample_conversations(n_runs, platform, min_results):
     print("Aberage Execution time:", average_time, "minutes")
 
 
-def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=True) -> list[DelabTree]:
+def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=True) -> list[list[DelabPost]]:
     result = []
     print("downloading random conversations for mturk_labeling")
     while len(result) < min_results:
@@ -43,7 +49,7 @@ def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=Tr
     forest = TreeManager.from_trees(result)
     # print(f"finished downloading trees {forest}")
 
-    flow_sample = forest.get_flow_sample(5, filter_function=is_short_text)
+    flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=is_short_text)
     print(flow_sample)
 
     # collect ids of the trees from the sample
@@ -55,12 +61,27 @@ def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=Tr
     # throw out the trees not sampled
     forest.keep(sample_tree_ids)
 
+    # TODO: potentially remove even more samples here using Valentins IPA
     if persist:
         objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id", flat=True)
         n_stored_objects = len(set(list(objects)))
         n_sample_tree_ids = len(set(sample_tree_ids))
         assert n_stored_objects == n_sample_tree_ids
+        persist_flow_in_db(flow_sample)
     # TODO persist flow_sample
+    return flow_sample
+
+
+def persist_flow_in_db(flow_sample: list[list[DelabPost]]):
+    for flow in flow_sample:
+        tweet_ids = list(map(lambda x: x.post_id, flow))
+        flowObject = ConversationFlow.objects.create(
+            flow_name=compute_flow_name(flow, "sample_"),
+            conversation_id=flow[0].tree_id,
+            longest=False,
+            sample_flow=timezone.now().date(),
+        )
+        flowObject.tweets.set(Tweet.objects.filter(twitter_id__in=tweet_ids))
 
 
 def is_short_text(text):
