@@ -1,8 +1,8 @@
 from random import choice
 
-from delab.corpus.download_conversations_util import set_up_topic_and_simple_request
+from delab.corpus.DelabTreeDAO import set_up_topic_and_simple_request, check_general_tree_requirements
 from delab.corpus.reddit.download_conversations_reddit import sort_comments_for_db, compute_reddit_tree, \
-    save_reddit_tree, store_computed_tree_in_db
+    save_reddit_tree
 from delab.tw_connection_util import get_praw
 from delab_trees.delab_tree import DelabTree
 from django_project.settings import MAX_CONVERSATION_LENGTH_REDDIT, MIN_CONVERSATION_LENGTH
@@ -152,23 +152,20 @@ def download_daily_rd_sample(topic_string, max_results, persist=True):
     reddit = get_praw()
     subreddit_string = choice(subreddits)
     # could use .hot()
+    count = 0
     for submission in reddit.subreddit(subreddit_string).top(time_filter='day'):
-        if MAX_CONVERSATION_LENGTH_REDDIT < submission.num_comments < MIN_CONVERSATION_LENGTH:
-            continue
         # print(submission)
-        comments = sort_comments_for_db(submission)
-        comment_dict, root = compute_reddit_tree(comments, submission)
-        # print("Found Tree With: ", root.flat_size())
-        # print("N_trees_found:", len(result))
-        # print(root.to_string())
-        if root.compute_max_path_length() > 4:
-            tree = DelabTree.from_recursive_tree(root)
-            tree.validate(verbose=False)
-            result.append(tree)
+        root = compute_reddit_tree(submission)
+        tree = DelabTree.from_recursive_tree(root)
+        useful = check_general_tree_requirements(tree)
+        if useful:
             if persist:
                 # store conversation in db
                 simple_request, topic = set_up_topic_and_simple_request(subreddit_string, -1, topic_string)
-                store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, None)
-        if len(result) >= max_results:
+                # store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, None)
+                save_reddit_tree(simple_request, submission, topic)
+            count += 1
+            result.append(tree)
+        if count > max_results:
             break
     return result

@@ -321,33 +321,3 @@ def save_tree_to_db(root_node: TreeNode,
     # TODO run some tree validations
     store_tree_data(conversation_id, platform, root_node, simple_request, topic, candidate_id, tweet_filter)
 
-
-def store_tree_data(conversation_id: int, platform: PLATFORM, root_node: TreeNode, simple_request: SimpleRequest,
-                    topic: TwTopic, candidate_id : int, tweet_filter):
-    # before = dt.now()
-    twitter_id = int(root_node.data["id"])
-    tweet = Tweet(topic=topic,
-                  text=root_node.data["text"],
-                  simple_request=simple_request,
-                  twitter_id=twitter_id,
-                  author_id=int(root_node.data["author_id"]),
-                  conversation_id=int(conversation_id),
-                  created_at=root_node.data["created_at"],
-                  in_reply_to_user_id=root_node.data.get("in_reply_to_user_id", None),
-                  in_reply_to_status_id=root_node.data.get("in_reply_to_status_id", None),
-                  platform=platform,
-                  tn_parent_id=root_node.parent_id,
-                  tn_parent_type=root_node.parent_type,
-                  was_query_candidate=candidate_id == twitter_id,
-                  # tn_priority=priority,
-                  language=root_node.data["lang"])
-    try:
-        apply_tweet_filter(tweet, tweet_filter)
-    except IntegrityError:
-        pass
-    # after = dt.now()
-    # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))
-    # recursively persisting the children in the database
-    if not len(root_node.children) == 0:
-        for child in root_node.children:
-            store_tree_data(conversation_id, platform, child, simple_request, topic, candidate_id, tweet_filter)

@@ -279,6 +279,7 @@ LOGGING = {
 MAX_CANDIDATES = 10000
 MIN_CONVERSATION_LENGTH = 10
 MAX_CONVERSATION_LENGTH = 500  # tested for 300
+MIN_CONVERSATION_DEPTH = 5
 
 TRAX_CAPABILITIES = False  # set this to true only if you running on a linux and have AVX commands available
 # sys.setrecursionlimit(2000)
