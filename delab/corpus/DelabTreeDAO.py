@@ -13,15 +13,16 @@ from django_project.settings import MIN_CONVERSATION_LENGTH, MIN_CONVERSATION_DE
 logger = logging.getLogger(__name__)
 
 
-def persist_tree(tree: DelabTree, platform: PLATFORM, simple_request: SimpleRequest,
-                 topic: TwTopic, candidate_id: int = -1, tweet_filter=None):
+def persist_tree(tree: DelabTree, platform: PLATFORM, simple_request: SimpleRequest = None,
+                 topic: TwTopic = None, candidate_id: int = -1, tweet_filter=None):
     root_node = tree.as_recursive_tree()
     persist_recursive_tree(root_node, platform, simple_request, topic, candidate_id, tweet_filter)
 
 
 def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_request: SimpleRequest,
-                           topic: TwTopic, candidate_id: int, tweet_filter):
+                           topic: TwTopic, candidate_id: int = -1, tweet_filter=None):
     # before = dt.now()
+    simple_request, topic = generate_default_request_and_topic(simple_request, topic)
     conversation_id = root_node.data["tree_id"]
     twitter_id = int(root_node.data["post_id"])
     tweet = Tweet(topic=topic,
@@ -92,4 +93,19 @@ def set_up_topic_and_simple_request(query_string, request_id, topic_string):
                 title=query_string,
                 topic=topic
             )
+    return simple_request, topic
+
+
+def generate_default_request_and_topic(simple_request, topic):
+    if topic is None:
+        # create the topic and save it to the db
+        topic, created = TwTopic.objects.get_or_create(
+            title="topic not given"
+        )
+
+    if simple_request is None:
+        simple_request, created = SimpleRequest.objects.get_or_create(
+            title="query not given",
+            topic=topic
+        )
     return simple_request, topic

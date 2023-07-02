@@ -4,14 +4,17 @@ import logging
 import prawcore
 import pytz
 
-from delab.corpus.DelabTreeDAO import persist_recursive_tree, set_up_topic_and_simple_request
+from delab.corpus.DelabTreeDAO import persist_recursive_tree, set_up_topic_and_simple_request, \
+    check_general_tree_requirements
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM
 from delab.models import TweetAuthor
 from delab.tw_connection_util import get_praw
+from delab_trees.delab_tree import DelabTree
 from delab_trees.recursive_tree.recursive_tree import TreeNode
 from django_project.settings import MAX_CANDIDATES_REDDIT
 from util.abusing_strings import convert_to_hash
+from delab.delab_enums import LANGUAGE
 
 """
 get the moderators like this
@@ -27,23 +30,23 @@ for message in reddit.subreddit("mod").mod.inbox(limit=5):
 logger = logging.getLogger(__name__)
 
 
-def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str, tweet_filter=None, recent=True):
+def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str, tweet_filter=None, recent=True, language=LANGUAGE.ENGLISH):
     simple_request, topic = set_up_topic_and_simple_request(sub_reddit_string, simple_request_id, topic_string)
     reddit = get_praw()
     try:
         if recent:
             for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=MAX_CANDIDATES_REDDIT,
                                                              sort="new"):
-                save_reddit_tree(simple_request, submission, topic)
+                save_reddit_tree(simple_request, submission, topic, language)
         else:
             for submission in reddit.subreddit("all").search(query=sub_reddit_string, limit=MAX_CANDIDATES_REDDIT):
-                save_reddit_tree(simple_request, submission, topic)
+                save_reddit_tree(simple_request, submission, topic, language)
 
     except prawcore.exceptions.Redirect:
         logger.error("reddit with this name does not exist")
 
 
-def download_subreddit(sub_reddit_string, simple_request_id, topic_string=None):
+def download_subreddit(sub_reddit_string, simple_request_id, topic_string=None, language=LANGUAGE.ENGLISH):
     if topic_string is None:
         topic_string = sub_reddit_string
     # create the topic and save it to the db,
@@ -54,50 +57,53 @@ def download_subreddit(sub_reddit_string, simple_request_id, topic_string=None):
 
     try:
         for submission in reddit.subreddit(sub_reddit_string).hot(limit=10):
-            save_reddit_tree(simple_request, submission, topic)
+            save_reddit_tree(simple_request, submission, topic, language)
     except prawcore.exceptions.Redirect:
         logger.error("reddit with this name does not exist")
 
 
-def save_reddit_tree(simple_request, submission, topic):
-    root = compute_reddit_tree(submission)
-    persist_recursive_tree(root, PLATFORM.REDDIT, simple_request, topic)
+def save_reddit_tree(simple_request, submission, topic, language):
+    root = compute_reddit_tree(submission, language)
+    delab_tree = DelabTree.from_recursive_tree(root)
+    if check_general_tree_requirements(delab_tree, verbose=False, platform=PLATFORM.REDDIT):
+        persist_recursive_tree(root, PLATFORM.REDDIT, simple_request, topic)
 
 
-def compute_reddit_tree(submission):
+def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
     comments = sort_comments_for_db(submission)
 
     # root node
     author_id, author_name = compute_author_id(submission)
-    conversation_id = convert_to_hash(submission.fullname)
-    data = {"conversation_id": conversation_id,
-            "id": convert_to_hash(submission.fullname),
-            "tree_id": convert_to_hash(submission.fullname),
-            "post_id": convert_to_hash(submission.fullname),
-            "text": submission.title + "\n" + submission.selftext,
-            "author_id": author_id,
-            "created_at": convert_time_stamp_to_django(submission),
-            "tw_author__name": author_name,
-            "rd_data": submission}
-    root = TreeNode(data, submission.fullname)
+    tree_id = convert_to_hash(submission.fullname)
+    root_node_id = convert_to_hash(submission.fullname)
+    data = {
+        "tree_id": tree_id,
+        "post_id": root_node_id,
+        "text": submission.title + "\n" + submission.selftext,
+        "author_id": author_id,
+        "created_at": convert_time_stamp_to_django(submission),
+        "tw_author__name": author_name,
+        "rd_data": submission,
+        "lang": language}
+    root = TreeNode(data, root_node_id, tree_id=tree_id)
     orphans = []
     for comment in comments:
         # node_id = comment.id
-        node_id = comment.fullname
+        node_id = convert_to_hash(comment.fullname)
         # parent_id = comment.parent_id.split("_")[1]
-        parent_id = comment.parent_id
+        parent_id = convert_to_hash(comment.parent_id)
         comment_author_id, comment_author_name = compute_author_id(submission)
-        comment_data = {"conversation_id": conversation_id,
-                        "id": convert_to_hash(comment.fullname),
-                        "tree_id": convert_to_hash(comment.fullname),
-                        "post_id": convert_to_hash(comment.fullname),
-                        "text": comment.body,
-                        "author_id": comment_author_id,
-                        "tw_author__name": comment_author_name,
-                        "created_at": convert_time_stamp_to_django(submission),
-                        "parent_id": parent_id,
-                        "rd_data": comment}
-        node = TreeNode(comment_data, node_id, parent_id)
+        comment_data = {
+            "tree_id": tree_id,
+            "post_id": node_id,
+            "text": comment.body,
+            "author_id": comment_author_id,
+            "tw_author__name": comment_author_name,
+            "created_at": convert_time_stamp_to_django(submission),
+            "parent_id": parent_id,
+            "rd_data": comment,
+            "lang": language}
+        node = TreeNode(comment_data, node_id, parent_id, tree_id=tree_id)
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if not root.find_parent_of(node):
             orphans.append(node)

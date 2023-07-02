@@ -2,16 +2,15 @@ import logging
 import re
 import time
 
-from django.db import IntegrityError
 from requests import HTTPError
 
-from delab_trees.recursive_tree.recursive_tree import TreeNode
-from delab.corpus.download_conversations_util import set_up_topic_and_simple_request, apply_tweet_filter
+from delab.corpus.DelabTreeDAO import set_up_topic_and_simple_request
 from delab.corpus.download_exceptions import ConversationNotInRangeException
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM, LANGUAGE, TWEET_RELATIONSHIPS
-from delab.models import Tweet, TwTopic, SimpleRequest
+from delab.models import TwTopic, SimpleRequest
 from delab.tw_connection_util import DelabTwarc
+from delab_trees.recursive_tree.recursive_tree import TreeNode
 from django_project.settings import MAX_CANDIDATES, MAX_CONVERSATION_LENGTH, MIN_CONVERSATION_LENGTH
 from util.abusing_lists import powerset
 
@@ -320,4 +319,3 @@ def save_tree_to_db(root_node: TreeNode,
     """
     # TODO run some tree validations
     store_tree_data(conversation_id, platform, root_node, simple_request, topic, candidate_id, tweet_filter)
-
