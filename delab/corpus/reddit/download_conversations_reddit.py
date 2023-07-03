@@ -30,7 +30,8 @@ for message in reddit.subreddit("mod").mod.inbox(limit=5):
 logger = logging.getLogger(__name__)
 
 
-def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str, tweet_filter=None, recent=True, language=LANGUAGE.ENGLISH):
+def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: str, tweet_filter=None, recent=True,
+                 language=LANGUAGE.ENGLISH):
     simple_request, topic = set_up_topic_and_simple_request(sub_reddit_string, simple_request_id, topic_string)
     reddit = get_praw()
     try:
@@ -85,7 +86,7 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
         "tw_author__name": author_name,
         "rd_data": submission,
         "lang": language,
-        "url": submission.permalink}
+        "url": "https://reddit.com" + submission.permalink}
     root = TreeNode(data, root_node_id, tree_id=tree_id)
     orphans = []
     for comment in comments:
@@ -104,7 +105,7 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
             "parent_id": parent_id,
             "rd_data": comment,
             "lang": language,
-            "url": comment.permalink}
+            "url": "https://reddit.com" + comment.permalink}
         node = TreeNode(comment_data, node_id, parent_id, tree_id=tree_id)
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if not root.find_parent_of(node):
