@@ -98,10 +98,10 @@ def is_short_text(text):
 
 
 def is_bad_reddit_case(text):
-    return "[removed]" in text or "!approve" in text or "!ban" in text
+    return "[removed]" not in text and "!approve" not in text and "!ban" not in text
 
 
 def meta_filter(text):
     is_short = is_short_text(text)
     is_bad_rd = is_bad_reddit_case(text)
-    return is_short or is_bad_rd
+    return is_short and is_bad_rd

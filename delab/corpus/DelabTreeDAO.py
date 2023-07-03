@@ -25,6 +25,9 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
     simple_request, topic = generate_default_request_and_topic(simple_request, topic)
     conversation_id = root_node.data["tree_id"]
     twitter_id = int(root_node.data["post_id"])
+    url = None
+    if "url" in root_node.data:
+        url = root_node.data["url"]
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],
                   simple_request=simple_request,
@@ -39,7 +42,7 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
                   tn_parent_type=root_node.parent_type,
                   was_query_candidate=candidate_id == twitter_id,
                   # tn_priority=priority,
-                  language=root_node.data["lang"])
+                  language=root_node.data["lang"], original_url=url)
     try:
         apply_tweet_filter(tweet, tweet_filter)
     except IntegrityError:
