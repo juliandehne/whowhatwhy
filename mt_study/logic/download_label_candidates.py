@@ -49,8 +49,10 @@ def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=Tr
     forest = TreeManager.from_trees(result)
     # print(f"finished downloading trees {forest}")
 
-    flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_filter)
-    print(flow_sample)
+    flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_list_filter)
+    print("found flows", len(flow_sample))
+
+    # flow_sample = list(filter(filter_self_answers, flow_sample))
 
     # collect ids of the trees from the sample
     sample_tree_ids = []
@@ -94,14 +96,30 @@ def is_short_text(text):
     Returns:
         bool: True if the text is shorter than 280 characters, False otherwise.
     """
-    return len(text) < 280
+    return len(text) < 500
 
 
 def is_bad_reddit_case(text):
     return "[removed]" not in text and "!approve" not in text and "!ban" not in text
 
 
-def meta_filter(text):
+def meta_list_filter(posts: list[DelabPost]):
+    return all([meta_filter(x) for x in posts]) and filter_self_answers(posts)
+
+
+def meta_filter(post: DelabPost):
+    text = post.text
     is_short = is_short_text(text)
     is_bad_rd = is_bad_reddit_case(text)
-    return is_short and is_bad_rd
+    result = is_short and is_bad_rd
+    return result
+
+
+def filter_self_answers(posts: list[DelabPost]):
+    # posts = posts.sort(key=lambda x: x.created_at)
+    previous_author = None
+    for post in posts:
+        if post.author_id == previous_author:
+            return False
+        previous_author = post.author_id
+    return True
