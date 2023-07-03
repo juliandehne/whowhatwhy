@@ -13,7 +13,7 @@ class VERSION(models.TextChoices):
 class PLATFORM(models.TextChoices):
     REDDIT = "reddit"
     TWITTER = "twitter"
-    MASTODON ="mastodon"
+    MASTODON = "mastodon"
     DELAB = "delab"
 
 
@@ -80,3 +80,12 @@ class CLIMATEAUTHOR(models.TextChoices):
 class DUOFLOW_METRIC(models.TextChoices):
     SENTIMENT = "sentiment"
     toxicity = "toxicity"
+
+
+class MODERATION_TYPE(models.TextChoices):
+    ELABORATION_SUPPORT = "elaboration support"
+    NORM_CONTROL = "norm control"
+    AGENDA_CONTROL = "agenda control"
+    EMOTION_CONTROL = "emotion control"
+    CONSENSUS_SEEKING = "consensus seeking"
+

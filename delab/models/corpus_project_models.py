@@ -155,7 +155,7 @@ class Tweet(models.Model):
                                   help_text="If this is checked, then the moderation suggestion would actually be "
                                             "send to twitter!")
     was_query_candidate = models.BooleanField(default=False)
-
+    original_url = models.URLField(null=True)
     # is_climate_author = models.BooleanField(null=True, default=False)
 
     class Meta:
@@ -252,6 +252,7 @@ class ConversationFlow(models.Model):
     flow_name = models.TextField(null=True, unique=True)
     conversation_id = models.BigIntegerField(null=True)
     longest = models.BooleanField(default=False)
+    sample_flow = models.DateField(null=True)
 
     @classmethod
     def create(cls, image, flow_name):

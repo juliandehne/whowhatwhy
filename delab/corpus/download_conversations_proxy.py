@@ -1,14 +1,13 @@
 import logging
 
-from delab.corpus.twitter.download_daily_political_sample import download_daily_political_sample
-from delab.delab_enums import PLATFORM, LANGUAGE
-from delab_trees import TreeManager
-from delab.corpus.reddit.download_conversations_reddit import search_r_all
-from delab.corpus.twitter.download_conversations_twitter import download_conversations_tw
-from delab.corpus.reddit.download_timelines_reddit import download_timelines_reddit
 from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd
+from delab.corpus.reddit.download_conversations_reddit import search_r_all
+from delab.corpus.reddit.download_daily_political_rd_sample import download_daily_rd_sample
+from delab.corpus.reddit.download_timelines_reddit import download_timelines_reddit
+from delab.corpus.twitter.download_conversations_twitter import download_conversations_tw
+from delab.corpus.twitter.download_daily_political_sample import download_daily_political_sample
 from delab.corpus.twitter.download_timelines_twitter import update_timelines_twitter
-
+from delab.delab_enums import PLATFORM, LANGUAGE
 # from .download_conversations_mastodon import download_conversation_mstd
 from delab_trees.delab_tree import DelabTree
 
@@ -67,11 +66,14 @@ def download_timelines(simple_request_id, platform: PLATFORM):
         download_timelines_reddit(simple_request_id)
 
 
-def download_daily_sample(topic_string, platform: PLATFORM, language=LANGUAGE.ENGLISH) -> list[DelabTree]:
+def download_daily_sample(topic_string,
+                          platform: PLATFORM,
+                          language=LANGUAGE.ENGLISH,
+                          max_results=20,
+                          persist=True) -> list[DelabTree]:
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
-        # return download_daily_rd_sample(topic_string=topic_string)
-        pass
+        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results, persist=persist)
     else:
         raise NotImplementedError()
