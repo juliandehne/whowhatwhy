@@ -1,5 +1,5 @@
 from mastodon import Mastodon
-#from delab_trees import TreeManager
+# from delab_trees import TreeManager
 from delab.corpus.twitter.download_conversations_twitter import save_tree_to_db
 from delab_trees.delab_tree import DelabTree
 from delab.models import Tweet
@@ -42,13 +42,13 @@ def download_conversations_to_search(query, mastodon, topic):
             contexts.append(context)
 
     for context in contexts:
-        conversation_id = get_conversation_id(context, mastodon)
+        conversation_id = get_conversation_id(context)
         save_toots_as_tweets(context, conversation_id)
         save_toots_as_tree(context=context, topic=topic, query=query, conversation_id=conversation_id)
 
 
 def download_timeline(query, mastodon):
-    timeline = mastodon.timeline_hashtag(hashtag=query)
+    timeline = mastodon.timeline_hashtag(hashtag=query, limit=40)
     return timeline
 
 
@@ -58,20 +58,25 @@ def find_context(status, mastodon):
     return context
 
 
-def get_conversation_id(context, mastodon):
-    first_toot_id = context["origin"]["id"]
-    conversation = mastodon.conversations(min_id=first_toot_id, limit=1)
-    print(conversation)
-    return 100 #Platzhalter
+def get_conversation_id(context):
+    # mastodon api has no option to get conversation_id by status --> using id of parent toot as conversation_id
+    ancestors = context["ancestors"]
+    origin = context["origin"]
+    if origin["in_reply_to_id"] is None:
+        return context["origin"]["id"]
+    else:
+        for status in ancestors:
+            if status["in_reply_to_id"] is None:
+                return status["id"]
+
 
 
 def save_toots_as_tweets(context, conversation_id):
     descendants = context["descendants"]
     ancestors = context["ancestors"]
     origin = context["origin"]
-    toots = descendants + ancestors + origin
-    root = get_root(context)
-    for toot in toots:
+    root = get_root()
+    for toot in ancestors:
         tweet = Tweet(twitter_id=toot["id"],
                       text=toot["content"],
                       author_id=toot["account"]["id"],
@@ -82,6 +87,27 @@ def save_toots_as_tweets(context, conversation_id):
                       tn_original_parent=root["id"],
                       platform=PLATFORM.MASTODON,
                       language=toot["language"])
+    for toot in descendants:
+        tweet = Tweet(twitter_id=toot["id"],
+                      text=toot["content"],
+                      author_id=toot["account"]["id"],
+                      in_reply_to_status_id=toot["in_reply_to_id"],
+                      in_reply_to_user_id=toot["in_reply_to_account_id"],
+                      created_at=toot["created_at"],
+                      conversation_id=conversation_id,
+                      tn_original_parent=root["id"],
+                      platform=PLATFORM.MASTODON,
+                      language=toot["language"])
+    tweet = Tweet(twitter_id=origin["id"],
+                  text=origin["content"],
+                  author_id=origin["account"]["id"],
+                  in_reply_to_status_id=origin["in_reply_to_id"],
+                  in_reply_to_user_id=origin["in_reply_to_account_id"],
+                  created_at=origin["created_at"],
+                  conversation_id=conversation_id,
+                  tn_original_parent=root["id"],
+                  platform=PLATFORM.MASTODON,
+                  language=origin["language"])
 
 
 def get_root(context):
