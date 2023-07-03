@@ -3,22 +3,15 @@
 {% block content %}
     <div class="content-section">
 
-        <!--
+
         <strong>Root post: {{ root_tweet }} </strong>
         </br>
         </br>
-        {% for context_text in conversation %}
-            {% if context_text == text %}
-                <span class="text-success">
-                >> {{ context_text }}
-                </span>
-            {% else %}
-                >> {{ context_text }}
-            {% endif %}
+        {% for tweet in tweets %}
+            >> {{ tweet.text }}
             </br>
             </br>
         {% endfor %}
-        -->
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
