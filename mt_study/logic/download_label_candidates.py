@@ -49,7 +49,7 @@ def download_mturk_samples(platform=PLATFORM.TWITTER, min_results=20, persist=Tr
     forest = TreeManager.from_trees(result)
     # print(f"finished downloading trees {forest}")
 
-    flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=is_short_text)
+    flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_filter)
     print(flow_sample)
 
     # collect ids of the trees from the sample
@@ -95,3 +95,13 @@ def is_short_text(text):
         bool: True if the text is shorter than 280 characters, False otherwise.
     """
     return len(text) < 280
+
+
+def is_bad_reddit_case(text):
+    return "[removed]" in text or "!approve" in text or "!ban" in text
+
+
+def meta_filter(text):
+    is_short = is_short_text(text)
+    is_bad_rd = is_bad_reddit_case(text)
+    return is_short or is_bad_rd

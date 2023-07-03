@@ -13,3 +13,4 @@ class Intervention(models.Model):
     moderation_type = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
                                        help_text="the type of moderation strategy employed")
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    is_conversation = models.BooleanField(default=True)
