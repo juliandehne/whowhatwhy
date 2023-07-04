@@ -1,16 +1,15 @@
 from mastodon import Mastodon
-#from delab_trees import TreeManager
-from delab.corpus.twitter.download_conversations_twitter import save_tree_to_db
+from delab.corpus.DelabTreeDAO import persist_tree, set_up_topic_and_simple_request
 from delab_trees.delab_tree import DelabTree
-from delab.models import Tweet
+from bs4 import BeautifulSoup
 from delab.delab_enums import PLATFORM
 import yaml
 import pandas as pd
 
 
-def download_conversations_mstd(query, topic):
+def download_conversations_mstd(query, topic, since=None):
     mastodon = create()
-    download_conversations_to_search(query=query, mastodon=mastodon, topic=topic)
+    download_conversations_to_search(query=query, mastodon=mastodon, topic=topic, since=since)
 
 
 def create():
@@ -31,7 +30,7 @@ def create():
     return mastodon
 
 
-def download_conversations_to_search(query, mastodon, topic):
+def download_conversations_to_search(query, mastodon, topic, since):
     statuses = download_timeline(query=query, mastodon=mastodon)
     contexts = []
     for status in statuses:
@@ -40,15 +39,13 @@ def download_conversations_to_search(query, mastodon, topic):
         else:
             context = find_context(status, mastodon)
             contexts.append(context)
-
     for context in contexts:
-        conversation_id = get_conversation_id(context, mastodon)
-        save_toots_as_tweets(context, conversation_id)
+        conversation_id = get_conversation_id(context)
         save_toots_as_tree(context=context, topic=topic, query=query, conversation_id=conversation_id)
 
 
-def download_timeline(query, mastodon):
-    timeline = mastodon.timeline_hashtag(hashtag=query)
+def download_timeline(query, mastodon, since):
+    timeline = mastodon.timeline_hashtag(hashtag=query, limit=40, since_id=since)
     return timeline
 
 
@@ -58,63 +55,74 @@ def find_context(status, mastodon):
     return context
 
 
-def get_conversation_id(context, mastodon):
-    first_toot_id = context["origin"]["id"]
-    conversation = mastodon.conversations(min_id=first_toot_id, limit=1)
-    print(conversation)
-    return 100 #Platzhalter
-
-
-def save_toots_as_tweets(context, conversation_id):
-    descendants = context["descendants"]
+def get_conversation_id(context):
+    # mastodon api has no option to get conversation_id by status --> using id of root toot as conversation_id
     ancestors = context["ancestors"]
     origin = context["origin"]
-    toots = descendants + ancestors + origin
-    root = get_root(context)
-    for toot in toots:
-        tweet = Tweet(twitter_id=toot["id"],
-                      text=toot["content"],
-                      author_id=toot["account"]["id"],
-                      in_reply_to_status_id=toot["in_reply_to_id"],
-                      in_reply_to_user_id=toot["in_reply_to_account_id"],
-                      created_at=toot["created_at"],
-                      conversation_id=conversation_id,
-                      tn_original_parent=root["id"],
-                      platform=PLATFORM.MASTODON,
-                      language=toot["language"])
+    if origin["in_reply_to_id"] is None:
+        return context["origin"]["id"]
+    else:
+        for status in ancestors:
+            if status["in_reply_to_id"] is None:
+                return status["id"]
 
 
 def get_root(context):
-    descendants = context["descendants"]
     ancestors = context["ancestors"]
     origin = context["origin"]
-    toots = descendants + ancestors + origin
-    for toot in toots:
-        if toot["in_reply_to_id"] == "null":
+    if origin["in_reply_to_id"] is None:
+        return origin
+    for toot in ancestors:
+        if toot["in_reply_to_id"] is None:
             return toot
         else:
             raise ValueError("Conversation has no root!")
 
 
 def save_toots_as_tree(context, conversation_id, topic, query):
-    root = context["origin"]
+    origin = context["origin"]
     descendants = context["descendants"]
     ancestors = context["ancestors"]  # should be emtpy
-    full_context = descendants.append(root)
-    full_context = full_context.append(ancestors)
+
     tree_context = []
-    for status in full_context:
+    text = content_to_text(origin["content"])
+    tree_status = {'tree_id': conversation_id,
+                   'post_id': origin['id'],
+                   'parent_id': origin['in_reply_to_id'],
+                   'text': text,
+                   'created_at': origin['created_at'],
+                   'author_id': origin['account']['id'],
+                   'lang': origin["language"]}
+    tree_context.append(tree_status)
+    for status in ancestors:
+        text = content_to_text(status["content"])
         tree_status = {'tree_id': conversation_id,
                        'post_id': status['id'],
                        'parent_id': status['in_reply_to_id'],
-                       'text': status['content'],
+                       'text': text,
                        'created_at': status['created_at'],
-                       'author_id': status['account']['id']}
+                       'author_id': status['account']['id'],
+                       'lang': status["language"]}
+        tree_context.append(tree_status)
+    for status in descendants:
+        text = content_to_text(status["content"])
+        tree_status = {'tree_id': conversation_id,
+                       'post_id': status['id'],
+                       'parent_id': status['in_reply_to_id'],
+                       'text': text,
+                       'created_at': status['created_at'],
+                       'author_id': status['account']['id'],
+                       'lang': status["language"]}
         tree_context.append(tree_status)
 
     context_df = pd.DataFrame(tree_context)
     tree = DelabTree(context_df)
-    recursive_tree = tree.as_recursive_tree()
-    save_tree_to_db(root_node=recursive_tree, topic=topic, platform=PLATFORM.MASTODON, simple_request=query,
-                    conversation_id=conversation_id)
-    # return tree
+    simple_request, tw_topic = set_up_topic_and_simple_request(query_string=query, request_id=-1, topic_string=topic)
+    persist_tree(tree=tree, platform=PLATFORM.MASTODON, simple_request=simple_request, topic=tw_topic)
+
+
+def content_to_text(content):
+    # content is html string --> get only necessary text
+    soup = BeautifulSoup(content, 'html.parser')
+    text = soup.get_text()
+    return text
