@@ -31,7 +31,7 @@ RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords
 RUN python -m nltk.downloader vader_lexicon
 
-# RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
+RUN pip install -e git+https://github.com/juliandehne/delab-trees
 #RUN pip install --upgrade "jax[cpu]"
 COPY . /code/
 
