@@ -3,7 +3,7 @@ import time
 from background_task.models import Task
 
 from delab.tasks import download_intolerant_tweets, download_moderating_tweets, download_network_structures, \
-    update_toxic_values
+    update_toxic_values, download_daily_sample
 
 
 def run():
@@ -34,11 +34,16 @@ def run():
         for background_task_4 in background_tasks_4:
             background_task_4.delete()
 
+    if Task.objects.filter(task_name='delab.tasks.download_daily_sample').exists():
+        background_tasks_5 = Task.objects.filter(task_name='delab.tasks.download_daily_sample')
+        for background_task_5 in background_tasks_5:
+            background_task_5.delete()
+
     time.sleep(2)
 
     # download_network_structures(repeat=Task.WEEKLY)
     # download_moderating_tweets(repeat=Task.WEEKLY)
-    download_intolerant_tweets(repeat=Task.WEEKLY)
+    # download_intolerant_tweets(repeat=Task.WEEKLY)
     # update_toxic_values()
-
+    download_daily_sample(repeat=Task.DAILY)
 

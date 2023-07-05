@@ -7,6 +7,7 @@ from background_task.models import Task
 from django.utils import timezone
 from delab.corpus.twitter.download_author_information import update_authors
 from delab.corpus.download_conversations_proxy import download_conversations, download_timelines
+from mt_study.logic.download_label_candidates import download_mturk_sample_conversations
 from .delab_enums import PLATFORM, LANGUAGE
 from .mm.download_moderating_tweets import download_mod_tweets, MODTOPIC2, tweet_filter_helper, MODTOPIC2_WEBSITE
 from .nce.download_intolerant_tweets import download_terrible_tweets
@@ -133,3 +134,8 @@ def update_toxic_values():
     logger.debug("CRONJOB: update toxic networks!")
     compute_toxicity_for_text()
 
+
+@background()
+def download_daily_sample():
+    logger.debug("CRONJOB: downloading_daily_sample flow!")
+    download_mturk_sample_conversations(1, platform=PLATFORM.REDDIT, min_results=20)
