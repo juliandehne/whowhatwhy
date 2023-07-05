@@ -31,4 +31,3 @@ xmltodict
 Mastodon.py
 tweepy
 nltk
-delab-trees
