@@ -1,9 +1,0 @@
-praw==7.5.0
-google-api-python-client
-networkx
-germansentiment
-neo4j
-django-model-utils
-tweepy
-matplotlib
-pydot

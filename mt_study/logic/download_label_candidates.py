@@ -3,6 +3,7 @@ import timeit
 from datetime import datetime
 from functools import partial
 
+from django.db import IntegrityError
 from django.utils import timezone
 from twarc.command2 import tweet
 
@@ -60,7 +61,8 @@ def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPos
 
             # potentially remove even more samples here using Valentins IPA
             if persist:
-                objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id", flat=True)
+                objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id",
+                                                                                                flat=True)
                 n_stored_objects = len(set(list(objects)))
                 n_sample_tree_ids = len(set(sample_tree_ids))
                 assert n_stored_objects == n_sample_tree_ids
@@ -70,14 +72,17 @@ def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPos
 
 def persist_flow_in_db(flow_sample: list[list[DelabPost]]):
     for flow in flow_sample:
-        tweet_ids = list(map(lambda x: x.post_id, flow))
-        flowObject = ConversationFlow.objects.create(
-            flow_name=compute_flow_name(flow, "sample_"),
-            conversation_id=flow[0].tree_id,
-            longest=False,
-            sample_flow=timezone.now().date(),
-        )
-        flowObject.tweets.set(Tweet.objects.filter(twitter_id__in=tweet_ids))
+        try:
+            tweet_ids = list(map(lambda x: x.post_id, flow))
+            flowObject = ConversationFlow.objects.create(
+                flow_name=compute_flow_name(flow, "sample_"),
+                conversation_id=flow[0].tree_id,
+                longest=False,
+                sample_flow=timezone.now().date(),
+            )
+            flowObject.tweets.set(Tweet.objects.filter(twitter_id__in=tweet_ids))
+        except IntegrityError:
+            pass
 
 
 def is_short_text(text):
