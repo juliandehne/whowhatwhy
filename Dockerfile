@@ -14,6 +14,36 @@ RUN apt-get install -y git
 RUN apt install python-is-python3
 RUN apt-mark hold python2 python2-minimal python2.7 python2.7-minimal libpython2-stdlib libpython2.7-minimal libpython2.7-stdlib
 
+# Install dependencies and necessary tools
+RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev wget
+
+# Download Python 3.9 source code
+RUN wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz
+
+# Extract Python source code
+RUN tar -xf Python-3.9.7.tgz
+
+# Change into Python source code directory
+WORKDIR /Python-3.9.7
+
+# Configure the build
+RUN ./configure --enable-optimizations
+
+# Compile Python 3.9
+RUN make -j $(nproc)
+
+# Install Python 3.9
+RUN make altinstall
+
+# Cleanup
+WORKDIR /
+RUN rm -rf /Python-3.9.7*
+RUN apt-get remove -y build-essential libssl-dev libffi-dev python3-dev wget
+RUN apt-get autoremove -y
+
+# Verify Python version
+RUN python3.9 --version
+
 # RUN apt install postgresql postgresql-contrib
 
 ENV PYTHONUNBUFFERED=1
