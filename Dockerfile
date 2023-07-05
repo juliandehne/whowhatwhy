@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:focal
 MAINTAINER fnndsc "dev@babymri.org"
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -23,7 +23,7 @@ COPY requirements_current.txt /code/
 
 RUN pip install --upgrade pip
 RUN pip install psycopg2-binary
-RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+# RUN pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install -r requirements-docker.txt
 RUN pip install -r requirements_current.txt
 
@@ -31,7 +31,7 @@ RUN python -m nltk.downloader twitter_samples
 RUN python -m nltk.downloader stopwords
 RUN python -m nltk.downloader vader_lexicon
 
-RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
+# RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
 #RUN pip install --upgrade "jax[cpu]"
 COPY . /code/
 
