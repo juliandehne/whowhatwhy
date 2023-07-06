@@ -181,4 +181,6 @@ def download_daily_rd_sample(topic_string, max_results, persist=True):
         logger.debug(ex, topic_string)
     except prawcore.exceptions.Forbidden as ex:
         logger.debug(ex, topic_string)
+    except prawcore.exceptions.Redirect as ex:
+        logger.debug(ex, topic_string)
     return result

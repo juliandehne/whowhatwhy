@@ -1,20 +1,17 @@
-import pickle
+import logging
 import timeit
-from datetime import datetime
 from functools import partial
 
 from django.db import IntegrityError
 from django.utils import timezone
-from twarc.command2 import tweet
 
 from delab.corpus.download_conversations_proxy import download_daily_sample
-
-from delab.delab_enums import PLATFORM
 from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
 from delab_trees.delab_post import DelabPost
-from delab_trees.delab_tree import DelabTree
 from delab_trees.flow_duos import compute_flow_name
+
+logger = logging.getLogger(__name__)
 
 M_TURK_TOPIC = "mturk_candidate"
 
@@ -31,21 +28,21 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, persist=T
 
 def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPost]]:
     result = []
-    print("downloading random conversations for mturk_labeling")
+    # print("downloading random conversations for mturk_labeling")
     while len(result) < min_results:
         # try:
         downloaded_trees = download_daily_sample(topic_string=M_TURK_TOPIC, platform=platform, persist=persist)
         for tree in downloaded_trees:
             tree.validate(verbose=False)
         # result += downloaded_trees
-        print("downloaded candidate trees:", len(downloaded_trees))
+        # print("downloaded candidate trees:", len(downloaded_trees))
 
         if len(downloaded_trees) > 0:
             forest = TreeManager.from_trees(downloaded_trees)
             # print(f"finished downloading trees {forest}")
 
             flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_list_filter)
-            print("found flows", len(flow_sample))
+            logging.debug("found flows", len(flow_sample))
             result += flow_sample
 
             # flow_sample = list(filter(filter_self_answers, flow_sample))

@@ -31,3 +31,4 @@ xmltodict
 Mastodon.py
 tweepy
 nltk
+BeautifulSoup4
