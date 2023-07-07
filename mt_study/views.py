@@ -9,7 +9,7 @@ from django.db.models import Exists, OuterRef
 from django.forms import ModelForm
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import CreateView, TemplateView
+from django.views.generic import CreateView, TemplateView, UpdateView
 
 from delab.models import ConversationFlow
 from mt_study.logic.label_flows import needs_moderation
@@ -52,7 +52,7 @@ def intervention_proxy(request):
     flows = ConversationFlow.objects \
         .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
         .filter(sample_flow=today) \
-        .filter(has_intervention=False).all()
+        .filter(has_intervention=False)
 
     flows = list(filter(needs_moderation, flows))
 
@@ -66,6 +66,54 @@ def intervention_proxy(request):
 
 class NoMoreDiscussionsView(TemplateView):
     template_name = "mt_study/nomore_interventions.html"
+
+
+class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
+    model = Intervention
+    fields = ['moderation_type', 'text', 'sendable']
+    template_name = "mt_study/mt_study.html"
+    # initial = {"title": "migration"}
+    success_message = "The Moderation was posted!"
+
+    def form_valid(self, form):
+        form.instance.coder = self.request.user
+        flow_id = self.request.resolver_match.kwargs['pk']
+        form.instance.flow_id = flow_id
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('mt_study-proxy')
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(InterventionSentView, self).get_context_data(**kwargs)
+        intervention_id = self.request.resolver_match.kwargs['pk']
+        flow = Intervention.objects.filter(id=intervention_id).first().flow
+        tweets = flow.tweets.all()
+        tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
+        tweets = tweets[-5:]
+        context["tweets"] = tweets
+        # TODO select tweets and add to context
+
+        return context
+
+
+def intervention_sent_view_proxy(request):
+    # current_user = request.user
+    today = date.today()
+
+    flows = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True)
+
+    interventions = Intervention.objects.filter(flow__in=flows)
+
+    candidates = list(map(lambda x: x.id, interventions))
+    if len(candidates) == 0:
+        # raise Http404("There seems no more data to label!")
+        return redirect('mt_study-send-intervention-nomore')
+    candidate = choice(candidates)
+    return redirect('mt_study-send-intervention', pk=candidate)
 
 
 class ClassificationForm(ModelForm):
