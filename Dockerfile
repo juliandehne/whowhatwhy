@@ -14,6 +14,10 @@ RUN python --version && \
 # installing the python libraries
 ENV PYTHONUNBUFFERED=1
 WORKDIR /code
+
+RUN pip install -e git+https://github.com/juliandehne/delab-trees#egg=delab-trees
+RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
+
 COPY requirements-docker.txt /code/
 COPY requirements_current.txt /code/
 
@@ -23,8 +27,6 @@ RUN pip install psycopg2-binary
 RUN pip install -r requirements-docker.txt
 RUN pip install -r requirements_current.txt
 
-RUN pip install -e git+https://github.com/juliandehne/delab-trees#egg=delab-trees
-RUN pip install -e git+https://github.com/juliandehne/django-likert-field#egg=django-likert-field
 COPY . /code/
 
 # RUN python /code/delab/sentiment/download_nltk.py

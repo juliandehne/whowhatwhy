@@ -270,6 +270,9 @@ LOGGING = {
         },
         'twarc': {
             'level': 'WARNING'
+        },
+        'h5py': {
+            'level': 'INFO'
         }
     },
 }
@@ -289,7 +292,6 @@ MAX_CANDIDATES_TWITTER = 850
 MAX_CONVERSATION_LENGTH_REDDIT = 50
 
 CURRENT_DUO_FLOW_METRIC = "sentiment"
-
 
 # the number of people that need to label a tweet as intolerant for it to be labeled correctly
 min_intolerance_coders_needed = 2
