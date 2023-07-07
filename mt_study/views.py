@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.views.generic import CreateView, TemplateView
 
 from delab.models import ConversationFlow
+from mt_study.logic.label_flows import needs_moderation
 from mt_study.models import Intervention, Classification
 
 
@@ -47,10 +48,15 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
 def intervention_proxy(request):
     # current_user = request.user
     today = date.today()
-    candidates = list(ConversationFlow.objects.annotate(
-        has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk'))))
-                      .filter(sample_flow=today)
-                      .filter(has_intervention=False).values_list("id", flat=True))
+
+    flows = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=False).all()
+
+    flows = list(filter(needs_moderation, flows))
+
+    candidates = list(map(lambda x: x.id, flows))
     if len(candidates) == 0:
         # raise Http404("There seems no more data to label!")
         return redirect('mt_study-nomore')

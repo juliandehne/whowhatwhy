@@ -20,6 +20,9 @@ class Classification(models.Model):
                              help_text="the sequence of posts to be moderated")
     is_valid_conversation = models.BooleanField(default=True)
 
+    needs_moderation = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
+                                        help_text="the type of moderation strategy needed", null=True, blank=True)
+
     is_conversation_0 = models.BooleanField(default=False,
                                             help_text="Is this a conversation that can be understood by most people?")
     is_conversation_1 = models.BooleanField(default=False,
@@ -56,7 +59,7 @@ class Classification(models.Model):
                                           help_text="Are arguments well formulated and understandable?")
 
     participation_3 = models.BooleanField(default=False,
-                                          help_text="Is the topic very general or specific to some experts?")
+                                          help_text="Is the topic very general?")
 
     consensus_seeking_1 = models.BooleanField(default=False,
                                               help_text="Is the discussion very polarized?")
@@ -66,5 +69,3 @@ class Classification(models.Model):
 
     consensus_seeking_3 = models.BooleanField(default=False,
                                               help_text="Are they talking past each other?")
-
-

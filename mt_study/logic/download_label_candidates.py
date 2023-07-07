@@ -42,7 +42,8 @@ def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPos
             # print(f"finished downloading trees {forest}")
 
             flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_list_filter)
-            logging.debug("found flows", len(flow_sample))
+            if flow_sample is not None and len(flow_sample) > 0:
+                logging.debug("found flows {}".format(len(flow_sample)))
             result += flow_sample
 
             # flow_sample = list(filter(filter_self_answers, flow_sample))
