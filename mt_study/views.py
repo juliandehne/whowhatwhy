@@ -11,6 +11,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, TemplateView, UpdateView
 
+from delab.bot.moderation_bot import send_post
 from delab.models import ConversationFlow
 from mt_study.logic.label_flows import needs_moderation
 from mt_study.models import Intervention, Classification
@@ -76,7 +77,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
     success_message = "The Moderation was posted!"
 
     def form_valid(self, form):
-        form.instance.coder = self.request.user
+        form.instance.sendable_coder = self.request.user
         flow_id = self.request.resolver_match.kwargs['pk']
         form.instance.flow_id = flow_id
         return super().form_valid(form)
@@ -95,6 +96,15 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
         # TODO select tweets and add to context
 
         return context
+
+    def send_out_moderating_post(self, intervention_id):
+        send_post(intervention_id)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        intervention_id = self.request.resolver_match.kwargs['pk']
+        self.send_out_moderating_post(intervention_id)
+        return super().post(request, *args, **kwargs)
 
 
 def intervention_sent_view_proxy(request):

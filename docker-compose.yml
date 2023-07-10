@@ -21,6 +21,7 @@ services:
       - ./database/migrations/delab:/code/delab/migrations
       - ./database/migrations/blog:/code/blog/migrations
       - ./database/migrations/users:/code/users/migrations
+      - ./database/migrations/mt_study:/code/mt_study/migrations
     depends_on:
       - postgres
     environment:
