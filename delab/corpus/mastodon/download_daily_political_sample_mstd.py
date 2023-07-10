@@ -131,5 +131,6 @@ hashtags = [
 
 def download_daily_political_sample_mstd(topic_string):
     hashtag = choice(hashtags)
-    today = date.today()
-    download_conversations_mstd(query=hashtag, topic=topic_string, since=today)
+    today = datetime.now()
+    midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    download_conversations_mstd(query=hashtag, topic=topic_string, since=midnight)

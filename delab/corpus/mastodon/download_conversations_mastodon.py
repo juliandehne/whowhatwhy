@@ -31,7 +31,7 @@ def create():
 
 
 def download_conversations_to_search(query, mastodon, topic, since):
-    statuses = download_timeline(query=query, mastodon=mastodon)
+    statuses = download_timeline(query=query, mastodon=mastodon, since=since)
     contexts = []
     for status in statuses:
         if status in contexts:
