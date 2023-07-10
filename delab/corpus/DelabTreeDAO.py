@@ -28,6 +28,9 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
     url = None
     if "url" in root_node.data:
         url = root_node.data["url"]
+    reddit_id = None
+    if "reddit_id" in root_node.data:
+        reddit_id = root_node.data["reddit_id"]
     tweet = Tweet(topic=topic,
                   text=root_node.data["text"],
                   simple_request=simple_request,
@@ -42,10 +45,13 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
                   tn_parent_type=root_node.parent_type,
                   was_query_candidate=candidate_id == twitter_id,
                   # tn_priority=priority,
-                  language=root_node.data["lang"], original_url=url)
+                  language=root_node.data["lang"],
+                  original_url=url,
+                  reddit_id=reddit_id)
     try:
         apply_tweet_filter(tweet, tweet_filter)
-    except IntegrityError:
+    except IntegrityError as ex:
+        # logger.debug(ex)
         pass
     # after = dt.now()
     # logger.debug("a query took: {} milliseconds".format((after - before).total_seconds() * 1000))

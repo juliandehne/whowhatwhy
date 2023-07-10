@@ -80,3 +80,4 @@ def download_daily_sample(topic_string,
         return download_daily_political_sample_mstd(topic_string)
     else:
         raise NotImplementedError()
+
