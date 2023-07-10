@@ -102,7 +102,7 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
             "text": comment.body,
             "author_id": comment_author_id,
             "tw_author__name": comment_author_name,
-            "created_at": convert_time_stamp_to_django(submission),
+            "created_at": convert_time_stamp_to_django(comment),
             "parent_id": parent_id,
             "rd_data": comment,
             "lang": language,

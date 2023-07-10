@@ -115,7 +115,7 @@ def intervention_sent_view_proxy(request):
         .filter(sample_flow=today) \
         .filter(has_intervention=True)
 
-    interventions = Intervention.objects.filter(flow__in=flows)
+    interventions = Intervention.objects.filter(flow__in=flows, sent=False)
 
     candidates = list(map(lambda x: x.id, interventions))
     if len(candidates) == 0:

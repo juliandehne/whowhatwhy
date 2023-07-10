@@ -77,6 +77,8 @@ class TwitterUtil:
         filename = keys_path
         reddit_secret = os.environ.get("reddit_secret")
         reddit_script_id = os.environ.get("reddit_script_id")
+        reddit_user = os.environ.get("reddit_user_name")
+        reddit_password = os.environ.get("reddit_password")
 
         with open(filename) as f:
             my_dict = yaml.safe_load(f)
@@ -84,7 +86,11 @@ class TwitterUtil:
                 reddit_secret = my_dict.get("reddit_secret")
             if reddit_script_id != "":
                 reddit_script_id = my_dict.get("reddit_script_id")
-        return reddit_secret, reddit_script_id
+            if reddit_user != "":
+                reddit_user = my_dict.get("reddit_user_name")
+            if reddit_password != "":
+                reddit_password = my_dict.get("reddit_password")
+        return reddit_secret, reddit_script_id, reddit_user, reddit_password
 
 
 class DelabTwarc(Twarc2):
@@ -95,8 +101,13 @@ class DelabTwarc(Twarc2):
 
 def get_praw():
     user_agent = "django_script:de.uni-goettingen.delab:v0.0.1 (by u/CalmAsTheSea)"
-    reddit_secret, reddit_script_id = TwitterUtil.get_reddit_secret()
-    reddit = praw.Reddit(client_id=reddit_script_id, client_secret=reddit_secret, user_agent=user_agent)
+    reddit_secret, reddit_script_id, reddit_user, reddit_password = TwitterUtil.get_reddit_secret()
+    reddit = praw.Reddit(client_id=reddit_script_id,
+                         client_secret=reddit_secret,
+                         user_agent=user_agent,
+                         username=reddit_user,
+                         password=reddit_password)
+    # reddit = praw.Reddit(client_id=reddit_script_id, client_secret=reddit_secret, user_agent=user_agent)
     return reddit
 
 

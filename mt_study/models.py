@@ -48,7 +48,7 @@ class Classification(models.Model):
                                            help_text="Is the conversation on a controversial topic?")
 
     emotion_control_1 = models.BooleanField(default=False,
-                                            help_text="Are the discussants showing emotions?")
+                                            help_text="Are the discussants showing emotions towards each other?")
 
     emotion_control_2 = models.BooleanField(default=False,
                                             help_text="Is someone being attacked or insulted?")
