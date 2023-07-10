@@ -39,7 +39,7 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         flow = ConversationFlow.objects.filter(id=flow_id).first()
         tweets = flow.tweets.all()
         tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
-        tweets = tweets[-5:]
+        # tweets = tweets[-5:]
         context["tweets"] = tweets
         # TODO select tweets and add to context
 
@@ -78,8 +78,6 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
 
     def form_valid(self, form):
         form.instance.sendable_coder = self.request.user
-        flow_id = self.request.resolver_match.kwargs['pk']
-        form.instance.flow_id = flow_id
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -91,7 +89,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
         flow = Intervention.objects.filter(id=intervention_id).first().flow
         tweets = flow.tweets.all()
         tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
-        tweets = tweets[-5:]
+        # tweets = tweets[-5:]
         context["tweets"] = tweets
         # TODO select tweets and add to context
 
@@ -103,7 +101,8 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         intervention_id = self.request.resolver_match.kwargs['pk']
-        self.send_out_moderating_post(intervention_id)
+        if self.object.sendable:
+            self.send_out_moderating_post(intervention_id)
         return super().post(request, *args, **kwargs)
 
 
@@ -154,7 +153,7 @@ class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMix
         flow = ConversationFlow.objects.filter(id=flow_id).first()
         tweets = flow.tweets.all()
         tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
-        tweets = tweets[-5:]
+        # tweets = tweets[-5:]
         context["tweets"] = tweets
         # TODO select tweets and add to context
 

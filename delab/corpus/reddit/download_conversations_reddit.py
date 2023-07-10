@@ -86,7 +86,8 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
         "tw_author__name": author_name,
         "rd_data": submission,
         "lang": language,
-        "url": "https://reddit.com" + submission.permalink}
+        "url": "https://reddit.com" + submission.permalink,
+        "reddit_id": submission.id}
     root = TreeNode(data, root_node_id, tree_id=tree_id)
     orphans = []
     for comment in comments:
@@ -105,7 +106,8 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
             "parent_id": parent_id,
             "rd_data": comment,
             "lang": language,
-            "url": "https://reddit.com" + comment.permalink}
+            "url": "https://reddit.com" + comment.permalink,
+            "reddit_id": submission.id}
         node = TreeNode(comment_data, node_id, parent_id, tree_id=tree_id)
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if not root.find_parent_of(node):
