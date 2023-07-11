@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from delab.bot.intolerance_bot import generate_answers
 from delab.bot.intolerance_bot import send_message
+from delab.bot.moderation_bot import send_post
 from delab.bot.sender import publish_moderation
 from delab.delab_enums import PLATFORM
 from delab.mm.download_moderating_tweets import MODTOPIC2
@@ -14,14 +15,18 @@ from delab.nce.download_intolerant_tweets import INTOLERANCE_DICT
 from delab.tasks import download_conversations_scheduler
 from django_project.settings import min_intolerance_coders_needed, min_intolerance_answer_coders_needed
 from mt_study.logic.download_label_candidates import M_TURK_TOPIC
+from mt_study.models import Intervention
 
 logger = logging.getLogger(__name__)
 
 
+
+
 @receiver(post_save, sender=Tweet)
 def process_moderation(sender, instance, created, **kwargs):
-    if instance.platform == PLATFORM.DELAB and instance.publish and created:
-        publish_moderation(instance)
+    # if instance.platform == PLATFORM.DELAB and instance.publish and created:
+    #    publish_moderation(instance)
+    pass
 
 
 @receiver(post_save, sender=TWIntoleranceRating)

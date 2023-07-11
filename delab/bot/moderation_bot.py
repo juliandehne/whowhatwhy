@@ -22,8 +22,8 @@ def send_rd_post(intervention_id, last_post: Tweet):
     submission_url = last_post.original_url
     intervention = Intervention.objects.filter(id=intervention_id).get()
     comment_text = intervention.text
-    submission = reddit.submission(url=submission_url)
-    submission.reply(comment_text)
+    original_comment = reddit.comment(url=submission_url)
+    original_comment.reply(comment_text)
     intervention.sent = True
     intervention.save(update_fields=['sent'])
 
@@ -31,6 +31,6 @@ def send_rd_post(intervention_id, last_post: Tweet):
 def get_last_post(intervention_id):
     intervention = Intervention.objects.filter(id=intervention_id).get()
     tweets = list(intervention.flow.tweets.all())
-    tweets.sort(key=lambda x: x.created_at)
+    tweets.sort(key=lambda x: x.created_at, reverse=True)
     last_tweet = tweets[0]
     return last_tweet

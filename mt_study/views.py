@@ -80,6 +80,9 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
 
     def form_valid(self, form):
         form.instance.sendable_coder = self.request.user
+        intervention_id = self.request.resolver_match.kwargs['pk']
+        if form.instance.sendable:
+            send_post(intervention_id)
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -97,6 +100,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
 
         return context
 
+    """
     def send_out_moderating_post(self, intervention_id):
         send_post(intervention_id)
 
@@ -106,6 +110,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
         if self.object.sendable:
             self.send_out_moderating_post(intervention_id)
         return super().post(request, *args, **kwargs)
+    """
 
 
 def intervention_sent_view_proxy(request):
