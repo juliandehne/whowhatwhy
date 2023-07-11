@@ -13,7 +13,8 @@ class Intervention(models.Model):
     moderation_type = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
                                        help_text="the type of moderation strategy employed")
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    sendable_coder = models.ForeignKey(User, related_name="sendable_coder", on_delete=models.DO_NOTHING, null=True, blank=True)
+    sendable_coder = models.ForeignKey(User, related_name="sendable_coder", on_delete=models.DO_NOTHING, null=True,
+                                       blank=True)
     sendable = models.BooleanField(null=True, blank=True,
                                    help_text="by checking this button, the moderation will be send out to the given platform")
     sent = models.BooleanField(default=False)
@@ -73,3 +74,9 @@ class Classification(models.Model):
 
     consensus_seeking_3 = models.BooleanField(default=False,
                                               help_text="Are they talking past each other?")
+    norm_control_1 = models.BooleanField(default=False,
+                                         help_text="Are there some intolerant speech acts in the conversation?")
+    norm_control_2 = models.BooleanField(default=False,
+                                         help_text="Are the discussants violating some basic social norms?")
+    norm_control_3 = models.BooleanField(default=False,
+                                         help_text="Are there comments that are racist, sexist, antisemitic or similar?")
