@@ -156,6 +156,7 @@ class Tweet(models.Model):
                                             "send to twitter!")
     was_query_candidate = models.BooleanField(default=False)
     original_url = models.URLField(null=True)
+
     # is_climate_author = models.BooleanField(null=True, default=False)
 
     class Meta:
@@ -253,12 +254,16 @@ class ConversationFlow(models.Model):
     conversation_id = models.BigIntegerField(null=True)
     longest = models.BooleanField(default=False)
     sample_flow = models.DateField(null=True)
+    mt_study_flow = models.BooleanField(default=False)
 
     @classmethod
     def create(cls, image, flow_name):
         conversation_flow = cls(image=image, flow_name=flow_name)
         # do something with the book
-        return conversation_flow
+        return
+
+    class Meta:
+        unique_together = ('conversation_id', 'mt_study_flow')
 
 
 class Conversation(models.Model):

@@ -107,7 +107,7 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
             "rd_data": comment,
             "lang": language,
             "url": "https://reddit.com" + comment.permalink,
-            "reddit_id": submission.id}
+            "reddit_id": comment.id}
         node = TreeNode(comment_data, node_id, parent_id, tree_id=tree_id)
         # IF NODE CANNOT BE PLACED IN TREE, ORPHAN IT UNTIL ITS PARENT IS FOUND
         if not root.find_parent_of(node):

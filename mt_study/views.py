@@ -52,8 +52,10 @@ def intervention_proxy(request):
 
     flows = ConversationFlow.objects \
         .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .annotate(has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk')))) \
         .filter(sample_flow=today) \
-        .filter(has_intervention=False)
+        .filter(has_intervention=False) \
+        .filter(has_classification=True)
 
     flows = list(filter(needs_moderation, flows))
 

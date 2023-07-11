@@ -5,7 +5,9 @@ from functools import partial
 from django.db import IntegrityError
 from django.utils import timezone
 
+from delab.corpus.DelabTreeDAO import check_general_tree_requirements, persist_tree, set_up_topic_and_simple_request
 from delab.corpus.download_conversations_proxy import download_daily_sample
+from delab.delab_enums import PLATFORM
 from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
 from delab_trees.delab_post import DelabPost
@@ -28,47 +30,60 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, persist=T
 
 def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPost]]:
     result = []
+    flow_result_count = 0
     # print("downloading random conversations for mturk_labeling")
-    while len(result) < min_results:
-        # try:
-        downloaded_trees = download_daily_sample(topic_string=M_TURK_TOPIC, platform=platform, persist=persist)
-        for tree in downloaded_trees:
-            tree.validate(verbose=False)
-        # result += downloaded_trees
-        # print("downloaded candidate trees:", len(downloaded_trees))
+    while flow_result_count < min_results:
+        downloaded_trees = download_daily_sample(topic_string=M_TURK_TOPIC, platform=platform)
+        validated_trees = []
+        # reddit sampler has integrated validation
+        if platform != PLATFORM.REDDIT:
+            for tree in downloaded_trees:
+                validated = tree.validate(verbose=False)
+                useful = check_general_tree_requirements(tree, platform=platform)
+                if validated and useful:
+                    validated_trees.append(tree)
+        else:
+            validated_trees = downloaded_trees
 
-        if len(downloaded_trees) > 0:
-            forest = TreeManager.from_trees(downloaded_trees)
-            # print(f"finished downloading trees {forest}")
+        if len(validated_trees) > 0:
+            forest = TreeManager.from_trees(validated_trees)
 
             flow_sample: list[list[DelabPost]] = forest.get_flow_sample(5, filter_function=meta_list_filter)
             if flow_sample is not None and len(flow_sample) > 0:
                 logging.debug("found flows {}".format(len(flow_sample)))
-            result += flow_sample
+                result += flow_sample
 
-            # flow_sample = list(filter(filter_self_answers, flow_sample))
+                # collect ids of the trees from the sample
+                sample_tree_ids = []
+                for sample in flow_sample:
+                    first_post = sample[0]
+                    tree_id = first_post.tree_id
+                    sample_tree_ids.append(tree_id)
+                # throw out the trees not sampled
+                forest.keep(sample_tree_ids)
 
-            # collect ids of the trees from the sample
-            sample_tree_ids = []
-            for sample in flow_sample:
-                first_post = sample[0]
-                tree_id = first_post.tree_id
-                sample_tree_ids.append(tree_id)
-            # throw out the trees not sampled
-            forest.keep(sample_tree_ids)
-
-            # potentially remove even more samples here using Valentins IPA
-            if persist:
-                objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id",
-                                                                                                flat=True)
-                n_stored_objects = len(set(list(objects)))
-                n_sample_tree_ids = len(set(sample_tree_ids))
-                assert n_stored_objects == n_sample_tree_ids
-                persist_flow_in_db(flow_sample)
+                # potentially remove even more samples here using Valentins IPA
+                if persist:
+                    for tree_id, tree in forest.trees.items():
+                        query_string = platform + "" + str(timezone.now().date()) + "mturk_sample"
+                        simple_request, topic = set_up_topic_and_simple_request(query_string, -1, M_TURK_TOPIC)
+                        persist_tree(tree, platform, simple_request, topic)
+                    objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id",
+                                                                                                    flat=True)
+                    n_stored_objects = len(set(list(objects)))
+                    n_sample_tree_ids = len(set(sample_tree_ids))
+                    assert n_stored_objects == n_sample_tree_ids
+                    duplicated_count = persist_flow_in_db(flow_sample)
+                    new_flows_persisted = len(flow_sample) - duplicated_count
+                    logger.debug("persisted in database: {}".format(new_flows_persisted))
+                    flow_result_count += new_flows_persisted
+                else:
+                    flow_result_count = len(result)
     return result
 
 
 def persist_flow_in_db(flow_sample: list[list[DelabPost]]):
+    dublicated_count = 0
     for flow in flow_sample:
         try:
             tweet_ids = list(map(lambda x: x.post_id, flow))
@@ -77,10 +92,12 @@ def persist_flow_in_db(flow_sample: list[list[DelabPost]]):
                 conversation_id=flow[0].tree_id,
                 longest=False,
                 sample_flow=timezone.now().date(),
+                mt_study_flow=True
             )
             flowObject.tweets.set(Tweet.objects.filter(twitter_id__in=tweet_ids))
         except IntegrityError:
-            pass
+            dublicated_count += 1
+    return dublicated_count
 
 
 def is_short_text(text):

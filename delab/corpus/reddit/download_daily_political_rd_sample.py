@@ -155,7 +155,7 @@ subreddits = [
 ]
 
 
-def download_daily_rd_sample(topic_string, max_results, persist=True):
+def download_daily_rd_sample(topic_string, max_results):
     result = []
     try:
         reddit = get_praw()
@@ -167,12 +167,7 @@ def download_daily_rd_sample(topic_string, max_results, persist=True):
             root = compute_reddit_tree(submission)
             tree = DelabTree.from_recursive_tree(root)
             useful = check_general_tree_requirements(tree)
-            if useful:
-                if persist:
-                    # store conversation in db
-                    simple_request, topic = set_up_topic_and_simple_request(subreddit_string, -1, topic_string)
-                    # store_computed_tree_in_db(comment_dict, root, simple_request, submission, topic, None)
-                    save_reddit_tree(simple_request, submission, topic, language=LANGUAGE.ENGLISH)
+            if useful and tree.validate(verbose=False):
                 count += 1
                 result.append(tree)
             if count > max_results:

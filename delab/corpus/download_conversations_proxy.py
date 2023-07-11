@@ -70,12 +70,11 @@ def download_timelines(simple_request_id, platform: PLATFORM):
 def download_daily_sample(topic_string,
                           platform: PLATFORM,
                           language=LANGUAGE.ENGLISH,
-                          max_results=20,
-                          persist=True) -> list[DelabTree]:
+                          max_results=20) -> list[DelabTree]:
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
-        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results, persist=persist)
+        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results)
     if platform == platform.MASTODON:
         return download_daily_political_sample_mstd(topic_string)
     else:
