@@ -1,5 +1,6 @@
 from random import choice
-from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd
+from mastodon import Mastodon
+from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd, download_conversations_to_search, create
 from datetime import date, datetime
 
 hashtags = [
@@ -133,4 +134,9 @@ def download_daily_political_sample_mstd(topic_string):
     hashtag = choice(hashtags)
     today = datetime.now()
     midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
-    download_conversations_mstd(query=hashtag, topic=topic_string, since=midnight)
+    #download_conversations_mstd(query=hashtag, topic=topic_string, since=midnight)
+    mastodon = create()
+    downloaded_trees = download_conversations_to_search(query=hashtag, mastodon=mastodon, topic=topic_string,
+                                                        since=midnight, daily_sample=True)
+
+    return downloaded_trees
