@@ -276,6 +276,7 @@ LOGGING = {
         }
     },
 }
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
