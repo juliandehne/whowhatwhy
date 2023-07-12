@@ -1,7 +1,7 @@
 import logging
 
 from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd
-from delab.corpus.reddit.download_conversations_reddit import search_r_all
+from delab.corpus.reddit.download_conversations_reddit import search_r_all, download_conversations_by_id
 from delab.corpus.reddit.download_daily_political_rd_sample import download_daily_rd_sample
 from delab.corpus.reddit.download_timelines_reddit import download_timelines_reddit
 from delab.corpus.twitter.download_conversations_twitter import download_conversations_tw
@@ -80,3 +80,9 @@ def download_daily_sample(topic_string,
     else:
         raise NotImplementedError()
 
+
+def update_conversations(conversation_ids: list[int], platform: PLATFORM):
+    if platform == PLATFORM.REDDIT:
+        download_conversations_by_id(conversation_ids)
+    else:
+        raise NotImplementedError()

@@ -8,7 +8,7 @@ from delab.corpus.DelabTreeDAO import persist_recursive_tree, set_up_topic_and_s
     check_general_tree_requirements
 from delab.corpus.filter_conversation_trees import solve_orphans
 from delab.delab_enums import PLATFORM
-from delab.models import TweetAuthor
+from delab.models import TweetAuthor, Tweet
 from delab.tw_connection_util import get_praw
 from delab_trees.delab_tree import DelabTree
 from delab_trees.recursive_tree.recursive_tree import TreeNode
@@ -289,3 +289,17 @@ def create_reddit_author(comment):
             screen_name=name,
             platform=PLATFORM.REDDIT
         )
+
+
+def download_conversations_by_id(conversation_ids: list[int], language=LANGUAGE.ENGLISH):
+    tweets = Tweet.objects.filter(conversation_id__in=conversation_ids).filter(tn_parent__isnull=True).all()
+    assert all(tweet.platform == PLATFORM.REDDIT for tweet in
+               tweets), "can only download conversations like this for reddit posts"
+    reddit = get_praw()
+    for tweet in tweets:
+        submission_url = tweet.original_url
+        simple_request = tweet.simple_request
+        topic = tweet.topic
+        original_comment = reddit.submission(url=submission_url)
+        recursive_tree = compute_reddit_tree(original_comment, language)
+        persist_recursive_tree(recursive_tree, PLATFORM.REDDIT, simple_request, topic)
