@@ -14,12 +14,12 @@ from django.views.generic import CreateView, TemplateView, UpdateView
 from delab.bot.moderation_bot import send_post
 from delab.models import ConversationFlow
 from mt_study.logic.label_flows import needs_moderation
-from mt_study.models import Intervention, Classification
+from mt_study.models import Intervention, Classification, validate_insert_position
 
 
 class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
     model = Intervention
-    fields = ['moderation_type', 'text']
+    fields = ['moderation_type', 'position_in_flow', 'text']
     template_name = "mt_study/mt_study.html"
     # initial = {"title": "migration"}
     success_message = "The Moderation Suggestion has been created!"
@@ -28,6 +28,7 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         form.instance.coder = self.request.user
         flow_id = self.request.resolver_match.kwargs['flow_id']
         form.instance.flow_id = flow_id
+        validate_insert_position(form.instance.position_in_flow, form.instance)
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -122,7 +123,9 @@ def intervention_sent_view_proxy(request):
         .filter(sample_flow=today) \
         .filter(has_intervention=True)
 
-    interventions = Intervention.objects.filter(flow__in=flows, sent=False)
+    interventions = Intervention.objects.filter(flow__in=flows)\
+        .exclude(sent=True)\
+        .exclude(sendable=False)
 
     candidates = list(map(lambda x: x.id, interventions))
     if len(candidates) == 0:

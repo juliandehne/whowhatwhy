@@ -6,7 +6,7 @@
         <legend class="border-bottom mb-4">Conversation:</legend>
 
         {% for tweet in tweets %}
-            >> {{ tweet.author_id }}: {{ tweet.text }}
+            {{ forloop.counter }}. >> {{ tweet.author_id }}: {{ tweet.text }}
 
             <a href="{{ tweet.original_url  }}">Link zum Nachschauen</a>
             </br>

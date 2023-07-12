@@ -1,9 +1,22 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 # Create your models here.
 from delab.delab_enums import MODERATION_TYPE
 from delab.models import ConversationFlow
+
+
+def validate_insert_position(value, instance=None):
+    if instance:
+        sequence_length = len(instance.flow.tweets.all())
+        # Access the instance and perform validation logic
+        # For example, you can access other fields of the instance
+        if sequence_length < value or value == 0:
+            raise ValidationError("The position cannot be greater than the number of posts and must be bigger than 0.")
+    else:
+        # Handle the case when the instance is not available
+        raise ValidationError("Validation failed. No instance found.")
 
 
 class Intervention(models.Model):
@@ -18,6 +31,9 @@ class Intervention(models.Model):
     sendable = models.BooleanField(null=True, blank=True,
                                    help_text="by checking this button, the moderation will be send out to the given platform")
     sent = models.BooleanField(default=False)
+
+    position_in_flow = models.IntegerField(default=-1, help_text="-1 for end of flow. 1 for after the first post etc.",
+                                           )
 
 
 class Classification(models.Model):
@@ -64,13 +80,13 @@ class Classification(models.Model):
                                           help_text="Are arguments well formulated and understandable?")
 
     participation_3 = models.BooleanField(default=False,
-                                          help_text="Is the topic very general?")
+                                          help_text="Is this a topic where everyone can join in?")
 
     consensus_seeking_1 = models.BooleanField(default=False,
                                               help_text="Is the discussion very polarized?")
 
     consensus_seeking_2 = models.BooleanField(default=False,
-                                              help_text="Are they agreeing on things?")
+                                              help_text="Are the discussants agreeing on things?")
 
     consensus_seeking_3 = models.BooleanField(default=False,
                                               help_text="Are they talking past each other?")
