@@ -166,9 +166,9 @@ def download_daily_rd_sample(topic_string, max_results):
             if count > max_results:
                 break
     except prawcore.exceptions.NotFound as ex:
-        logger.debug(ex, topic_string)
+        logger.debug(ex)
     except prawcore.exceptions.Forbidden as ex:
-        logger.debug(ex, topic_string)
+        logger.debug(ex)
     except prawcore.exceptions.Redirect as ex:
-        logger.debug(ex, topic_string)
+        logger.debug(ex)
     return result
