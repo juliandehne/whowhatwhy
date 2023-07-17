@@ -292,6 +292,9 @@ MAX_CANDIDATES_TWITTER = 850
 
 MAX_CONVERSATION_LENGTH_REDDIT = 50
 
+MIN_CONVERSATION_LENGTH_MASTODON = 5
+MIN_CONVERSATION_DEPTH_MASTODON = 3
+
 CURRENT_DUO_FLOW_METRIC = "sentiment"
 
 # the number of people that need to label a tweet as intolerant for it to be labeled correctly
