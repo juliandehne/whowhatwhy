@@ -25,7 +25,7 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, persist=T
     execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
     average_time = (execution_time / 100) / 60
     print("Execution time:", execution_time, "seconds")
-    print("Aberage Execution time:", average_time, "minutes")
+    print("Average Execution time:", average_time, "minutes")
 
 
 def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPost]]:
