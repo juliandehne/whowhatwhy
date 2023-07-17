@@ -1,5 +1,6 @@
 import logging
 from random import choice
+from time import sleep
 
 import prawcore
 
@@ -170,5 +171,10 @@ def download_daily_rd_sample(topic_string, max_results):
     except prawcore.exceptions.Forbidden as ex:
         logger.debug(ex)
     except prawcore.exceptions.Redirect as ex:
+        logger.debug(ex)
+    except prawcore.exceptions.TooManyRequests as ex:
+        logger.debug(ex)
+        sleep(60*15)
+    except prawcore.exceptions.ServerError as ex:
         logger.debug(ex)
     return result

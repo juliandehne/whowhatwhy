@@ -47,8 +47,8 @@ urlpatterns = [
          ),
          name='password_reset_complete'),
     path('delab/', include('delab.urls')),
-    path('', include('blog.urls')),
-    path('mt_study/', include('mt_study.urls'))
+    path('blog/', include('blog.urls')),
+    path('', include('mt_study.urls'))
 
 ]
 

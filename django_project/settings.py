@@ -186,7 +186,7 @@ MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-LOGIN_REDIRECT_URL = 'blog-home'
+LOGIN_REDIRECT_URL = 'mt_study-classification-proxy'
 LOGIN_URL = 'login'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -311,3 +311,4 @@ MAX_CCCP_CONVERSATION_CANDIDATES = 1000
 CCCP_N_LARGEST = 10
 
 # FLOW_DUO_API_COUNT = 50
+MT_STUDY_DAILY_FLOWS_NEEDED = 70

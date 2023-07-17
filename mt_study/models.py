@@ -39,30 +39,34 @@ class Intervention(models.Model):
 class Classification(models.Model):
     flow = models.ForeignKey(ConversationFlow, on_delete=models.DO_NOTHING,
                              help_text="the sequence of posts to be moderated")
-    is_valid_conversation = models.BooleanField(default=True)
+
+    coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    is_valid_conversation = models.BooleanField(default=True, help_text="Mark this,"
+                                                                        " if the conversation is correct in a technical sense "
+                                                                        "(no weird letters, deleted posts or similar!")
 
     needs_moderation = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
-                                        help_text="the type of moderation strategy needed", null=True, blank=True)
+                                        help_text="The type of moderation strategy needed", null=True, blank=True)
 
-    is_conversation_0 = models.BooleanField(default=False,
+    is_conversation_0 = models.BooleanField(default=True,
                                             help_text="Is this a conversation that can be understood by most people?")
-    is_conversation_1 = models.BooleanField(default=False,
+    is_conversation_1 = models.BooleanField(default=True,
                                             help_text="Is there a specific topic or issue being discussed?")
-    is_conversation_2 = models.BooleanField(default=False,
+    is_conversation_2 = models.BooleanField(default=True,
                                             help_text="Are there different viewpoints or perspectives being presented?")
-    is_conversation_3 = models.BooleanField(default=False,
+    is_conversation_3 = models.BooleanField(default=True,
                                             help_text="Are participants actively questioning or challenging"
                                                       " each other's ideas?")
-    is_conversation_4 = models.BooleanField(default=False, help_text="Is this a political debate?")
-    is_conversation_5 = models.BooleanField(default=False,
+    is_conversation_4 = models.BooleanField(default=False, help_text="Is this a political debate? If unsure mark no.")
+    is_conversation_5 = models.BooleanField(default=True,
                                             help_text="Are there arguments or counterarguments being presented?")
 
-    agenda_control_1 = models.BooleanField(default=False,
+    agenda_control_1 = models.BooleanField(default=True,
                                            help_text="Are the discussants staying on topic?")
     agenda_control_2 = models.BooleanField(default=False,
-                                           help_text="Is there one main topic?")
+                                           help_text="Is it hard to keep track on the issue at hand?")
     agenda_control_3 = models.BooleanField(default=False,
-                                           help_text="Is the conversation on a controversial topic?")
+                                           help_text="Is the conversation split in two or more very separate topics?")
 
     emotion_control_1 = models.BooleanField(default=False,
                                             help_text="Are the discussants showing emotions towards each other?")
@@ -73,26 +77,37 @@ class Classification(models.Model):
     emotion_control_3 = models.BooleanField(default=False,
                                             help_text="Is bad language used?")
 
-    participation_1 = models.BooleanField(default=False,
-                                          help_text="Are there many different perspectives?")
+    participation_1 = models.BooleanField(default=True,
+                                          help_text="Are there many different perspectives (allowed)?")
 
     participation_2 = models.BooleanField(default=False,
-                                          help_text="Are arguments well formulated and understandable?")
+                                          help_text="Is the discussion dominated by a certain group?")
 
-    participation_3 = models.BooleanField(default=False,
-                                          help_text="Is this a topic where everyone can join in?")
+    # Are arguments well formulated and understandable?
+    participation_3 = models.BooleanField(default=True,
+                                          help_text="Is this a discussion where everyone can join in?")
 
     consensus_seeking_1 = models.BooleanField(default=False,
                                               help_text="Is the discussion very polarized?")
 
-    consensus_seeking_2 = models.BooleanField(default=False,
+    consensus_seeking_2 = models.BooleanField(default=True,
                                               help_text="Are the discussants agreeing on things?")
 
     consensus_seeking_3 = models.BooleanField(default=False,
                                               help_text="Are they talking past each other?")
+
     norm_control_1 = models.BooleanField(default=False,
                                          help_text="Are there some intolerant speech acts in the conversation?")
     norm_control_2 = models.BooleanField(default=False,
-                                         help_text="Are the discussants violating some basic social norms?")
+                                         help_text="Are the discussants violating some basic social rules?")
     norm_control_3 = models.BooleanField(default=False,
                                          help_text="Are there comments that are racist, sexist, antisemitic or similar?")
+
+    elaboration_support_1 = models.BooleanField(default=True,
+                                                help_text="Are arguments well formulated and understandable?")
+    elaboration_support_2 = models.BooleanField(default=False,
+                                                help_text="Are there hidden assumptions that shape the discussion?")
+    elaboration_support_3 = models.BooleanField(default=True,
+                                                help_text="Is there a tabu involved (elefant in the room)"
+                                                          " that needs to be addressed to further the conversation?")
+
