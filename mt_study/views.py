@@ -1,5 +1,6 @@
 from random import choice
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 # Create your views here.
@@ -47,6 +48,7 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         return context
 
 
+@login_required
 def intervention_proxy(request):
     # current_user = request.user
     today = date.today()
@@ -114,6 +116,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
     """
 
 
+@login_required
 def intervention_sent_view_proxy(request):
     # current_user = request.user
     today = date.today()
@@ -123,8 +126,8 @@ def intervention_sent_view_proxy(request):
         .filter(sample_flow=today) \
         .filter(has_intervention=True)
 
-    interventions = Intervention.objects.filter(flow__in=flows)\
-        .exclude(sent=True)\
+    interventions = Intervention.objects.filter(flow__in=flows) \
+        .exclude(sent=True) \
         .exclude(sendable=False)
 
     candidates = list(map(lambda x: x.id, interventions))
@@ -170,6 +173,7 @@ class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMix
         return context
 
 
+@login_required
 def classification_proxy(request):
     # current_user = request.user
     today = date.today()
