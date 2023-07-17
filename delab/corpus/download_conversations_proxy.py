@@ -11,6 +11,7 @@ from delab.corpus.mastodon.download_daily_political_sample_mstd import download_
 from delab.delab_enums import PLATFORM, LANGUAGE
 # from .download_conversations_mastodon import download_conversation_mstd
 from delab_trees.delab_tree import DelabTree
+from django_project.settings import MT_STUDY_DAILY_FLOWS_NEEDED
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,15 @@ def download_timelines(simple_request_id, platform: PLATFORM):
 def download_daily_sample(topic_string,
                           platform: PLATFORM,
                           language=LANGUAGE.ENGLISH,
-                          max_results=20) -> list[DelabTree]:
+                          max_results=MT_STUDY_DAILY_FLOWS_NEEDED) -> list[DelabTree]:
+    """
+
+    @param topic_string:
+    @param platform:
+    @param language:
+    @param max_results: the maximum number of suitable trees to be found for a given platform and a day
+    @return:
+    """
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
