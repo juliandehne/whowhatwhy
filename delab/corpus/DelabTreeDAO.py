@@ -8,7 +8,7 @@ from delab.models import SimpleRequest, TwTopic, Tweet
 from delab_trees import TreeNode
 from delab_trees.delab_tree import DelabTree
 from django_project.settings import MIN_CONVERSATION_LENGTH, MIN_CONVERSATION_DEPTH, MAX_CONVERSATION_LENGTH, \
-    MAX_CONVERSATION_LENGTH_REDDIT
+    MAX_CONVERSATION_LENGTH_REDDIT, MIN_CONVERSATION_LENGTH_MASTODON, MIN_CONVERSATION_DEPTH_MASTODON
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,8 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
     # before = dt.now()
     simple_request, topic = generate_default_request_and_topic(simple_request, topic)
     conversation_id = root_node.data["tree_id"]
+    if type(root_node.data["post_id"]) != 'float':
+        float(root_node.data["post_id"])
     twitter_id = int(root_node.data["post_id"])
     url = None
     if "url" in root_node.data:
@@ -70,6 +72,9 @@ def check_general_tree_requirements(delab_tree: DelabTree, verbose=True, platfor
         max_conversation_length = MAX_CONVERSATION_LENGTH
         if platform == PLATFORM.REDDIT:
             max_conversation_length = MAX_CONVERSATION_LENGTH_REDDIT
+        if platform == PLATFORM.MASTODON:
+            min_conversation_length = MIN_CONVERSATION_LENGTH_MASTODON
+            min_depth = MIN_CONVERSATION_DEPTH_MASTODON
         if min_conversation_length < tree_size < max_conversation_length and tree_depth >= min_depth:
             if verbose:
                 logger.debug("found suitable conversation with length {} and depth {}".format(tree_size, tree_depth))

@@ -1,5 +1,5 @@
 from mastodon import Mastodon
-from delab.corpus.DelabTreeDAO import persist_tree, set_up_topic_and_simple_request
+from delab.corpus.DelabTreeDAO import persist_tree, set_up_topic_and_simple_request, check_general_tree_requirements
 from delab_trees.delab_tree import DelabTree
 from bs4 import BeautifulSoup
 from delab.delab_enums import PLATFORM
@@ -43,13 +43,12 @@ def download_conversations_to_search(query, mastodon, topic, since, daily_sample
     for context in contexts:
         conversation_id = context['root']["id"]
         tree = toots_to_tree(context=context, conversation_id=conversation_id)
-        trees.append(tree)
-        if not daily_sample:
-            save_tree_to_db(tree=tree, topic=topic, query=query)
+        if tree is not None:
+            trees.append(tree)
+            if not daily_sample:
+                save_tree_to_db(tree=tree, topic=topic, query=query)
 
     return trees
-
-
 
 
 def download_timeline(query, mastodon, since):
@@ -85,8 +84,8 @@ def get_conversation_id(context):
 def get_root(context):
     ancestors = context["ancestors"]
     origin = context["origin"]
-    if origin["in_reply_to_id"] is None:
-        return origin
+    if origin["in_reply_to_id"] is not None and len(ancestors)==0:
+        raise ValueError("Conversation has no root!")
     for toot in ancestors:
         if toot["in_reply_to_id"] is None:
             return toot
@@ -102,8 +101,8 @@ def toots_to_tree(context, conversation_id):
     tree_context = []
     text = content_to_text(root["content"])
     tree_status = {'tree_id': conversation_id,
-                   'post_id': root['id'],
-                   'parent_id': root['in_reply_to_id'],
+                   'post_id': str(root['id']),
+                   'parent_id': str(root['in_reply_to_id']),
                    'text': text,
                    'created_at': root['created_at'],
                    'author_id': root['account']['id'],
@@ -112,8 +111,8 @@ def toots_to_tree(context, conversation_id):
     for ancestor in ancestors:
         text = content_to_text(ancestor["content"])
         tree_status = {'tree_id': conversation_id,
-                       'post_id': ancestor['id'],
-                       'parent_id': ancestor['in_reply_to_id'],
+                       'post_id': str(ancestor['id']),
+                       'parent_id': str(ancestor['in_reply_to_id']),
                        'text': text,
                        'created_at': ancestor['created_at'],
                        'author_id': ancestor['account']['id'],
@@ -123,7 +122,7 @@ def toots_to_tree(context, conversation_id):
         text = content_to_text(descendant["content"])
         tree_status = {'tree_id': conversation_id,
                        'post_id': descendant['id'],
-                       'parent_id': descendant['in_reply_to_id'],
+                       'parent_id': str(descendant['in_reply_to_id']),
                        'text': text,
                        'created_at': descendant['created_at'],
                        'author_id': descendant['account']['id'],
@@ -131,13 +130,34 @@ def toots_to_tree(context, conversation_id):
         tree_context.append(tree_status)
 
     context_df = pd.DataFrame(tree_context)
+    #context_df_clean = pre_process_df(context_df)
     tree = DelabTree(context_df)
+    if not check_general_tree_requirements(delab_tree=tree, platform=PLATFORM.MASTODON):
+        return None
     return tree
 
 
-def save_tree_to_db(tree, topic, query ):
+def pre_process_df(context_df):
+    """
+    convert float and int ids to str
+    :return:
+    """
+    if context_df["parent_id"].dtype != "object":
+        df_parent_view = context_df.loc[:, "parent_id"]
+        context_df.loc[:, "parent_id"] = df_parent_view.astype(float).astype(str)
+    if context_df["post_id"].dtype != "object":
+        df_post_view = context_df.loc[:, "post_id"]
+        context_df.loc[:, "post_id"] = df_post_view.astype(float).astype(str)
+    else:
+        assert context_df["parent_id"].dtype == "object" and context_df[
+            "post_id"].dtype == "object", "post_id and parent_id need to be both float or str"
+    return context_df
+
+
+def save_tree_to_db(tree, topic, query):
     simple_request, tw_topic = set_up_topic_and_simple_request(query_string=query, request_id=-1, topic_string=topic)
     persist_tree(tree=tree, platform=PLATFORM.MASTODON, simple_request=simple_request, topic=tw_topic)
+
 
 def content_to_text(content):
     # content is html string --> get only necessary text

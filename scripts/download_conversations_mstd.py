@@ -8,7 +8,7 @@ from delab.delab_enums import LANGUAGE, PLATFORM
 
 
 def run():
-    download_conversations('Klimawandel', "Klimawandel",
+    download_conversations('Klimawandel', "Polizei",
                            language=LANGUAGE.GERMAN, platform=PLATFORM.MASTODON)
-    download_conversations('Klimawandel', "climatechange",
+    download_conversations('Klimawandel', "police",
                            language=LANGUAGE.ENGLISH, platform=PLATFORM.MASTODON)
