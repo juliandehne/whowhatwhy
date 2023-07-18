@@ -255,12 +255,9 @@ class ConversationFlow(models.Model):
     longest = models.BooleanField(default=False)
     sample_flow = models.DateField(null=True)
     mt_study_flow = models.BooleanField(default=False)
-
-    @classmethod
-    def create(cls, image, flow_name):
-        conversation_flow = cls(image=image, flow_name=flow_name)
-        # do something with the book
-        return
+    mt_study_lock_time = models.DateTimeField(null=True, blank=True)
+    mt_study_lock_time_write = models.DateTimeField(null=True, blank=True)
+    mt_study_lock_time_send = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('conversation_id', 'mt_study_flow')

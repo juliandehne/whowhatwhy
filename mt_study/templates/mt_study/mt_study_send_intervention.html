@@ -2,16 +2,39 @@
 {% load crispy_forms_tags %}
 {% block content %}
     <div class="content-section">
+        <legend class="section-description border-bottom mb-4">Sending out moderating statement</legend>
+        <ol>
+            <li>
+                Read the conversation carefully!
+            </li>
+            <li>
+                Read the prepared moderating statement carefully!
+            </li>
+            <li>
+                Make sure that it is not ethically problematic or in any way unresponsible! If you would send it out from your private account, select sendable Yes in the dropdown below! Else select No!
+            </li>
+        </ol>
 
-        <legend class="border-bottom mb-4">Conversation:</legend>
+        <p>The first number is an alias for the author name. After the colon the written post follows.
+            The posts are a sequence of answers to the previous ones.
+        </p>
+
+        <legend class="border-bottom mb-4"></legend>
 
         {% for tweet in tweets %}
             {{ forloop.counter }}. >> {{ tweet.author_id }}: {{ tweet.text }}
 
-            <a href="{{ tweet.original_url  }}">Link zum Nachschauen</a>
+            <a href="{{ tweet.original_url }}">Link zum Nachschauen</a>
             </br>
-            </br>
+            {% if not forloop.last %}
+                <div class="vertical-line"></div>
+            {% endif %}
         {% endfor %}
+
+        <br>
+         <legend class="border-bottom mb-4"></legend>
+        <br>
+
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
