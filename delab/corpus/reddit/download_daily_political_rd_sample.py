@@ -50,6 +50,7 @@ subreddits = [
     "moderatepolitics",
     "UKPolitics",
     "CanadaPolitics",
+    "Refugees",
     "Europe",
     "Asia",
     "Africa",

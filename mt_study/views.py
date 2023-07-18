@@ -1,5 +1,6 @@
 from random import choice
 
+from crispy_forms.helper import FormHelper
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -20,8 +21,8 @@ from mt_study.models import Intervention, Classification, validate_insert_positi
 
 class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
     model = Intervention
-    fields = ['moderation_type', 'position_in_flow', 'text']
-    template_name = "mt_study/mt_study.html"
+    fields = ['position_in_flow', 'text']
+    template_name = "mt_study/mt_study_intervention.html"
     # initial = {"title": "migration"}
     success_message = "The Moderation Suggestion has been created!"
 
@@ -76,8 +77,8 @@ class NoMoreDiscussionsView(TemplateView):
 
 class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
     model = Intervention
-    fields = ['moderation_type', 'text', 'sendable']
-    template_name = "mt_study/mt_study.html"
+    fields = ['text', 'sendable']
+    template_name = "mt_study/mt_study_send_intervention.html"
     # initial = {"title": "migration"}
     success_message = "The Moderation was posted!"
 
@@ -139,15 +140,22 @@ def intervention_sent_view_proxy(request):
 
 
 class ClassificationForm(ModelForm):
+    """
+    def __init__(self, *args, **kwargs):
+        super(ClassificationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_show_labels = False
+    """
+
     class Meta:
         model = Classification
-        exclude = ('flow',)
+        exclude = ('flow', 'coder')
 
 
 class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):
     model = Classification
     form_class = ClassificationForm
-    template_name = "mt_study/mt_study.html"
+    template_name = "mt_study/mt_study_classification.html"
     # initial = {"title": "migration"}
     success_message = "The Conversation has been classified!"
 

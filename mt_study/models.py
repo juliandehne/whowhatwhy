@@ -41,13 +41,6 @@ class Classification(models.Model):
                              help_text="the sequence of posts to be moderated")
 
     coder = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    is_valid_conversation = models.BooleanField(default=True, help_text="Mark this,"
-                                                                        " if the conversation is correct in a technical sense "
-                                                                        "(no weird letters, deleted posts or similar!")
-
-    needs_moderation = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
-                                        help_text="The type of moderation strategy needed", null=True, blank=True)
-
     is_conversation_0 = models.BooleanField(default=True,
                                             help_text="Is this a conversation that can be understood by most people?")
     is_conversation_1 = models.BooleanField(default=True,
@@ -64,7 +57,7 @@ class Classification(models.Model):
     agenda_control_1 = models.BooleanField(default=True,
                                            help_text="Are the discussants staying on topic?")
     agenda_control_2 = models.BooleanField(default=False,
-                                           help_text="Is it hard to keep track on the issue at hand?")
+                                           help_text="Is it hard to keep track of the issue at hand?")
     agenda_control_3 = models.BooleanField(default=False,
                                            help_text="Is the conversation split in two or more very separate topics?")
 
@@ -111,3 +104,9 @@ class Classification(models.Model):
                                                 help_text="Is there a tabu involved (elefant in the room)"
                                                           " that needs to be addressed to further the conversation?")
 
+    is_valid_conversation = models.BooleanField(default=True, help_text="Mark this,"
+                                                                        " if the conversation is correct in a technical sense "
+                                                                        "(no weird letters, deleted posts or similar!")
+
+    needs_moderation = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
+                                        help_text="The type of moderation strategy needed", null=True, blank=True)

@@ -1,0 +1,62 @@
+{% extends "mt_study/mt_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <legend class="section-description border-bottom mb-4">Classify this conversation</legend>
+        <ol>
+            <li>
+                Read the conversation carefully!
+            </li>
+            <li>
+                Make a mental note if something is not productive!
+            </li>
+            <li>
+                Think about the topic of the conversation and whether you understand the general gist of it!
+            </li>
+        </ol>
+
+        <p>The first number is an alias for the author name. After the colon the written post follows.
+            The posts are a sequence of answers to the previous ones.
+        </p>
+
+        <legend class="border-bottom mb-4"></legend>
+
+        {% for tweet in tweets %}
+            {{ forloop.counter }}. >> {{ tweet.author_id }}: {{ tweet.text }}
+
+            <a href="{{ tweet.original_url }}">Link zum Nachschauen</a>
+            </br>
+            {% if not forloop.last %}
+                <div class="vertical-line"></div>
+            {% endif %}
+        {% endfor %}
+
+        <br>
+        <legend class="border-bottom mb-4"></legend>
+        <br>
+
+        <legend class="border-bottom mb-4">Answer the following questions:</legend>
+
+        <ol>
+            <li>
+                If unsure, don't change the default values!
+            </li>
+            <li>
+                Pick a moderation strategy based on the reflective questions and the coding guide for the
+                moderating statements!
+            </li>
+        </ol>
+
+        <legend class="border-bottom mb-4"></legend>
+
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button id="submitButton" class="btn btn-outline-info" type="submit">Post</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
