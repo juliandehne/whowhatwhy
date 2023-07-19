@@ -29,6 +29,7 @@ class LANGUAGE(models.TextChoices):
     POLISH = "pl"
     SPANISH = "es"
     UNKNOWN = "unk"
+    DUTCH = "ne"
 
 
 class Likert(models.IntegerChoices):
