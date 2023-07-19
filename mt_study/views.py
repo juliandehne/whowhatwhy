@@ -89,7 +89,9 @@ def get_last_hour():
     # Get the current time
     now = timezone.now()
     # Calculate the datetime range for the last hour
-    last_hour = now - timedelta(hours=1)
+    # for debugging purposes changed to five minutes
+    # last_hour = now - timedelta(hours=1)
+    last_hour = now - timedelta(minutes=5)
     return last_hour, now
 
 
@@ -121,7 +123,9 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         tweets = flow.tweets.all()
         tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
         # tweets = tweets[-5:]
+        classification = Classification.objects.filter(flow_id=flow_id).get()
         context["tweets"] = tweets
+        context["classification"] = classification.needs_moderation
         return context
 
 
@@ -204,6 +208,10 @@ def intervention_sent_view_proxy(request):
         # raise Http404("There seems no more data to label!")
         return redirect('mt_study-send-intervention-nomore')
     candidate = choice(interventions)
-    candidate.mt_study_lock_time_send = now
-    candidate.save(update_fields=["mt_study_lock_time_send"])
+    candidate.flow.mt_study_lock_time_send = now
+    candidate.flow.save(update_fields=["mt_study_lock_time_send"])
     return redirect('mt_study-send-intervention', pk=candidate.id)
+
+
+class HelpView(TemplateView):
+    template_name = 'mt_study/help.html'

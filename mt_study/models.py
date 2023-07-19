@@ -108,5 +108,5 @@ class Classification(models.Model):
                                                                         " if the conversation is correct in a technical sense "
                                                                         "(no weird letters, deleted posts or similar!")
 
-    needs_moderation = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
+    needs_moderation = models.TextField(choices=MODERATION_TYPE.choices,
                                         help_text="The type of moderation strategy needed", null=True, blank=True)

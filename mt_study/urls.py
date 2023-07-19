@@ -1,7 +1,7 @@
 from django.urls import path
 
 from mt_study.views import InterventionCreateView, NoMoreDiscussionsView, intervention_proxy, classification_proxy, \
-    ClassificationCreateView, NoMoreClassificationsView, intervention_sent_view_proxy, InterventionSentView
+    ClassificationCreateView, NoMoreClassificationsView, intervention_sent_view_proxy, InterventionSentView, HelpView
 
 urlpatterns = [
     # the patterns for the writing up the moderation view
@@ -27,5 +27,6 @@ urlpatterns = [
          name='mt_study-send-intervention-proxy'),
     path('intervention_send/nomore', NoMoreDiscussionsView.as_view(),
          name='mt_study-send-intervention-nomore'),
+    path('help', HelpView.as_view(), name="mt_study-help")
 
 ]

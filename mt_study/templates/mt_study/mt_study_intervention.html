@@ -3,22 +3,112 @@
 {% block content %}
     <div class="content-section">
 
-            <legend class="section-description border-bottom mb-4">Write moderating statement!</legend>
+        <legend class="section-description border-bottom mb-4">Write moderating statement!</legend>
+
+              <p>This conversation has been classified as <b>{{ classification }}</b>:</p>
+
+        {% if classification == "emotion control" %}
+            <section>
+                <p>
+                    Emotion control involves encouraging respectful and positive interactions while discouraging hostile
+                    or
+                    offensive behavior.
+                </p>
+                <p>Example:</p>
+                <blockquote>
+                    "Please remember to maintain a respectful tone in your comments."
+                </blockquote>
+                <blockquote>
+                    "Calm down! Insulting people does not help anyone... "
+                </blockquote>
+            </section>
+        {% endif %}
+
+        {% if classification == "norm control" %}
+            <section>
+                <p>
+                    Norm control refers to establishing and enforcing the community guidelines and rules to maintain a
+                    healthy and inclusive discussion environment.
+                </p>
+                <p>Example:</p>
+                <blockquote>
+                    "One should refrain from using offensive language towards minorities."
+                </blockquote>
+                <blockquote>
+                    "It is not ok to frame sex workers just because of their profession."
+                </blockquote>
+            </section>
+        {% endif %}
+
+        {% if classification == "elaboration support" %}
+            <section>
+                <p>
+                    Elaboration support involves encouraging participants to provide more detailed explanations or
+                    reasoning
+                    for their opinions or claims.
+                </p>
+                <p>Example:</p>
+                <blockquote>
+                    "Could you please elaborate on your point about XYZ? It would help us understand your perspective
+                    better."
+                </blockquote>
+                <blockquote>
+                    "When you are saying XYZ, what is your assumption?"
+                </blockquote>
+            </section>
+        {% endif %}
+
+        {% if classification == "consensus seeking" %}
+            <section>
+                <p>
+                    Consensus seeking aims to promote understanding and collaboration by encouraging participants to
+                    consider and respect each other's viewpoints.
+                </p>
+                <p>Example:</p>
+                <blockquote>
+                    "You guys should consider each other's perspectives and try to find common ground."
+                </blockquote>
+                <blockquote>
+                    "You guys should listen to each other more."
+                </blockquote>
+
+            </section>
+
+        {% endif %}
+        {% if classification == "agenda control" %}
+            <section>
+                <p>
+                    Agenda control involves guiding the discussion back to the main topic and preventing conversations
+                    from
+                    going off on unrelated tangents.
+                </p>
+                <p>Example:</p>
+                <blockquote>
+                    "Please stay on the topic at hand to ensure a focused discussion!"
+                </blockquote>
+                <blockquote>
+                    "Please don't switch the topic or use whataboutism!"
+                </blockquote>
+            </section>
+        {% endif %}
+
+        <legend class="border-bottom mb-4"></legend>
+
+        <p>Instructions:</p>
         <ol>
             <li>
                 Read the conversation carefully!
             </li>
+            <li>If the conversation is misclassified from your perspective, write your argument why that is in the text field!</li>
             <li>
-                Write a moderating statement using the give strategies introduced They can be revisited at the help page in the top menu!
+                Else write a moderating statement using the give strategies introduced They can be revisited at the help page
+                in the top menu!
             </li>
             <li>
-                Select a position where you would want the statement to appear! Note that this will create a new branch and the subsequent authors will not see this branch!
+                Select a position where you would want the statement to appear! Note that this will create a new branch
+                and the subsequent authors will not see this branch!
             </li>
         </ol>
-
-        <p>The first number is an alias for the author name. After the colon the written post follows.
-            The posts are a sequence of answers to the previous ones.
-        </p>
 
         <legend class="border-bottom mb-4"></legend>
 
@@ -31,8 +121,9 @@
                 <div class="vertical-line"></div>
             {% endif %}
         {% endfor %}
-
+        <br>
         <legend class="border-bottom mb-4"></legend>
+
 
         <form method="POST">
             {% csrf_token %}
