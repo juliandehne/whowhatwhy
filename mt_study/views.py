@@ -65,18 +65,16 @@ class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMix
 
 @login_required
 def classification_proxy(request):
-    current_user = request.user
-    languages = [current_user.profile.primary_language, current_user.profile.secondary_language,
-                 current_user.profile.tertiary_language]
+    languages = get_user_languages(request)
 
     last_hour, now = get_last_hour()
 
     today = date.today()
     candidate_flows = list(ConversationFlow.objects.annotate(
         has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk'))))
-                      .filter(sample_flow=today)
-                      .filter(has_classification=False)
-                      .filter(Q(mt_study_lock_time__lt=last_hour) | Q(mt_study_lock_time__isnull=True)).all())
+                           .filter(sample_flow=today)
+                           .filter(has_classification=False)
+                           .filter(Q(mt_study_lock_time__lt=last_hour) | Q(mt_study_lock_time__isnull=True)).all())
     # hack after manually deleting tweets
     # candidate_flows = list(filter(lambda x: len(x.tweets.all()) > 4, candidate_flows))
     candidates = list(filter(lambda x: x.tweets.first().language in languages, candidate_flows))
@@ -87,6 +85,13 @@ def classification_proxy(request):
     candidate.mt_study_lock_time = now
     candidate.save(update_fields=["mt_study_lock_time"])
     return redirect('mt_study-create-classification', flow_id=candidate.id)
+
+
+def get_user_languages(request):
+    current_user = request.user
+    languages = [current_user.profile.primary_language, current_user.profile.secondary_language,
+                 current_user.profile.tertiary_language]
+    return languages
 
 
 def get_last_hour():
@@ -135,7 +140,8 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
 
 @login_required
 def intervention_proxy(request):
-    # current_user = request.user
+    languages = get_user_languages(request)
+
     today = date.today()
     last_hour, now = get_last_hour()
 
@@ -148,6 +154,7 @@ def intervention_proxy(request):
         .filter(Q(mt_study_lock_time_write__lt=last_hour) | Q(mt_study_lock_time_write__isnull=True)).all()
 
     flows = list(filter(needs_moderation, flows))
+    flows = list(filter(lambda x: x.tweets.first().language in languages, flows))
 
     if len(flows) == 0:
         # raise Http404("There seems no more data to label!")
@@ -194,7 +201,8 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
 
 @login_required
 def intervention_sent_view_proxy(request):
-    # current_user = request.user
+    languages = get_user_languages(request)
+
     today = date.today()
     last_hour, now = get_last_hour()
 
@@ -202,7 +210,9 @@ def intervention_sent_view_proxy(request):
         .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
         .filter(sample_flow=today) \
         .filter(has_intervention=True) \
-        .filter(Q(mt_study_lock_time_send__lt=last_hour) | Q(mt_study_lock_time_send__isnull=True))
+        .filter(Q(mt_study_lock_time_send__lt=last_hour) | Q(mt_study_lock_time_send__isnull=True)).all()
+
+    flows = list(filter(lambda x: x.tweets.first().language in languages, flows))
 
     interventions = list(Intervention.objects.filter(flow__in=flows) \
                          .exclude(sent=True) \

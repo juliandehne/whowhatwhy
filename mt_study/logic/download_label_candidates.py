@@ -127,7 +127,7 @@ def is_short_text(text):
 
 
 def is_bad_reddit_case(text):
-    return "[removed]" not in text and "!approve" not in text and "!ban" not in text
+    return "[removed]" not in text and "[entfernt]" not in text and "!approve" not in text and "!ban" not in text
 
 
 def meta_list_filter(posts: list[DelabPost]):
