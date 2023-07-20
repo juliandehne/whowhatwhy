@@ -179,7 +179,7 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('mt_study-proxy')
+        return reverse('mt_study-send-intervention-proxy')
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(InterventionSentView, self).get_context_data(**kwargs)
