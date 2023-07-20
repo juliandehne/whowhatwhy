@@ -2,7 +2,7 @@ import logging
 
 from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd
 from delab.corpus.reddit.download_conversations_reddit import search_r_all, download_conversations_by_id
-from delab.corpus.reddit.download_daily_political_rd_sample import download_daily_rd_sample
+from delab.corpus.reddit.download_daily_political_rd_sample import RD_Sampler
 from delab.corpus.reddit.download_timelines_reddit import download_timelines_reddit
 from delab.corpus.twitter.download_conversations_twitter import download_conversations_tw
 from delab.corpus.twitter.download_daily_political_sample import download_daily_political_sample
@@ -83,7 +83,8 @@ def download_daily_sample(topic_string,
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
-        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results, language=language)
+        sampler = RD_Sampler(language)
+        return sampler.download_daily_rd_sample(max_results=max_results)
     if platform == platform.MASTODON:
         return download_daily_political_sample_mstd(topic_string)
     else:

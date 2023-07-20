@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from delab.corpus.DelabTreeDAO import check_general_tree_requirements, persist_tree, set_up_topic_and_simple_request
 from delab.corpus.download_conversations_proxy import download_daily_sample
+from delab.corpus.download_exceptions import NoDailySubredditAvailableException
 from delab.delab_enums import PLATFORM
 from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
@@ -20,12 +21,14 @@ M_TURK_TOPIC = "mturk_candidate"
 
 def download_mturk_sample_conversations(n_runs, platform, min_results, language, persist=True):
     # Perform 100 runs of the function and measure the time taken
-
-    download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
-    execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
-    average_time = (execution_time / 100) / 60
-    print("Execution time:", execution_time, "seconds")
-    print("Average Execution time:", average_time, "minutes")
+    try:
+        download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
+        execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
+        average_time = (execution_time / 100) / 60
+        print("Execution time:", execution_time, "seconds")
+        print("Average Execution time:", average_time, "minutes")
+    except NoDailySubredditAvailableException as no_more_subreddits_to_try:
+        logger.debug("Tried all subreddits for language {}".format(no_more_subreddits_to_try.language))
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
