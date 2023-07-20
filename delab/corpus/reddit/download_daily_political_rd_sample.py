@@ -14,9 +14,44 @@ from django_project.settings import MAX_CONVERSATION_LENGTH_REDDIT, MIN_CONVERSA
 
 logger = logging.getLogger(__name__)
 
-
+german_political_subreddits = [
+    "de_IAmA",
+    "de_podcasts",
+    "depression_de",
+    "finanzen",
+    "grundeinkommen",
+    "nachrichten",
+    "piratenpartei",
+    "recht",
+    "sozialismus",
+    "wissenschaft",
+    "afd",
+    "antikapitalismus",
+    "antinational",
+    "bundestag",
+    "cdu",
+    "die_linke",
+    "diepartei",
+    "dokumentation",
+    "fdp",
+    "hartz4",
+    "klimawandel",
+    "kommunismus",
+    "nachhaltigkeit",
+    "piraten",
+    "spd",
+    "wirtschaft",
+    "austria",
+    "Dachschaden",
+    "aeiou",
+    "spacefrogs",
+    "GeschichtsMaimais",
+    "Kaiserposting"
+]
 
 subreddits = [
+    "protest",
+    "migration",
     "politics",
     "worldpolitics",
     "geopolitics",
@@ -146,23 +181,29 @@ subreddits = [
     "AsiaNews",
     "AfricaNews",
     "MiddleEastNews",
-    "LatinAmericaNews"
+    "LatinAmericaNews",
+    "neoliberal",
 ]
 
 
-def download_daily_rd_sample(topic_string, max_results):
+def download_daily_rd_sample(topic_string, max_results, language):
     result = []
     try:
         reddit = get_praw()
-        subreddit_string = choice(subreddits)
+        if language == LANGUAGE.GERMAN:
+            subreddit_string = choice(german_political_subreddits)
+        else:
+            subreddit_string = choice(subreddits)
         # could use .hot()
         count = 0
         for submission in reddit.subreddit(subreddit_string).top(time_filter='day'):
             # print(submission)
-            root = compute_reddit_tree(submission)
+            root = compute_reddit_tree(submission, language)
             tree = DelabTree.from_recursive_tree(root)
+            # validate tree here so that there are not too many downloads necessary
             useful = check_general_tree_requirements(tree)
-            if useful and tree.validate(verbose=False):
+            valid = tree.validate(verbose=False)
+            if useful and valid:
                 count += 1
                 result.append(tree)
             if count > max_results:
@@ -174,8 +215,9 @@ def download_daily_rd_sample(topic_string, max_results):
     except prawcore.exceptions.Redirect as ex:
         logger.debug(ex)
     except prawcore.exceptions.TooManyRequests as ex:
-        logger.debug(ex)
-        sleep(60*15)
+        # logger.debug(ex)
+        logger.debug("too many requests, going to sleep for 15 min")
+        sleep(60 * 15)
     except prawcore.exceptions.ServerError as ex:
         logger.debug(ex)
     return result

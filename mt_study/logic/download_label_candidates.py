@@ -18,32 +18,23 @@ logger = logging.getLogger(__name__)
 M_TURK_TOPIC = "mturk_candidate"
 
 
-def download_mturk_sample_conversations(n_runs, platform, min_results, persist=True):
+def download_mturk_sample_conversations(n_runs, platform, min_results, language, persist=True):
     # Perform 100 runs of the function and measure the time taken
 
-    download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, persist)
+    download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
     execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
     average_time = (execution_time / 100) / 60
     print("Execution time:", execution_time, "seconds")
     print("Average Execution time:", average_time, "minutes")
 
 
-def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPost]]:
+def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
     result = []
     flow_result_count = 0
     # print("downloading random conversations for mturk_labeling")
     while flow_result_count < min_results:
-        downloaded_trees = download_daily_sample(topic_string=M_TURK_TOPIC, platform=platform)
-        validated_trees = []
-        # reddit sampler has integrated validation
-        if platform != PLATFORM.REDDIT:
-            for tree in downloaded_trees:
-                validated = tree.validate(verbose=False)
-                useful = check_general_tree_requirements(tree, platform=platform)
-                if validated and useful:
-                    validated_trees.append(tree)
-        else:
-            validated_trees = downloaded_trees
+        downloaded_trees = download_daily_sample(topic_string=M_TURK_TOPIC, platform=platform, language=language)
+        validated_trees = validate_trees(downloaded_trees, platform)
 
         if len(validated_trees) > 0:
             forest = TreeManager.from_trees(validated_trees)
@@ -62,24 +53,43 @@ def download_mturk_samples(platform, min_results, persist) -> list[list[DelabPos
                 # throw out the trees not sampled
                 forest.keep(sample_tree_ids)
 
-                # potentially remove even more samples here using Valentins IPA
                 if persist:
-                    for tree_id, tree in forest.trees.items():
-                        query_string = platform + "" + str(timezone.now().date()) + "mturk_sample"
-                        simple_request, topic = set_up_topic_and_simple_request(query_string, -1, M_TURK_TOPIC)
-                        persist_tree(tree, platform, simple_request, topic)
-                    objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id",
-                                                                                                    flat=True)
-                    n_stored_objects = len(set(list(objects)))
-                    n_sample_tree_ids = len(set(sample_tree_ids))
-                    assert n_stored_objects == n_sample_tree_ids
-                    duplicated_count = persist_flow_in_db(flow_sample)
-                    new_flows_persisted = len(flow_sample) - duplicated_count
-                    logger.debug("persisted in database: {}".format(new_flows_persisted))
-                    flow_result_count += new_flows_persisted
+                    flow_result_count = persist_flows(flow_result_count, flow_sample, forest, platform, sample_tree_ids)
                 else:
                     flow_result_count = len(result)
     return result
+
+
+def persist_flows(flow_result_count, flow_sample, forest, platform, sample_tree_ids):
+    for tree_id, tree in forest.trees.items():
+        query_string = platform + "" + str(timezone.now().date()) + "mturk_sample"
+        simple_request, topic = set_up_topic_and_simple_request(query_string, -1, M_TURK_TOPIC)
+        persist_tree(tree, platform, simple_request, topic)
+    objects = Tweet.objects.filter(conversation_id__in=sample_tree_ids).values_list("conversation_id",
+                                                                                    flat=True)
+    # check if all the conversations to the flows are in the database
+    n_stored_objects = len(set(list(objects)))
+    n_sample_tree_ids = len(set(sample_tree_ids))
+    assert n_stored_objects == n_sample_tree_ids
+    duplicated_count = persist_flow_in_db(flow_sample)
+    new_flows_persisted = len(flow_sample) - duplicated_count
+    logger.debug("persisted in database: {}".format(new_flows_persisted))
+    flow_result_count += new_flows_persisted
+    return flow_result_count
+
+
+def validate_trees(downloaded_trees, platform):
+    validated_trees = []
+    # reddit sampler has integrated validation
+    if platform != PLATFORM.REDDIT:
+        for tree in downloaded_trees:
+            validated = tree.validate(verbose=False)
+            useful = check_general_tree_requirements(tree, platform=platform)
+            if validated and useful:
+                validated_trees.append(tree)
+    else:
+        validated_trees = downloaded_trees
+    return validated_trees
 
 
 def persist_flow_in_db(flow_sample: list[list[DelabPost]]):

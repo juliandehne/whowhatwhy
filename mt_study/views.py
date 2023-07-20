@@ -65,17 +65,21 @@ class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMix
 
 @login_required
 def classification_proxy(request):
-    # current_user = request.user
+    current_user = request.user
+    languages = [current_user.profile.primary_language, current_user.profile.secondary_language,
+                 current_user.profile.tertiary_language]
 
     last_hour, now = get_last_hour()
 
     today = date.today()
-    candidates = list(ConversationFlow.objects.annotate(
+    candidate_flows = list(ConversationFlow.objects.annotate(
         has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk'))))
                       .filter(sample_flow=today)
                       .filter(has_classification=False)
-                      .filter(Q(mt_study_lock_time__lt=last_hour) | Q(mt_study_lock_time__isnull=True)).all()
-                      )
+                      .filter(Q(mt_study_lock_time__lt=last_hour) | Q(mt_study_lock_time__isnull=True)).all())
+    # hack after manually deleting tweets
+    # candidate_flows = list(filter(lambda x: len(x.tweets.all()) > 4, candidate_flows))
+    candidates = list(filter(lambda x: x.tweets.first().language in languages, candidate_flows))
     if len(candidates) == 0:
         # raise Http404("There seems no more data to label!")
         return redirect('mt_study-classification-nomore')

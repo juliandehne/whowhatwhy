@@ -70,13 +70,17 @@ def save_reddit_tree(simple_request, submission, topic, language):
         persist_recursive_tree(root, PLATFORM.REDDIT, simple_request, topic)
 
 
-def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
+def compute_reddit_tree(submission, language):
     comments = sort_comments_for_db(submission)
 
     # root node
     author_id, author_name = compute_author_id(submission)
     tree_id = convert_to_hash(submission.fullname)
     root_node_id = convert_to_hash(submission.fullname)
+    if hasattr(submission, 'lang'):
+        submission_lang = submission.lang
+    else:
+        submission_lang = language
     data = {
         "tree_id": tree_id,
         "post_id": root_node_id,
@@ -85,17 +89,22 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
         "created_at": convert_time_stamp_to_django(submission),
         "tw_author__name": author_name,
         "rd_data": submission,
-        "lang": language,
+        "lang": submission_lang,
         "url": "https://reddit.com" + submission.permalink,
         "reddit_id": submission.id}
     root = TreeNode(data, root_node_id, tree_id=tree_id)
     orphans = []
+
     for comment in comments:
         # node_id = comment.id
         node_id = convert_to_hash(comment.fullname)
         # parent_id = comment.parent_id.split("_")[1]
         parent_id = convert_to_hash(comment.parent_id)
         comment_author_id, comment_author_name = compute_author_id(comment)
+        if hasattr(comment, 'lang'):
+            comment_lang = comment.lang
+        else:
+            comment_lang = language
         comment_data = {
             "tree_id": tree_id,
             "post_id": node_id,
@@ -105,7 +114,7 @@ def compute_reddit_tree(submission, language=LANGUAGE.ENGLISH):
             "created_at": convert_time_stamp_to_django(comment),
             "parent_id": parent_id,
             "rd_data": comment,
-            "lang": language,
+            "lang": comment_lang,
             "url": "https://reddit.com" + comment.permalink,
             "reddit_id": comment.id}
         node = TreeNode(comment_data, node_id, parent_id, tree_id=tree_id)
@@ -137,128 +146,6 @@ def sort_comments_for_db(submission):
     # if len(comments) > 0:
     #    print("found tree")
     return result
-
-
-"""
-def save_reddit_entry(comment, simple_request, topic, tweetfilter, conversation_id_check):
-    try:
-
-        created_time = convert_time_stamp_to_django(comment)
-        # create the author
-        author_id, name = compute_author_id(comment)
-
-        if TweetAuthor.objects.filter(twitter_id=author_id).exists():
-            author = TweetAuthor.objects.filter(twitter_id=author_id).first()
-        else:
-            author, created = TweetAuthor.objects.get_or_create(
-                twitter_id=author_id,
-                name=name,
-                screen_name=name,
-                platform=PLATFORM.REDDIT
-            )
-
-        # tweet_id = convert_to_hash(comment.id)
-        tweet_id = convert_to_hash(comment.fullname)
-        banned_at = None
-        if comment.banned_at_utc:
-            banned_at = datetime.datetime.fromtimestamp(comment.banned_at_utc)
-
-        conversation_id = convert_to_hash(comment.submission.fullname)
-        assert conversation_id_check == conversation_id
-
-        # parent_id = comment.parent_id.split("_")[1]
-        parent_id = comment.parent_id
-        tn_parent = convert_to_hash(parent_id)
-        if tn_parent == conversation_id:
-            # if the comments are in the second hierarchy level the id should be the generated root id for that
-            # conversation
-            try:
-                tn_parent = Tweet.objects.filter(conversation_id=conversation_id,
-                                                 tn_parent__isnull=True).get().twitter_id
-            except Exception as ex:
-                logger.error("could not find parent in second hierarchy TODO DEBUG {}".format(ex))
-                return False
-        # create the tweet
-        text = comment.body
-        language = comment.submission.subreddit.lang
-        if Tweet.objects.filter(twitter_id=tweet_id).exists():
-            return True
-        try:
-            tweet = Tweet(
-                twitter_id=tweet_id,
-                text=text,
-                author_id=author_id,
-                tn_parent_id=tn_parent,
-                language=language,
-                platform=PLATFORM.REDDIT,
-                created_at=created_time,
-                conversation_id=conversation_id,
-                simple_request=simple_request,
-                topic=topic,
-                tw_author=author,
-                banned_at=banned_at,
-                reddit_id=comment.fullname
-            )
-            apply_tweet_filter(tweet, tweetfilter)
-            return True
-        except IntegrityError as ex:
-            logger.error("could not save reddit comment to db because of {}".format(ex))
-            return False
-        except pytz.exceptions.AmbiguousTimeError:
-            logger.error("something was weird with the time field")
-            return False
-    except prawcore.exceptions.NotFound:
-        logger.error("could not find something on reddit anymore")
-        
-def save_reddit_submission(comment, simple_request, topic, tweetfilter, conversation_id_check):
-    author_id, name = compute_author_id(comment)
-    created_time = convert_time_stamp_to_django(comment)
-    banned_at = None
-    # create the author
-    if TweetAuthor.objects.filter(twitter_id=author_id).exists():
-        author = TweetAuthor.objects.filter(twitter_id=author_id).first()
-    else:
-        author, created = TweetAuthor.objects.get_or_create(
-            twitter_id=author_id,
-            name=name,
-            screen_name=name,
-            platform=PLATFORM.REDDIT
-        )
-    # tweet_id = convert_to_hash(comment.selftext)
-    tweet_id = convert_to_hash(comment.fullname)
-    # conversation_id = convert_to_hash(comment.id)
-    conversation_id = convert_to_hash(comment.fullname)
-    assert conversation_id_check == conversation_id
-
-    text = comment.title + "\n" + comment.selftext
-
-    language = comment.subreddit.lang
-    try:
-        tweet = Tweet(
-            twitter_id=tweet_id,
-            text=text,
-            author_id=author_id,
-            language=language,
-            platform=PLATFORM.REDDIT,
-            created_at=created_time,
-            conversation_id=conversation_id,
-            simple_request=simple_request,
-            topic=topic,
-            tw_author=author,
-            banned_at=banned_at,
-            reddit_id=comment.fullname
-        )
-        apply_tweet_filter(tweet, tweetfilter)
-        return True
-    except IntegrityError as ex:
-        logger.error("could not save submission because {}".format(ex))
-        return False
-    except pytz.exceptions.AmbiguousTimeError:
-        "something was weird with the time field"
-        return False        
-        
-        
-"""
 
 
 def convert_time_stamp_to_django(comment):

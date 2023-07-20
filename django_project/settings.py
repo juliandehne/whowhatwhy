@@ -273,6 +273,9 @@ LOGGING = {
         },
         'h5py': {
             'level': 'INFO'
+        },
+        'urllib3': {
+            'level': 'WARNING'
         }
     },
 }
@@ -281,7 +284,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # delab_settings
 # max candidates when downloading Tweets by query must be bigger then 10, quota for lookup is 900
 MAX_CANDIDATES = 10000
-MIN_CONVERSATION_LENGTH = 10
+MIN_CONVERSATION_LENGTH = 5
 MAX_CONVERSATION_LENGTH = 500  # tested for 300
 MIN_CONVERSATION_DEPTH = 5
 

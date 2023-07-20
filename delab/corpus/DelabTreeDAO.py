@@ -63,7 +63,7 @@ def persist_recursive_tree(root_node: TreeNode, platform: PLATFORM, simple_reque
             persist_recursive_tree(child, platform, simple_request, topic, candidate_id, tweet_filter)
 
 
-def check_general_tree_requirements(delab_tree: DelabTree, verbose=True, platform=PLATFORM.REDDIT):
+def check_general_tree_requirements(delab_tree: DelabTree, verbose=False, platform=PLATFORM.REDDIT):
     if delab_tree is not None:
         tree_size = delab_tree.total_number_of_posts()
         tree_depth = delab_tree.depth()

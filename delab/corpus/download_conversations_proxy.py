@@ -83,7 +83,7 @@ def download_daily_sample(topic_string,
     if platform == platform.TWITTER:
         return download_daily_political_sample(language, topic_string=topic_string)
     if platform == platform.REDDIT:
-        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results)
+        return download_daily_rd_sample(topic_string=topic_string, max_results=max_results, language=language)
     if platform == platform.MASTODON:
         return download_daily_political_sample_mstd(topic_string)
     else:
