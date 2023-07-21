@@ -1,7 +1,8 @@
 from django.urls import path
 
 from mt_study.views import InterventionCreateView, NoMoreDiscussionsView, intervention_proxy, classification_proxy, \
-    ClassificationCreateView, NoMoreClassificationsView, intervention_sent_view_proxy, InterventionSentView, HelpView
+    ClassificationCreateView, NoMoreClassificationsView, intervention_sent_view_proxy, InterventionSentView, HelpView, \
+    status_read_view
 
 urlpatterns = [
     # the patterns for the writing up the moderation view
@@ -17,7 +18,7 @@ urlpatterns = [
          name='mt_study-create-classification'),
     path('', classification_proxy,
          name='mt_study-classification-proxy'),
-    path('intervention/nomore', NoMoreClassificationsView.as_view(),
+    path('classification/nomore', NoMoreClassificationsView.as_view(),
          name='mt_study-classification-nomore'),
 
     # the patterns for the classification view
@@ -27,6 +28,10 @@ urlpatterns = [
          name='mt_study-send-intervention-proxy'),
     path('intervention_send/nomore', NoMoreDiscussionsView.as_view(),
          name='mt_study-send-intervention-nomore'),
-    path('help', HelpView.as_view(), name="mt_study-help")
+    path('help', HelpView.as_view(), name="mt_study-help"),
+
+    # status page
+    # urls.py
+    path('status-read', status_read_view, name='status_read'),
 
 ]

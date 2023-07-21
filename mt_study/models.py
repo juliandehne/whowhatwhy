@@ -110,3 +110,4 @@ class Classification(models.Model):
 
     needs_moderation = models.TextField(choices=MODERATION_TYPE.choices,
                                         help_text="The type of moderation strategy needed", null=True, blank=True)
+

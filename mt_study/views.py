@@ -10,8 +10,8 @@ from django.utils import timezone
 from datetime import timedelta
 
 from django.db.models import Exists, OuterRef, Q
-from django.forms import ModelForm
-from django.shortcuts import redirect
+from django.forms import ModelForm, Form, IntegerField
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, TemplateView, UpdateView
 
@@ -229,3 +229,69 @@ def intervention_sent_view_proxy(request):
 
 class HelpView(TemplateView):
     template_name = 'mt_study/help.html'
+
+
+class StatusForm(Form):
+    n_classified_today = IntegerField()
+    n_written_today = IntegerField()
+    n_send_today = IntegerField()
+
+    n_classified_today_by_you = IntegerField()
+    n_written_today_by_you = IntegerField()
+    n_send_today_by_you = IntegerField()
+
+    n_classify_available_today = IntegerField()
+    n_write_available_today = IntegerField()
+    n_send_available_today = IntegerField()
+
+    n_classify_available_today_for_you = IntegerField()
+    n_write_available_today_for_you = IntegerField()
+    n_sendable_available_today_for_you = IntegerField()
+
+
+# views.py
+
+def custom_query(request):
+    current_user = request.user
+    today = date.today()
+    classification_flows_today = ConversationFlow.objects.annotate(
+        has_classification=Exists(Classification.objects
+                                  .filter(flow_id=OuterRef('pk')))).filter(sample_flow=today) \
+        .filter(has_classification=True)
+
+    intervention_written_today = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .annotate(has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True) \
+        .filter(has_classification=True)
+
+    intervention_sent_today = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects
+                                          .filter(flow_id=OuterRef('pk'))
+                                          .filter(sendable__isnull=False))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True)
+
+    data_to_fill = 42
+    filled_form = StatusForm(initial={
+        'n_classified_today': classification_flows_today.count(),
+        'n_written_today': intervention_written_today.count(),
+        'n_send_today': intervention_sent_today.count(),
+        'n_classified_today_by_you': data_to_fill,
+        'n_written_today_by_you': data_to_fill,
+        'n_send_today_by_you': data_to_fill,
+        'n_classify_available_today': data_to_fill,
+        'n_write_available_today': data_to_fill,
+        'n_send_available_today': data_to_fill,
+        'n_classify_available_today_for_you': data_to_fill,
+        'n_write_available_today_for_you': data_to_fill,
+        'n_sendable_available_today_for_you': data_to_fill,
+    })
+    return [filled_form]
+
+
+def status_read_view(request):
+    data_objects = custom_query(request)
+
+    return render(request, 'mt_study/status_read_template.html', {'forms_list': data_objects})
