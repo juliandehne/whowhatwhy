@@ -259,9 +259,24 @@ def custom_query(request):
                                   .filter(flow_id=OuterRef('pk')))).filter(sample_flow=today) \
         .filter(has_classification=True)
 
+    classification_flows_today_by_you = ConversationFlow.objects.annotate(
+        has_classification=Exists(Classification.objects
+                                  .filter(flow_id=OuterRef('pk')).filter(coder=current_user))) \
+        .filter(sample_flow=today) \
+        .filter(has_classification=True)
+
     intervention_written_today = ConversationFlow.objects \
         .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
         .annotate(has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True) \
+        .filter(has_classification=True)
+
+    intervention_written_today_by_you = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .annotate(has_classification=Exists(Classification.objects
+                                            .filter(flow_id=OuterRef('pk'))
+                                            .filter(coder=current_user))) \
         .filter(sample_flow=today) \
         .filter(has_intervention=True) \
         .filter(has_classification=True)
@@ -273,20 +288,56 @@ def custom_query(request):
         .filter(sample_flow=today) \
         .filter(has_intervention=True)
 
-    data_to_fill = 42
+    intervention_sent_today_by_you = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects
+                                          .filter(flow_id=OuterRef('pk'))
+                                          .filter(sendable__isnull=False)
+                                          .filter(sendable_coder=current_user))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True)
+
+    n_classify_available_today = ConversationFlow.objects.annotate(
+        has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_classification=False)
+
+    languages = get_user_languages(request)
+    n_classify_available_today_for_you = len(list(filter(lambda x: x.tweets.first().language in languages,
+                                                         n_classify_available_today.all())))
+
+    n_write_available_today = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .annotate(has_classification=Exists(Classification.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=False) \
+        .filter(has_classification=True)
+
+    n_write_available_today = list(filter(needs_moderation, n_write_available_today))
+
+    n_write_available_today_for_you = len(list(filter(lambda x: x.tweets.first().language in languages,
+                                                      n_write_available_today)))
+
+    n_send_available_today = ConversationFlow.objects \
+        .annotate(has_intervention=Exists(Intervention.objects.filter(flow_id=OuterRef('pk')))) \
+        .filter(sample_flow=today) \
+        .filter(has_intervention=True).filter(intervention__sendable__isnull=True)
+
+    n_sendable_available_today_for_you = len(list(filter(lambda x: x.tweets.first().language in languages,
+                                                         n_send_available_today.all())))
+
     filled_form = StatusForm(initial={
         'n_classified_today': classification_flows_today.count(),
         'n_written_today': intervention_written_today.count(),
         'n_send_today': intervention_sent_today.count(),
-        'n_classified_today_by_you': data_to_fill,
-        'n_written_today_by_you': data_to_fill,
-        'n_send_today_by_you': data_to_fill,
-        'n_classify_available_today': data_to_fill,
-        'n_write_available_today': data_to_fill,
-        'n_send_available_today': data_to_fill,
-        'n_classify_available_today_for_you': data_to_fill,
-        'n_write_available_today_for_you': data_to_fill,
-        'n_sendable_available_today_for_you': data_to_fill,
+        'n_classified_today_by_you': classification_flows_today_by_you.count(),
+        'n_written_today_by_you': intervention_written_today_by_you.count(),
+        'n_send_today_by_you': intervention_sent_today_by_you.count(),
+        'n_classify_available_today': n_classify_available_today.count(),
+        'n_write_available_today': len(n_write_available_today),
+        'n_send_available_today': n_send_available_today.count(),
+        'n_classify_available_today_for_you': n_classify_available_today_for_you,
+        'n_write_available_today_for_you': n_write_available_today_for_you,
+        'n_sendable_available_today_for_you': n_sendable_available_today_for_you,
     })
     return [filled_form]
 
