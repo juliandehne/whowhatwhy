@@ -1,0 +1,15 @@
+{% extends "mt_study/mt_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+
+    <h1>Status Data</h1>
+    {% for form in forms_list %}
+        <form>
+            {% csrf_token %}
+            {{ form.as_p }}
+        </form>
+        <hr>
+    {% endfor %}
+
+{% endblock content %}
