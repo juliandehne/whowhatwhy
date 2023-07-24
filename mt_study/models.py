@@ -100,7 +100,7 @@ class Classification(models.Model):
                                                 help_text="Are arguments well formulated and understandable?")
     elaboration_support_2 = models.BooleanField(default=False,
                                                 help_text="Are there hidden assumptions that shape the discussion?")
-    elaboration_support_3 = models.BooleanField(default=True,
+    elaboration_support_3 = models.BooleanField(default=False,
                                                 help_text="Is there a tabu involved (elefant in the room)"
                                                           " that needs to be addressed to further the conversation?")
 
