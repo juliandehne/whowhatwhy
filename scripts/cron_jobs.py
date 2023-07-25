@@ -45,5 +45,6 @@ def run():
     # download_moderating_tweets(repeat=Task.WEEKLY)
     # download_intolerant_tweets(repeat=Task.WEEKLY)
     # update_toxic_values()
-    download_daily_sample(repeat=Task.DAILY)
+    # download_daily_sample(repeat=Task.DAILY)
+    download_daily_sample(repeat=60*60*4)
 

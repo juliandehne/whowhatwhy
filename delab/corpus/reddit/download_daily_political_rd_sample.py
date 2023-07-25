@@ -221,6 +221,9 @@ class RD_Sampler:
             current_list.remove(subreddit_string)
             RD_Sampler.daily_de_subreddits[current_date] = current_list
         self.subreddit_string = subreddit_string
+        logger.debug(
+            "current subreddits to search are en: {}, de: {}".format(RD_Sampler.daily_en_subreddits[current_date],
+                                                                     RD_Sampler.daily_de_subreddits[current_date]))
         self.language = language
         self.current_date = current_date
 
