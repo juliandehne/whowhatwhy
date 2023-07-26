@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from delab.corpus.reddit.download_daily_political_rd_sample import RD_Sampler
 from delab.delab_enums import LANGUAGE
 
@@ -13,8 +15,8 @@ def run():
     print("en_subreddits", len(RD_Sampler.subreddits))
     print("de_subreddits", len(RD_Sampler.german_political_subreddits))
 
-    RD_Sampler.daily_en_subreddits = {}
-    RD_Sampler.daily_de_subreddits = {}
+    # RD_Sampler.daily_en_subreddits = {}
+    # RD_Sampler.daily_de_subreddits = {}
 
     sampler3 = RD_Sampler(language=LANGUAGE.ENGLISH)
     print(sampler3.subreddit_string)
@@ -26,3 +28,7 @@ def run():
     print("en_subreddits", len(RD_Sampler.subreddits))
     print("de_subreddits", len(RD_Sampler.german_political_subreddits))
 
+    test_dict = {"test": [1, 2, 3]}
+    test_list = deepcopy(test_dict["test"])
+    test_list.remove(2)
+    print(test_dict) # {'test': [1,2, 3]}

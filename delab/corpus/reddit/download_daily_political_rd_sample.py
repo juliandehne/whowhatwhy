@@ -1,18 +1,16 @@
 import logging
+import prawcore
+
+from copy import deepcopy
 from datetime import datetime
 from random import choice
 from time import sleep
-
-import prawcore
-
-from delab.corpus.DelabTreeDAO import set_up_topic_and_simple_request, check_general_tree_requirements
+from delab.corpus.DelabTreeDAO import check_general_tree_requirements
 from delab.corpus.download_exceptions import NoDailySubredditAvailableException
-from delab.corpus.reddit.download_conversations_reddit import sort_comments_for_db, compute_reddit_tree, \
-    save_reddit_tree
+from delab.corpus.reddit.download_conversations_reddit import compute_reddit_tree
 from delab.delab_enums import LANGUAGE
 from delab.tw_connection_util import get_praw
 from delab_trees.delab_tree import DelabTree
-from django_project.settings import MAX_CONVERSATION_LENGTH_REDDIT, MIN_CONVERSATION_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -196,34 +194,11 @@ class RD_Sampler:
     daily_de_subreddits = {}
 
     def __init__(self, language):
-        current_date = datetime.now().date()
-        # init dictionary of subreddits if empty
-        if current_date not in RD_Sampler.daily_en_subreddits:
-            RD_Sampler.daily_en_subreddits[current_date] = RD_Sampler.subreddits
-        if current_date not in RD_Sampler.daily_de_subreddits:
-            RD_Sampler.daily_de_subreddits[current_date] = RD_Sampler.german_political_subreddits
-        # get current state of available subreddits and pick one
-        if language == LANGUAGE.GERMAN:
-            available_reddits = RD_Sampler.daily_de_subreddits[current_date]
-        else:
-            available_reddits = RD_Sampler.daily_en_subreddits[current_date]
-        if len(available_reddits) == 0:
-            raise NoDailySubredditAvailableException(language=language)
-        else:
-            subreddit_string = choice(available_reddits)
-        # update dictionary with current available states
-        if language == LANGUAGE.ENGLISH:
-            current_list = RD_Sampler.daily_en_subreddits[current_date]
-            current_list.remove(subreddit_string)
-            RD_Sampler.daily_en_subreddits[current_date] = current_list
-        else:
-            current_list = RD_Sampler.daily_de_subreddits[current_date]
-            current_list.remove(subreddit_string)
-            RD_Sampler.daily_de_subreddits[current_date] = current_list
+        current_date, subreddit_string = pick_random_subreddit(language)
         self.subreddit_string = subreddit_string
         logger.debug(
-            "current subreddits to search are en: {}, de: {}".format(RD_Sampler.daily_en_subreddits[current_date],
-                                                                     RD_Sampler.daily_de_subreddits[current_date]))
+            "current subreddits to search are en: {}, de: {}".format(len(RD_Sampler.daily_en_subreddits[current_date]),
+                                                                     len(RD_Sampler.daily_de_subreddits[current_date])))
         self.language = language
         self.current_date = current_date
 
@@ -267,3 +242,31 @@ class RD_Sampler:
             return self.daily_en_subreddits[self.current_date]
         else:
             return self.daily_de_subreddits[self.current_date]
+
+
+def pick_random_subreddit(language):
+    current_date = datetime.now().date()
+    # init dictionary of subreddits if empty
+    if current_date not in RD_Sampler.daily_en_subreddits:
+        RD_Sampler.daily_en_subreddits[current_date] = deepcopy(RD_Sampler.subreddits)
+    if current_date not in RD_Sampler.daily_de_subreddits:
+        RD_Sampler.daily_de_subreddits[current_date] = deepcopy(RD_Sampler.german_political_subreddits)
+    # get current state of available subreddits and pick one
+    if language == LANGUAGE.GERMAN:
+        available_reddits = RD_Sampler.daily_de_subreddits[current_date]
+    else:
+        available_reddits = RD_Sampler.daily_en_subreddits[current_date]
+    if len(available_reddits) == 0:
+        raise NoDailySubredditAvailableException(language=language)
+    else:
+        subreddit_string = choice(available_reddits)
+    # update dictionary with current available states
+    if language == LANGUAGE.ENGLISH:
+        current_list = deepcopy(RD_Sampler.daily_en_subreddits[current_date])
+        current_list.remove(subreddit_string)
+        RD_Sampler.daily_en_subreddits[current_date] = current_list
+    else:
+        current_list = deepcopy(RD_Sampler.daily_de_subreddits[current_date])
+        current_list.remove(subreddit_string)
+        RD_Sampler.daily_de_subreddits[current_date] = current_list
+    return current_date, subreddit_string
