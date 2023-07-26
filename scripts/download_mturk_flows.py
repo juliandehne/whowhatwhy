@@ -6,7 +6,7 @@ from mt_study.logic.download_label_candidates import download_mturk_sample_conve
 def run():
 
     download_mturk_sample_conversations(n_runs=1,
-                                        platform=PLATFORM.REDDIT,
+                                        platform=PLATFORM.MASTODON,
                                         min_results=5,
                                         language=LANGUAGE.ENGLISH)
 

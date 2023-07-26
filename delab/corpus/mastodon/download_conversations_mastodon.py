@@ -39,6 +39,8 @@ def download_conversations_to_search(query, mastodon, topic, since, daily_sample
             continue
         else:
             context = find_context(status, mastodon)
+            if context is None:
+                continue
             contexts.append(context)
     for context in contexts:
         conversation_id = context['root']["id"]
@@ -64,6 +66,8 @@ def find_context(status, mastodon):
         original_context = {'origin': status}
         original_context.update(mastodon.status_context(status["id"]))
         root = get_root(original_context)
+        if root is None:
+            return None
         context['root'] = root
         context.update(mastodon.status_context(root["id"]))
     return context
@@ -84,13 +88,14 @@ def get_conversation_id(context):
 def get_root(context):
     ancestors = context["ancestors"]
     origin = context["origin"]
-    if origin["in_reply_to_id"] is not None and len(ancestors)==0:
-        raise ValueError("Conversation has no root!")
+    if origin["in_reply_to_id"] is not None and len(ancestors) == 0:
+        print("Conversation has no root!")
+        return None
     for toot in ancestors:
         if toot["in_reply_to_id"] is None:
             return toot
-        else:
-            raise ValueError("Conversation has no root!")
+    print("Couldn't find root!")
+    return None
 
 
 def toots_to_tree(context, conversation_id):
@@ -121,7 +126,7 @@ def toots_to_tree(context, conversation_id):
     for descendant in descendants:
         text = content_to_text(descendant["content"])
         tree_status = {'tree_id': conversation_id,
-                       'post_id': descendant['id'],
+                       'post_id': str(descendant['id']),
                        'parent_id': str(descendant['in_reply_to_id']),
                        'text': text,
                        'created_at': descendant['created_at'],
