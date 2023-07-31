@@ -6,6 +6,7 @@ import praw
 import tweepy
 import yaml
 from twarc import Twarc2
+from mastodon import Mastodon
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +121,21 @@ def send_tweet(text, tweet_id):
     api = tweepy.API(auth)
     response = api.update_status(text, in_reply_to_status_id=tweet_id, auto_populate_reply_metadata=True)
     return response
+
+
+def create_mastodon():
+    """
+    You have to register your application in the mastodon web app first,
+    (home/preferences/Development/new application)
+    then save the necessary information in the file that is called
+    """
+
+    with open("twitter/secret/secret_mstd.yaml", 'r') as f:
+        access = yaml.safe_load(f)
+
+    mastodon = Mastodon(client_id=access["client_id"],
+                        client_secret=access["client_secret"],
+                        access_token=access["access_token"],
+                        api_base_url="https://mastodon.social/"
+                        )
+    return mastodon

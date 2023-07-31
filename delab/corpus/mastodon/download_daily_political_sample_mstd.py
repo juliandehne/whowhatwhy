@@ -1,7 +1,9 @@
 from random import choice
 from mastodon import Mastodon
-from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd, download_conversations_to_search, create
-from datetime import date, datetime
+from delab.corpus.mastodon.download_conversations_mastodon import download_conversations_mstd, download_conversations_to_search
+from delab.tw_connection_util import create_mastodon
+from datetime import datetime, timedelta
+from delab.delab_enums import LANGUAGE
 
 hashtags = [
     'politics',
@@ -146,14 +148,104 @@ hashtags = [
     "EconomicFreedom",
     "Capitalism"]
 
+german_hashtags = [
+    "Politik",
+    "Bundestagswahl",
+    "Bundestag",
+    "Bundesregierung",
+    "Wahlen",
+    "Parteien",
+    "Demokratie",
+    "Europa",
+    "Klimapolitik",
+    "Flüchtlinge",
+    "Asyl",
+    "Corona",
+    "Gesundheitspolitik",
+    "Wirtschaftspolitik",
+    "Arbeit",
+    "Soziales",
+    "Umwelt",
+    "Bildung",
+    "Digitalisierung",
+    "Kriminalität",
+    "Sicherheit",
+    "Familienpolitik",
+    "Energiepolitik",
+    "Landwirtschaft",
+    "Steuern",
+    "Außenpolitik",
+    "Integration",
+    "Gleichberechtigung",
+    "Grundrechte",
+    "Meinungsfreiheit",
+    "Linke",
+    "SPD",
+    "DieGrünen",
+    "Sozialdemokratie",
+    "Antikapitalismus",
+    "Solidarität",
+    "Gerechtigkeit",
+    "Arbeitnehmerrechte",
+    "Gleichheit",
+    "Umweltschutz",
+    "Klimagerechtigkeit",
+    "Feminismus",
+    "Bildungsgerechtigkeit",
+    "Sozialstaat",
+    "BGE",
+    "Antirassismus",
+    "Asylrecht",
+    "Demokratie",
+    "Frieden",
+    "Linksjugend",
+    "SolidarischeÖkonomie",
+    "Mindestlohn",
+    "Kollektiveigentum",
+    "Antifa",
+    "KampfgegenRechts",
+    "Protest",
+    "Globalisierungskritik",
+    "Widerstand",
+    "Bündnis90DieGrünen",
+    "Ökosozialismus",
+    "CDU",
+    "CSU",
+    "AfD",
+    "Konservativ",
+    "Werte",
+    "Heimat",
+    "Familie",
+    "Religion",
+    "Tradition",
+    "Sicherheit",
+    "Nationalismus",
+    "Patriotismus",
+    "GesetzundOrdnung",
+    "Marktwirtschaft",
+    "Freiheit",
+    "Migrationspolitik",
+    "Asylpolitik",
+    "Grenzschutz",
+    "Bildung",
+    "Wirtschaftswachstum",
+    "Steuersenkungen",
+    "Arbeitsmarkt",
+    "Energiewende",
+    "Klimaskeptiker"
+]
 
-def download_daily_political_sample_mstd(topic_string):
-    hashtag = choice(hashtags)
+
+def download_daily_political_sample_mstd(topic_string, lang):
+    if lang == LANGUAGE.GERMAN:
+        hashtag = choice(german_hashtags)
+    else:
+        hashtag = choice(hashtags)
+    # toots in the last 24 hours
     today = datetime.now()
-    midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
-    #download_conversations_mstd(query=hashtag, topic=topic_string, since=midnight, daily_sample=True)
-    mastodon = create()
+    yesterday = today - timedelta(days=1)
+    mastodon = create_mastodon()
     downloaded_trees = download_conversations_to_search(query=hashtag, mastodon=mastodon, topic=topic_string,
-                                                        since=midnight, daily_sample=True)
+                                                        since=yesterday, daily_sample=True)
 
     return downloaded_trees

@@ -1,33 +1,19 @@
 from mastodon import Mastodon
 from delab.corpus.DelabTreeDAO import persist_tree, set_up_topic_and_simple_request, check_general_tree_requirements
 from delab_trees.delab_tree import DelabTree
+from delab.tw_connection_util import create_mastodon
 from bs4 import BeautifulSoup
-from delab.delab_enums import PLATFORM
+from delab.delab_enums import PLATFORM, LANGUAGE
 import yaml
 import pandas as pd
 
 
 def download_conversations_mstd(query, topic, since=None):
-    mastodon = create()
+    mastodon = create_mastodon()
     download_conversations_to_search(query=query, mastodon=mastodon, topic=topic, since=since)
 
 
-def create():
-    """
-    You have to register your application in the mastodon web app first,
-    (home/preferences/Development/new application)
-    then save the necessary information in the file that is called
-    """
 
-    with open("twitter/secret/secret_mstd.yaml", 'r') as f:
-        access = yaml.safe_load(f)
-
-    mastodon = Mastodon(client_id=access["client_id"],
-                        client_secret=access["client_secret"],
-                        access_token=access["access_token"],
-                        api_base_url="https://mastodon.social/"
-                        )
-    return mastodon
 
 
 def download_conversations_to_search(query, mastodon, topic, since, daily_sample=False):
@@ -111,7 +97,8 @@ def toots_to_tree(context, conversation_id):
                    'text': text,
                    'created_at': root['created_at'],
                    'author_id': root['account']['id'],
-                   'lang': root["language"]}
+                   'lang': root["language"],
+                   'url': root["url"]}
     tree_context.append(tree_status)
     for ancestor in ancestors:
         text = content_to_text(ancestor["content"])
@@ -121,7 +108,8 @@ def toots_to_tree(context, conversation_id):
                        'text': text,
                        'created_at': ancestor['created_at'],
                        'author_id': ancestor['account']['id'],
-                       'lang': ancestor["language"]}
+                       'lang': ancestor["language"],
+                       'url': ancestor["url"]}
         tree_context.append(tree_status)
     for descendant in descendants:
         text = content_to_text(descendant["content"])
@@ -131,7 +119,8 @@ def toots_to_tree(context, conversation_id):
                        'text': text,
                        'created_at': descendant['created_at'],
                        'author_id': descendant['account']['id'],
-                       'lang': descendant["language"]}
+                       'lang': descendant["language"],
+                       'url': descendant["url"]}
         tree_context.append(tree_status)
 
     context_df = pd.DataFrame(tree_context)

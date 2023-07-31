@@ -86,7 +86,7 @@ def download_daily_sample(topic_string,
         sampler = RD_Sampler(language)
         return sampler.download_daily_rd_sample(max_results=max_results)
     if platform == platform.MASTODON:
-        return download_daily_political_sample_mstd(topic_string)
+        return download_daily_political_sample_mstd(topic_string, lang=language)
     else:
         raise NotImplementedError()
 
