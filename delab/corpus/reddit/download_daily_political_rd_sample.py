@@ -51,6 +51,8 @@ class RD_Sampler:
         "Kaiserposting",
         "600euro",
         "mauerstrassenwetten",
+        "PolitPro",
+        "dezwo"
 
     ]
 
@@ -188,6 +190,18 @@ class RD_Sampler:
         "MiddleEastNews",
         "LatinAmericaNews",
         "neoliberal",
+        "AustrailianPolitics",
+        "centrist",
+        "onguardforthee",
+        "WhitePeopleTwitter",
+        "ParlerWatch",
+        "CivPolitics",
+        "science",
+        "TexasPolitics",
+        "California_Politics",
+        "PoliticsPeopleTwitter",
+        "World_Politics",
+        "PoliticalHumor"
     ]
 
     daily_en_subreddits = {}
