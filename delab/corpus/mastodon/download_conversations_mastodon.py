@@ -6,6 +6,10 @@ from bs4 import BeautifulSoup
 from delab.delab_enums import PLATFORM, LANGUAGE
 import yaml
 import pandas as pd
+from datetime import datetime, timedelta
+import signal
+import time
+from urllib3.exceptions import ReadTimeoutError
 
 
 def download_conversations_mstd(query, topic, since=None):
@@ -13,13 +17,11 @@ def download_conversations_mstd(query, topic, since=None):
     download_conversations_to_search(query=query, mastodon=mastodon, topic=topic, since=since)
 
 
-
-
-
 def download_conversations_to_search(query, mastodon, topic, since, daily_sample=False):
     statuses = download_timeline(query=query, mastodon=mastodon, since=since)
     contexts = []
     trees = []
+
     for status in statuses:
         if status in contexts:
             continue
@@ -28,6 +30,7 @@ def download_conversations_to_search(query, mastodon, topic, since, daily_sample
             if context is None:
                 continue
             contexts.append(context)
+
     for context in contexts:
         conversation_id = context['root']["id"]
         tree = toots_to_tree(context=context, conversation_id=conversation_id)
@@ -35,7 +38,6 @@ def download_conversations_to_search(query, mastodon, topic, since, daily_sample
             trees.append(tree)
             if not daily_sample:
                 save_tree_to_db(tree=tree, topic=topic, query=query)
-
     return trees
 
 
@@ -44,18 +46,33 @@ def download_timeline(query, mastodon, since):
     return timeline
 
 
+def timeout_handler(signum, frame):
+    raise TimeoutError("process took too long")
+
+
 def find_context(status, mastodon):
+    timeout_seconds = 10
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
     context = {'root': status}
-    if status['in_reply_to_id'] is None:
-        context.update(mastodon.status_context(status["id"]))
-    else:
-        original_context = {'origin': status}
-        original_context.update(mastodon.status_context(status["id"]))
-        root = get_root(original_context)
-        if root is None:
-            return None
-        context['root'] = root
-        context.update(mastodon.status_context(root["id"]))
+    try:
+        if status['in_reply_to_id'] is None:
+            context.update(mastodon.status_context(status["id"]))
+        else:
+            original_context = {'origin': status}
+            original_context.update(mastodon.status_context(status["id"]))
+            root = get_root(original_context)
+            if root is None:
+                return None
+            context['root'] = root
+            context.update(mastodon.status_context(root["id"]))
+    except TimeoutError:
+        print("API request took too long, skipping this conversation")
+        return None
+    except ReadTimeoutError:
+        print("Api threw ReadTimeOutError")
+        return None
+
     return context
 
 
@@ -74,7 +91,7 @@ def get_conversation_id(context):
 def get_root(context):
     ancestors = context["ancestors"]
     origin = context["origin"]
-    if origin["in_reply_to_id"] is not None and len(ancestors) == 0:
+    if origin["in_reply_to_id"] is not None and len(context['ancestors']) == 0:
         print("Conversation has no root!")
         return None
     for toot in ancestors:
@@ -88,19 +105,24 @@ def toots_to_tree(context, conversation_id):
     root = context["root"]
     descendants = context["descendants"]
     ancestors = context["ancestors"]  # should be emtpy
-
     tree_context = []
     text = content_to_text(root["content"])
+    lang = root['language']
+    if lang is None:
+        lang = LANGUAGE.UNKNOWN
     tree_status = {'tree_id': conversation_id,
                    'post_id': str(root['id']),
                    'parent_id': str(root['in_reply_to_id']),
                    'text': text,
                    'created_at': root['created_at'],
                    'author_id': root['account']['id'],
-                   'lang': root["language"],
+                   'lang': lang,
                    'url': root["url"]}
     tree_context.append(tree_status)
     for ancestor in ancestors:
+        lang = ancestor['lang']
+        if lang is None:
+            lang = LANGUAGE.UNKNOWN
         text = content_to_text(ancestor["content"])
         tree_status = {'tree_id': conversation_id,
                        'post_id': str(ancestor['id']),
@@ -108,10 +130,13 @@ def toots_to_tree(context, conversation_id):
                        'text': text,
                        'created_at': ancestor['created_at'],
                        'author_id': ancestor['account']['id'],
-                       'lang': ancestor["language"],
+                       'lang': lang,
                        'url': ancestor["url"]}
         tree_context.append(tree_status)
     for descendant in descendants:
+        lang = descendant['language']
+        if lang is None:
+            lang = LANGUAGE.UNKNOWN
         text = content_to_text(descendant["content"])
         tree_status = {'tree_id': conversation_id,
                        'post_id': str(descendant['id']),
@@ -119,7 +144,7 @@ def toots_to_tree(context, conversation_id):
                        'text': text,
                        'created_at': descendant['created_at'],
                        'author_id': descendant['account']['id'],
-                       'lang': descendant["language"],
+                       'lang': lang,
                        'url': descendant["url"]}
         tree_context.append(tree_status)
 

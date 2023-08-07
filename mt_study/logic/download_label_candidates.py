@@ -85,6 +85,8 @@ def persist_flows(flow_result_count, flow_sample, forest, platform, sample_tree_
     # check if all the conversations to the flows are in the database
     n_stored_objects = len(set(list(objects)))
     n_sample_tree_ids = len(set(sample_tree_ids))
+    if n_sample_tree_ids != n_stored_objects:
+        pass
     assert n_stored_objects == n_sample_tree_ids
     duplicated_count = persist_flow_in_db(flow_sample)
     new_flows_persisted = len(flow_sample) - duplicated_count

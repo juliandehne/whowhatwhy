@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class MTSampler:
-    #
+    # Hashtags überarbetien/aussortieren
     hashtags = [
         'politics',
         'currentaffairs',
@@ -39,11 +39,9 @@ class MTSampler:
         'protest',
         'conservative',
         'liberal',
-        'republican',
-        'democrat',
-        'independent',
-        'grassroots',
-        'policereform',
+        'republicans',
+        'democrats',
+        'police',
         'guncontrol',
         'voterregistration',
         'civilrights',
@@ -249,6 +247,7 @@ class MTSampler:
         today = datetime.now()
         yesterday = today - timedelta(days=1)
         mastodon = create_mastodon()
+        #logger.debug("searching for conversations for hashtag {}".format(self.hashtag_string))
         downloaded_trees = download_conversations_to_search(query=hashtag, mastodon=mastodon, topic=topic_string,
                                                             since=yesterday, daily_sample=True)
 
