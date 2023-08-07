@@ -7,7 +7,7 @@ from delab.corpus.reddit.download_timelines_reddit import download_timelines_red
 from delab.corpus.twitter.download_conversations_twitter import download_conversations_tw
 from delab.corpus.twitter.download_daily_political_sample import download_daily_political_sample
 from delab.corpus.twitter.download_timelines_twitter import update_timelines_twitter
-from delab.corpus.mastodon.download_daily_political_sample_mstd import download_daily_political_sample_mstd
+from delab.corpus.mastodon.download_daily_political_sample_mstd import MTSampler
 from delab.delab_enums import PLATFORM, LANGUAGE
 # from .download_conversations_mastodon import download_conversation_mstd
 from delab_trees.delab_tree import DelabTree
@@ -86,7 +86,8 @@ def download_daily_sample(topic_string,
         sampler = RD_Sampler(language)
         return sampler.download_daily_rd_sample(max_results=max_results)
     if platform == platform.MASTODON:
-        return download_daily_political_sample_mstd(topic_string, lang=language)
+        sampler = MTSampler(language=language)
+        return sampler.download_daily_political_sample_mstd(topic_string)
     else:
         raise NotImplementedError()
 

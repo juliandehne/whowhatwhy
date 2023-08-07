@@ -8,7 +8,7 @@ def run():
     download_mturk_sample_conversations(n_runs=1,
                                         platform=PLATFORM.MASTODON,
                                         min_results=5,
-                                        language=LANGUAGE.ENGLISH)
+                                        language=LANGUAGE.GERMAN)
 
     """
     download_mturk_sample_conversations(n_runs=1,

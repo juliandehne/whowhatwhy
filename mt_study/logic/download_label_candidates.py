@@ -9,6 +9,8 @@ from delab.corpus.DelabTreeDAO import check_general_tree_requirements, persist_t
 from delab.corpus.download_conversations_proxy import download_daily_sample
 from delab.corpus.download_exceptions import NoDailySubredditAvailableException
 from delab.corpus.reddit.download_daily_political_rd_sample import RD_Sampler
+from delab.corpus.download_exceptions import NoDailyMTHashtagsAvailableException
+from delab.corpus.mastodon.download_daily_political_sample_mstd import MTSampler
 from delab.delab_enums import PLATFORM
 from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
@@ -22,9 +24,12 @@ M_TURK_TOPIC = "mturk_candidate"
 
 def download_mturk_sample_conversations(n_runs, platform, min_results, language, persist=True):
     # reset the list of subreddits to download
-    RD_Sampler.daily_en_subreddits = {}
-    RD_Sampler.daily_de_subreddits = {}
-
+    if platform==PLATFORM.REDDIT:
+        RD_Sampler.daily_en_subreddits = {}
+        RD_Sampler.daily_de_subreddits = {}
+    elif platform==PLATFORM.MASTODON:
+        MTSampler.daily_en_hashtags = {}
+        MTSampler.daily_de_hashtags = {}
     # Perform 100 runs of the function and measure the time taken
     try:
         download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
@@ -34,6 +39,8 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
         print("Average Execution time:", average_time, "minutes")
     except NoDailySubredditAvailableException as no_more_subreddits_to_try:
         logger.debug("Tried all subreddits for language {}".format(no_more_subreddits_to_try.language))
+    except NoDailyMTHashtagsAvailableException as no_more_hashtags_to_try:
+        logger.debug("Tried all hashtags for language {}".format(no_more_hashtags_to_try.language))
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
