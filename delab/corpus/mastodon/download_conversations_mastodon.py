@@ -1,15 +1,14 @@
-from mastodon import Mastodon
+import logging
 from delab.corpus.DelabTreeDAO import persist_tree, set_up_topic_and_simple_request, check_general_tree_requirements
 from delab_trees.delab_tree import DelabTree
 from delab.tw_connection_util import create_mastodon
 from bs4 import BeautifulSoup
 from delab.delab_enums import PLATFORM, LANGUAGE
-import yaml
 import pandas as pd
-from datetime import datetime, timedelta
 import signal
-import time
-from urllib3.exceptions import ReadTimeoutError
+from mastodon.errors import MastodonNetworkError
+
+logger = logging.getLogger(__name__)
 
 
 def download_conversations_mstd(query, topic, since=None):
@@ -41,22 +40,31 @@ def download_conversations_to_search(query, mastodon, topic, since, daily_sample
     return trees
 
 
-def download_timeline(query, mastodon, since):
-    timeline = mastodon.timeline_hashtag(hashtag=query, limit=40, since_id=since)
-    return timeline
-
-
 def timeout_handler(signum, frame):
     raise TimeoutError("process took too long")
 
 
+def download_timeline(query, mastodon, since):
+    timeout_seconds = 30
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
+    try:
+        timeline = mastodon.timeline_hashtag(hashtag=query, limit=40, since_id=since)
+    except TimeoutError:
+        logger.debug("Downloading timeline took too long. Skipping hashtag {}".format(query))
+        return []
+    return timeline
+
+
 def find_context(status, mastodon):
-    timeout_seconds = 10
+    timeout_seconds = 20
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout_seconds)
     context = {'root': status}
     try:
         if status['in_reply_to_id'] is None:
+            if status['replies_count'] == 0:
+                return None
             context.update(mastodon.status_context(status["id"]))
         else:
             original_context = {'origin': status}
@@ -66,11 +74,12 @@ def find_context(status, mastodon):
                 return None
             context['root'] = root
             context.update(mastodon.status_context(root["id"]))
+
     except TimeoutError:
-        print("API request took too long, skipping this conversation")
+        logger.debug("Downloading context took too long. Skipping status {}".format(status['url']))
         return None
-    except ReadTimeoutError:
-        print("Api threw ReadTimeOutError")
+    except MastodonNetworkError as neterr:
+        logger.debug("API threw following error: {}".format(neterr))
         return None
 
     return context
@@ -149,7 +158,7 @@ def toots_to_tree(context, conversation_id):
         tree_context.append(tree_status)
 
     context_df = pd.DataFrame(tree_context)
-    #context_df_clean = pre_process_df(context_df)
+    # context_df_clean = pre_process_df(context_df)
     tree = DelabTree(context_df)
     if not check_general_tree_requirements(delab_tree=tree, platform=PLATFORM.MASTODON):
         return None
