@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 
 import prawcore
 import pytz
@@ -47,20 +48,36 @@ def search_r_all(sub_reddit_string: str, simple_request_id: int, topic_string: s
         logger.error("reddit with this name does not exist")
 
 
-def download_subreddit(sub_reddit_string, simple_request_id, topic_string=None, language=LANGUAGE.ENGLISH):
+def download_subreddit(sub_reddit_string, simple_request_id=-1, topic_string=None, language=LANGUAGE.ENGLISH,
+                       hot=False):
     if topic_string is None:
         topic_string = sub_reddit_string
     # create the topic and save it to the db,
     # creates a reddit specific dummy request (as there is no query when downloading a wholoe subrreddit
     simple_request, topic = set_up_topic_and_simple_request(sub_reddit_string, simple_request_id, topic_string)
 
+    logger.debug("saving subreddit {}".format(sub_reddit_string))
+
     reddit = get_praw()
 
     try:
-        for submission in reddit.subreddit(sub_reddit_string).hot(limit=10):
-            save_reddit_tree(simple_request, submission, topic, language)
+        if not hot:
+            count = 0
+            for submission in reddit.subreddit(sub_reddit_string).top(limit=None):
+                try:
+                    count += 1
+                    logger.debug("saving subreddit {}, submission {}".format(sub_reddit_string, count))
+                    save_reddit_tree(simple_request, submission, topic, language)
+                except prawcore.exceptions.TooManyRequests:
+                    time.sleep(600)
+        else:
+            for submission in reddit.subreddit(sub_reddit_string).hot(limit=10):
+                save_reddit_tree(simple_request, submission, topic, language)
     except prawcore.exceptions.Redirect:
-        logger.error("reddit with this name does not exist")
+        logger.error("reddit with this name does not exist{}".format(sub_reddit_string))
+    except prawcore.exceptions.Forbidden:
+        logger.error("reddit with this name could not be accessed {}".format(sub_reddit_string))
+
 
 
 def save_reddit_tree(simple_request, submission, topic, language):

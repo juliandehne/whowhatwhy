@@ -86,7 +86,7 @@ def check_general_tree_requirements(delab_tree: DelabTree, verbose=False, platfo
         return False
 
 
-def set_up_topic_and_simple_request(query_string, request_id, topic_string):
+def set_up_topic_and_simple_request(query_string, request_id, topic_string, platform=PLATFORM.TWITTER):
     # save the request to the db in order to link the results in the view to the hashtags entered
     if SimpleRequest.objects.filter(title=query_string).exists():
         simple_request = SimpleRequest.objects.filter(title=query_string).get()
@@ -99,6 +99,7 @@ def set_up_topic_and_simple_request(query_string, request_id, topic_string):
         if request_id > 0:
             simple_request, created = SimpleRequest.objects.get_or_create(
                 pk=request_id,
+                platform=platform,
                 topic=topic
             )
         else:
