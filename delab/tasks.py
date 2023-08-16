@@ -149,3 +149,12 @@ def download_daily_sample():
                                         platform=PLATFORM.REDDIT,
                                         min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
                                         language=LANGUAGE.GERMAN)
+
+    download_mturk_sample_conversations(n_runs=1,
+                                        platform=PLATFORM.MASTODON,
+                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED,
+                                        language=LANGUAGE.ENGLISH)
+    download_mturk_sample_conversations(n_runs=1,
+                                        platform=PLATFORM.MASTODON,
+                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
+                                        language=LANGUAGE.GERMAN)
