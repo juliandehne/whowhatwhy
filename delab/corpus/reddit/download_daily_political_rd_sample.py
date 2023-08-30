@@ -247,8 +247,11 @@ class RD_Sampler:
             sleep(60 * 15)
         except prawcore.exceptions.ServerError as ex:
             logger.debug(ex)
+        except prawcore.exceptions.ResponseException as ex:
+            logger.debug(ex)
         logger.debug("returning {} conversations for subreddit {}, {} subreddits not searched for lang {}"
                      .format(len(result), self.subreddit_string, len(self.get_current_dictionary()), self.language))
+
         return result
 
     def get_current_dictionary(self):
