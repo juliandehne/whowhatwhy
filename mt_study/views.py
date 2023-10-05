@@ -9,6 +9,7 @@ from datetime import date
 from django.utils import timezone
 from datetime import timedelta
 
+from django import forms
 from django.db.models import Exists, OuterRef, Q
 from django.forms import ModelForm, Form, IntegerField
 from django.shortcuts import redirect, render
@@ -16,6 +17,7 @@ from django.urls import reverse
 from django.views.generic import CreateView, TemplateView, UpdateView
 
 from delab.bot.moderation_bot import send_post
+from delab.delab_enums import MODERATION_TYPE
 from delab.models import ConversationFlow
 from mt_study.logic.label_flows import needs_moderation
 from mt_study.models import Intervention, Classification, validate_insert_position
@@ -28,10 +30,33 @@ class ClassificationForm(ModelForm):
         self.helper = FormHelper()
         self.helper.form_show_labels = False
     """
+    needs_moderation = forms.ChoiceField(
+        choices=[('', 'No moderation is needed')] + list(MODERATION_TYPE.choices),
+        required=False,
+        widget=forms.Select()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ClassificationForm, self).__init__(*args, **kwargs)
+
+        # Loop through all fields
+        for name, field in self.fields.items():
+            # Check if the field is a BooleanField
+            if isinstance(field, forms.BooleanField):
+                # Adjust the field's choices and widget
+                field.choices = [
+                    (True, 'Yes'),
+                    (False, 'No'),
+                    (None, 'Not Sure')
+                ]
+                field.widget = forms.RadioSelect()
+                field.required = False
+                field.label = None  # This removes the label
+
 
     class Meta:
         model = Classification
-        exclude = ('flow', 'coder')
+        exclude = ('flow', 'coder', 'elaboration_support_3', 'norm_control_1')
 
 
 class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):

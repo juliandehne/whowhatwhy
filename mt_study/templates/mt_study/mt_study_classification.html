@@ -1,6 +1,9 @@
 {% extends "mt_study/mt_base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
+
+    <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.1.0/dist/jdenticon.min.js"></script>
+
     <div class="content-section">
         <legend class="section-description border-bottom mb-4">Classify this conversation</legend>
         <ol>
@@ -22,8 +25,9 @@
         <legend class="border-bottom mb-4"></legend>
 
         {% for tweet in tweets %}
-            {{ forloop.counter }}. >> {{ tweet.author_id }}: {{ tweet.text }}
-
+            {{ forloop.counter }}.
+            <canvas class="identicon" data-author-id="{{ tweet.author_id }}" width="40" height="40"></canvas>
+            {{ tweet.text }}
             <a href="{{ tweet.original_url }}">Link zum Nachschauen</a>
             </br>
             {% if not forloop.last %}
@@ -31,8 +35,9 @@
             {% endif %}
         {% endfor %}
 
+
         <br>
-         <legend class="border-bottom mb-4"></legend>
+        <legend class="border-bottom mb-4"></legend>
         <br>
 
         <legend class="border-bottom mb-4">Answer the following questions:</legend>
@@ -59,4 +64,21 @@
             </div>
         </form>
     </div>
+
+    <script type="application/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const identicons = document.querySelectorAll('.identicon');
+
+            identicons.forEach(canvas => {
+                const authorId = canvas.getAttribute('data-author-id');
+
+                // Convert authorId to a unique string (here we just use the authorId directly)
+                const hashString = authorId; // Adjust if needed
+
+                // Render the identicon
+                jdenticon.update(canvas, hashString);
+            });
+        });
+    </script>
+
 {% endblock content %}
