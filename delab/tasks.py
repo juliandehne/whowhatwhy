@@ -16,9 +16,7 @@ from .sentiment.sentiment_classification import update_tweet_sentiments
 from .toxicity.perspectives import compute_toxicity_for_text
 from django_project.settings import MT_STUDY_DAILY_FLOWS_NEEDED, MT_STUDY_DAILY_FLOWS_NEEDED_DE
 
-
 logger = logging.getLogger(__name__)
-
 
 
 @background(schedule=1)
@@ -141,14 +139,6 @@ def update_toxic_values():
 @background()
 def download_daily_sample():
     logger.debug("CRONJOB: downloading_daily_sample flow!")
-    download_mturk_sample_conversations(n_runs=1,
-                                        platform=PLATFORM.REDDIT,
-                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED,
-                                        language=LANGUAGE.ENGLISH)
-    download_mturk_sample_conversations(n_runs=1,
-                                        platform=PLATFORM.REDDIT,
-                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
-                                        language=LANGUAGE.GERMAN)
 
     download_mturk_sample_conversations(n_runs=1,
                                         platform=PLATFORM.MASTODON,
@@ -156,5 +146,14 @@ def download_daily_sample():
                                         language=LANGUAGE.ENGLISH)
     download_mturk_sample_conversations(n_runs=1,
                                         platform=PLATFORM.MASTODON,
+                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
+                                        language=LANGUAGE.GERMAN)
+
+    download_mturk_sample_conversations(n_runs=1,
+                                        platform=PLATFORM.REDDIT,
+                                        min_results=MT_STUDY_DAILY_FLOWS_NEEDED,
+                                        language=LANGUAGE.ENGLISH)
+    download_mturk_sample_conversations(n_runs=1,
+                                        platform=PLATFORM.REDDIT,
                                         min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
                                         language=LANGUAGE.GERMAN)
