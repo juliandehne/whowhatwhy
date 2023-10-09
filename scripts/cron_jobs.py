@@ -4,6 +4,7 @@ from background_task.models import Task
 
 from delab.tasks import download_intolerant_tweets, download_moderating_tweets, download_network_structures, \
     update_toxic_values, download_daily_sample
+from util.time_util import next_8am_berlin
 
 
 def run():
@@ -45,6 +46,8 @@ def run():
     # download_moderating_tweets(repeat=Task.WEEKLY)
     # download_intolerant_tweets(repeat=Task.WEEKLY)
     # update_toxic_values()
-    # download_daily_sample(repeat=Task.DAILY)
-    download_daily_sample(repeat=60*60*4)
-
+    download_daily_sample(schedule=next_8am_berlin(), repeat=Task.DAILY)
+    download_daily_sample(schedule=next_8am_berlin(12), repeat=Task.DAILY)
+    download_daily_sample(schedule=next_8am_berlin(16), repeat=Task.DAILY)
+    download_daily_sample(schedule=next_8am_berlin(20), repeat=Task.DAILY)
+    # download_daily_sample(repeat=60*60*4)
