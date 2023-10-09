@@ -51,7 +51,9 @@ class ClassificationForm(ModelForm):
                 ]
                 field.widget = forms.RadioSelect()
                 field.required = False
-                field.label = None  # This removes the label
+                # field.label = None  # This removes the label
+                field.label = field.help_text
+                field.help_text = None
 
 
     class Meta:
