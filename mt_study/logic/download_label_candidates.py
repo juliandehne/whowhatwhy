@@ -32,15 +32,19 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
         MTSampler.daily_de_hashtags = {}
     # Perform 100 runs of the function and measure the time taken
     try:
-        download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
-        execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
-        average_time = (execution_time / 100) / 60
-        print("Execution time:", execution_time, "seconds")
-        print("Average Execution time:", average_time, "minutes")
+        # download_mturk_sample_helper = partial(download_mturk_samples, platform, min_results, language, persist)
+        # execution_time = timeit.timeit(download_mturk_sample_helper, number=n_runs)
+        download_mturk_samples(platform, min_results, language, persist)
+        # average_time = (execution_time / 100) / 60
+        # print("Execution time:", execution_time, "seconds")
+        # print("Average Execution time:", average_time, "minutes")
     except NoDailySubredditAvailableException as no_more_subreddits_to_try:
         logger.debug("Tried all subreddits for language {}".format(no_more_subreddits_to_try.language))
     except NoDailyMTHashtagsAvailableException as no_more_hashtags_to_try:
         logger.debug("Tried all hashtags for language {}".format(no_more_hashtags_to_try.language))
+    except TimeoutError:
+        logger.debug("Downloading timeline took too long. Skipping hashtag {}")
+        return []
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
