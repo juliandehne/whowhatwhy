@@ -11,7 +11,7 @@ def needs_moderation(flow: ConversationFlow):
 
     c = classifications.first()
 
-    return c.needs_moderation is not None and c.is_valid_conversation
+    return c.needs_moderation is not None and c.is_valid_conversation and c.needs_moderation != ''
 
 
 def needs_moderation_implicit(flow: ConversationFlow):

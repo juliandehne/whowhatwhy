@@ -31,7 +31,7 @@ class ClassificationForm(ModelForm):
         self.helper.form_show_labels = False
     """
     needs_moderation = forms.ChoiceField(
-        choices=[('', 'No moderation is needed')] + list(MODERATION_TYPE.choices),
+        choices=[(None, 'No moderation is needed')] + list(MODERATION_TYPE.choices),
         required=False,
         widget=forms.Select()
     )
@@ -54,7 +54,6 @@ class ClassificationForm(ModelForm):
                 # field.label = None  # This removes the label
                 field.label = field.help_text
                 field.help_text = None
-
 
     class Meta:
         model = Classification
