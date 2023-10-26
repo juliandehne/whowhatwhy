@@ -2,8 +2,10 @@ import logging
 import timeit
 from functools import partial
 
+import mastodon
 from django.db import IntegrityError
 from django.utils import timezone
+from mastodon import MastodonServiceUnavailableError
 
 from delab.corpus.DelabTreeDAO import check_general_tree_requirements, persist_tree, set_up_topic_and_simple_request
 from delab.corpus.download_conversations_proxy import download_daily_sample
@@ -24,10 +26,10 @@ M_TURK_TOPIC = "mturk_candidate"
 
 def download_mturk_sample_conversations(n_runs, platform, min_results, language, persist=True):
     # reset the list of subreddits to download
-    if platform==PLATFORM.REDDIT:
+    if platform == PLATFORM.REDDIT:
         RD_Sampler.daily_en_subreddits = {}
         RD_Sampler.daily_de_subreddits = {}
-    elif platform==PLATFORM.MASTODON:
+    elif platform == PLATFORM.MASTODON:
         MTSampler.daily_en_hashtags = {}
         MTSampler.daily_de_hashtags = {}
     # Perform 100 runs of the function and measure the time taken
@@ -45,6 +47,8 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
     except TimeoutError:
         logger.debug("Downloading timeline took too long. Skipping hashtag {}")
         return []
+    except MastodonServiceUnavailableError as mastodonerror:
+        logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
