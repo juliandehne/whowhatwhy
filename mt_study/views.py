@@ -1,3 +1,4 @@
+import time
 from random import choice
 
 from crispy_forms.helper import FormHelper
@@ -74,7 +75,9 @@ class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMix
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('mt_study-classification-proxy')
+        # return reverse('mt_study-classification-proxy')
+        flow_url = reverse('mt_study-classification-proxy')
+        return cache_buster(flow_url)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(ClassificationCreateView, self).get_context_data(**kwargs)
@@ -149,7 +152,9 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('mt_study-proxy')
+        # return reverse('mt_study-proxy')
+        flow_url = reverse('mt_study-proxy')
+        return cache_buster(flow_url)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(InterventionCreateView, self).get_context_data(**kwargs)
@@ -158,7 +163,7 @@ class InterventionCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin
         tweets = flow.tweets.all()
         tweets = list(sorted(tweets, key=lambda x: x.created_at, reverse=False))
         # tweets = tweets[-5:]
-        classification = Classification.objects.filter(flow_id=flow_id).get()
+        classification = Classification.objects.filter(flow_id=flow_id).first()
         context["tweets"] = tweets
         context["classification"] = classification.needs_moderation
         return context
@@ -190,6 +195,7 @@ def intervention_proxy(request):
     candidate.save(update_fields=["mt_study_lock_time_write"])
 
     return redirect('mt_study-create-intervention', flow_id=candidate.pk)
+    # Construct the base URL.
 
 
 class NoMoreDiscussionsView(TemplateView):
@@ -212,7 +218,9 @@ class InterventionSentView(SuccessMessageMixin, UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('mt_study-send-intervention-proxy')
+        # return reverse('mt_study-send-intervention-proxy')
+        flow_url = reverse('mt_study-send-intervention-proxy')
+        return cache_buster(flow_url)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(InterventionSentView, self).get_context_data(**kwargs)
@@ -242,6 +250,7 @@ def intervention_sent_view_proxy(request):
 
     interventions = list(Intervention.objects.filter(flow__in=flows) \
                          .exclude(sent=True) \
+                         .exclude(sendable=True).all() \
                          .exclude(sendable=False).all())
 
     if len(interventions) == 0:
@@ -372,3 +381,16 @@ def status_read_view(request):
     data_objects = custom_query(request)
 
     return render(request, 'mt_study/status_read_template.html', {'forms_list': data_objects})
+
+
+def cache_buster(url):
+    # Generate a timestamp as a string, but it should be bytes when using quote_from_bytes
+    cache_buster = str(int(time.time()))
+
+    # If you were using quote or quote_from_bytes somewhere like this:
+    # url_encoded_cache_buster = quote(cache_buster)  # This line could cause an error if not expected.
+
+    # Correct usage without quote_from_bytes, as cache_buster is not bytes.
+    flow_url_with_cache_buster = f"{url}?_={cache_buster}"
+
+    return flow_url_with_cache_buster

@@ -21,7 +21,7 @@ def validate_insert_position(value, instance=None):
 
 class Intervention(models.Model):
     flow = models.ForeignKey(ConversationFlow, on_delete=models.DO_NOTHING,
-                             help_text="the sequence of posts to be moderated")
+                             help_text="the sequence of posts to be moderated", unique=True)
     text = models.TextField(help_text="the text written to try to moderate the discussion up to this point")
     moderation_type = models.TextField(default=MODERATION_TYPE.CONSENSUS_SEEKING, choices=MODERATION_TYPE.choices,
                                        help_text="the type of moderation strategy employed")
