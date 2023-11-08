@@ -139,7 +139,7 @@ def update_toxic_values():
 @background()
 def download_daily_sample():
     logger.debug("CRONJOB: downloading_daily_sample flow!")
-
+    """
     download_mturk_sample_conversations(n_runs=1,
                                         platform=PLATFORM.MASTODON,
                                         min_results=MT_STUDY_DAILY_FLOWS_NEEDED,
@@ -148,7 +148,7 @@ def download_daily_sample():
                                         platform=PLATFORM.MASTODON,
                                         min_results=MT_STUDY_DAILY_FLOWS_NEEDED_DE,
                                         language=LANGUAGE.GERMAN)
-
+    """
     download_mturk_sample_conversations(n_runs=1,
                                         platform=PLATFORM.REDDIT,
                                         min_results=MT_STUDY_DAILY_FLOWS_NEEDED,
