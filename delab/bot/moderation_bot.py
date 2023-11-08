@@ -22,31 +22,33 @@ def send_post(intervention_id):
 
 
 def send_rd_post(intervention_id, last_post: Tweet, is_submission):
-
     reddit = get_praw()
 
     submission_url = last_post.original_url
     intervention = Intervention.objects.filter(id=intervention_id).get()
-    if intervention.sent is not True:
+    other_intervents = Intervention.objects.filter(flow=intervention.flow).exclude(id=intervention_id).exists()
+    if intervention.sent is not True and not other_intervents:
         comment_text = intervention.text
         if is_submission:
             original_comment = reddit.submission(url=submission_url)
         else:
             original_comment = reddit.comment(url=submission_url)
-        original_comment.reply(comment_text)
         intervention.sent = True
         intervention.save(update_fields=['sent'])
+        original_comment.reply(comment_text)
 
 
 def send_mstd_post(intervention_id, last_post):
     parent_id = last_post.twitter_id
     mastodon = create_mastodon()
+
     intervention = Intervention.objects.filter(id=intervention_id).get()
-    if intervention.sent is not True:
+    other_intervents = Intervention.objects.filter(flow=intervention.flow).exclude(id=intervention_id).exists()
+    if intervention.sent is not True and not other_intervents:
         comment_text = intervention.text
-        mastodon.status_post(status=comment_text, in_reply_to_id=parent_id)
         intervention.sent = True
         intervention.save(update_fields=['sent'])
+        mastodon.status_post(status=comment_text, in_reply_to_id=parent_id)
 
 
 def get_parent_post(intervention_id):
@@ -58,4 +60,3 @@ def get_parent_post(intervention_id):
     tweets.sort(key=lambda x: x.created_at)
     last_tweet = tweets[position]
     return last_tweet, position == 0
-
