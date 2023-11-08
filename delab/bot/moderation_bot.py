@@ -22,28 +22,31 @@ def send_post(intervention_id):
 
 
 def send_rd_post(intervention_id, last_post: Tweet, is_submission):
+
     reddit = get_praw()
 
     submission_url = last_post.original_url
     intervention = Intervention.objects.filter(id=intervention_id).get()
-    comment_text = intervention.text
-    if is_submission:
-        original_comment = reddit.submission(url=submission_url)
-    else:
-        original_comment = reddit.comment(url=submission_url)
-    original_comment.reply(comment_text)
-    intervention.sent = True
-    intervention.save(update_fields=['sent'])
+    if intervention.sent is not True:
+        comment_text = intervention.text
+        if is_submission:
+            original_comment = reddit.submission(url=submission_url)
+        else:
+            original_comment = reddit.comment(url=submission_url)
+        original_comment.reply(comment_text)
+        intervention.sent = True
+        intervention.save(update_fields=['sent'])
 
 
 def send_mstd_post(intervention_id, last_post):
     parent_id = last_post.twitter_id
     mastodon = create_mastodon()
     intervention = Intervention.objects.filter(id=intervention_id).get()
-    comment_text = intervention.text
-    mastodon.status_post(status=comment_text, in_reply_to_id=parent_id)
-    intervention.sent = True
-    intervention.save(update_fields=['sent'])
+    if intervention.sent is not True:
+        comment_text = intervention.text
+        mastodon.status_post(status=comment_text, in_reply_to_id=parent_id)
+        intervention.sent = True
+        intervention.save(update_fields=['sent'])
 
 
 def get_parent_post(intervention_id):
