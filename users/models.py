@@ -16,8 +16,11 @@ class Profile(models.Model):
     tertiary_language = models.TextField(choices=LANGUAGE.choices,
                                          help_text="The third working language you are proficient in.", null=True,
                                          blank=True)
-    full_name = models.TextField(blank=True, null=True, help_text="Name of the account owner!")
+    full_name = models.TextField(blank=True, null=True, help_text="Name of the account owner! Needs to be the correct name for payment")
     iban = models.TextField(blank=True, null=True, help_text="The IBAN for your remuneration")
+    birthday = models.DateField(null=True, blank=True, help_text="your birthday")
+    billing_address = models.TextField(null=True, blank=True, help_text="your current living address")
+
     agb = models.BooleanField(blank=True, null=True, help_text="Please check this to affirm that we can store your "
                                                                "payment detail for the duration of the study. The "
                                                                "information will only be used for the purpose of "
