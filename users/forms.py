@@ -28,6 +28,8 @@ class ProfileUpdateForm(forms.ModelForm):
                   'secondary_language',
                   'tertiary_language',
                   'full_name',
+                  'birthday',
+                  'billing_address',
                   'iban',
                   'agb']
 
