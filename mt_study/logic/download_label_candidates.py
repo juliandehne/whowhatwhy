@@ -1,6 +1,4 @@
 import logging
-import timeit
-from functools import partial
 
 import mastodon
 from django.db import IntegrityError
@@ -9,10 +7,10 @@ from mastodon import MastodonServiceUnavailableError
 
 from delab.corpus.DelabTreeDAO import check_general_tree_requirements, persist_tree, set_up_topic_and_simple_request
 from delab.corpus.download_conversations_proxy import download_daily_sample
-from delab.corpus.download_exceptions import NoDailySubredditAvailableException
-from delab.corpus.reddit.download_daily_political_rd_sample import RD_Sampler
 from delab.corpus.download_exceptions import NoDailyMTHashtagsAvailableException
+from delab.corpus.download_exceptions import NoDailySubredditAvailableException
 from delab.corpus.mastodon.download_daily_political_sample_mstd import MTSampler
+from delab.corpus.reddit.download_daily_political_rd_sample import RD_Sampler
 from delab.delab_enums import PLATFORM
 from delab.models import Tweet, ConversationFlow
 from delab_trees import TreeManager
@@ -48,6 +46,8 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
         logger.debug("Downloading timeline took too long. Skipping hashtag {}")
         return []
     except MastodonServiceUnavailableError as mastodonerror:
+        logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
+    except mastodon.errors.MastodonAPIError as mastodonerror:
         logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
 
 
