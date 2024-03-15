@@ -49,6 +49,8 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
         logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
     except mastodon.errors.MastodonAPIError as mastodonerror:
         logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
+    except mastodon.errors.MastodonNetworkError as mastodonerror:
+        logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
