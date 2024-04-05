@@ -33,3 +33,4 @@ tweepy
 nltk
 BeautifulSoup4
 cloud-tpu-client
+chardet
