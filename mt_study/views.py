@@ -58,7 +58,18 @@ class ClassificationForm(ModelForm):
 
     class Meta:
         model = Classification
-        exclude = ('flow', 'coder', 'elaboration_support_3', 'norm_control_1')
+        # exclude = ('flow', 'coder', 'elaboration_support_3', 'norm_control_1')
+        exclude = (
+            'flow', 'coder', 'elaboration_support_3', 'norm_control_1',
+            'is_conversation_0', 'is_conversation_1', 'is_conversation_2',
+            'is_conversation_3', 'is_conversation_4', 'is_conversation_5',
+            'agenda_control_1', 'agenda_control_2', 'agenda_control_3',
+            'emotion_control_1', 'emotion_control_2', 'emotion_control_3',
+            'participation_1', 'participation_2', 'participation_3',
+            'consensus_seeking_1', 'consensus_seeking_2', 'consensus_seeking_3',
+            'norm_control_2', 'norm_control_3',
+            'elaboration_support_1', 'elaboration_support_2', 'is_valid_conversation'
+        )
 
 
 class ClassificationCreateView(SuccessMessageMixin, CreateView, LoginRequiredMixin):

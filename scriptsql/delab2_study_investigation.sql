@@ -40,6 +40,6 @@ INNER JOIN
 INNER JOIN
     mt_study_classification msc
     ON cf.id = msc.flow_id
-INNER JOIN
+LEFT JOIN
     mt_study_intervention msi
     ON cf.id = msi.flow_id;
