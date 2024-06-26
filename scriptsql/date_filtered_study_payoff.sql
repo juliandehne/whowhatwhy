@@ -18,7 +18,7 @@ LEFT JOIN mt_study_intervention mi_as_sendable ON au.id = mi_as_sendable.sendabl
 LEFT JOIN delab_conversationflow dcf ON mc.flow_id = dcf.id OR mi_as_coder.flow_id = dcf.id OR mi_as_sendable.flow_id = dcf.id
 WHERE
     up.iban IS NOT NULL AND up.iban != ''
-    AND dcf.sample_flow >= '2024-03-01'
+    AND dcf.sample_flow >= '2024-04-01'
     AND dcf.sample_flow <= '2024-05-01'
 GROUP BY
     au.id, au.email, au.username, up.iban, up.full_name;

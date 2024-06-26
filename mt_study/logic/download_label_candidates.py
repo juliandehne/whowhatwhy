@@ -51,6 +51,8 @@ def download_mturk_sample_conversations(n_runs, platform, min_results, language,
         logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
     except mastodon.errors.MastodonNetworkError as mastodonerror:
         logger.error("Mastodon seemed not to be available {}".format(mastodonerror))
+    except Exception as blankexception:
+        logger.error("could not figure out the exception {}".format(blankexception))
 
 
 def download_mturk_samples(platform, min_results, language, persist) -> list[list[DelabPost]]:
